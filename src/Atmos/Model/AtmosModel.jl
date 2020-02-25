@@ -359,7 +359,7 @@ end
     aux::Vars,
     t::Real,
 )
-    ν, D_t, τ = turbulence_tensors(atmos, state, diffusive, aux, t)
+    ν, D_t, τ = turbulence_tensors(atmos, atmos.turbulence, state, diffusive, aux, t)
     d_h_tot = -D_t .* diffusive.∇h_tot
     flux_diffusive!(atmos, flux, state, τ, d_h_tot)
     flux_diffusive!(atmos.moisture, flux, state, diffusive, aux, t, D_t)

@@ -74,14 +74,27 @@ function config_heldsuarez(FT, poly_order, resolution)
         exp_sponge,
     )
 
+    # Viscous sponge to dampen flow at the top of the domain
+    dyn_visc_bg = FT(0.0)
+    z_sponge = FT(15e3)
+    dyn_visc_sp = FT(1e10)
+    exp_sponge = FT(2)
+    visc_sponge = ConstantViscousSponge(
+        dyn_visc_bg,
+        domain_height,
+        z_sponge,
+        dyn_visc_sp,
+        exp_sponge,
+    )
+
     # Set up the atmosphere model
     model = AtmosModel{FT}(
         AtmosGCMConfigType,
         param_set;
         ref_state = ref_state,
-        turbulence = ConstantViscosityWithDivergence(turb_visc),
+        turbulence = visc_sponge,
         moisture = DryModel(),
-        source = (Gravity(), Coriolis(), held_suarez_forcing!, sponge),
+        source = (Gravity(), Coriolis(), held_suarez_forcing!),
         init_state = init_heldsuarez!,
         data_config = HeldSuarezDataConfig(T_ref),
     )
@@ -160,7 +173,7 @@ function held_suarez_forcing!(
 end
 
 function config_diagnostics(FT, driver_config)
-    interval = 1000 # in time steps
+    interval = 200 # in time steps
 
     _planet_radius = FT(planet_radius(param_set))
 
@@ -212,6 +225,7 @@ function main()
         Courant_number = 0.14,
         init_on_cpu = true,
         CFL_direction = HorizontalDirection(),
+        diffdir = HorizontalDirection(),
     )
 
     # Set up diagnostics

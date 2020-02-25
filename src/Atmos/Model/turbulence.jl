@@ -19,7 +19,7 @@
 
 using DocStringExtensions
 using CLIMAParameters.Atmos.SubgridScale: inv_Pr_turb
-export ConstantViscosityWithDivergence, SmagorinskyLilly, Vreman, AnisoMinDiss
+export ConstantViscosityWithDivergence, SmagorinskyLilly, Vreman, AnisoMinDiss, ConstantViscousSponge
 export turbulence_tensors
 
 # ### Abstract Type
@@ -219,6 +219,68 @@ function turbulence_tensors(
     return ν, D_t, τ
 end
 
+"""
+    ConstantViscousSponge <: TurbulenceClosure
+
+Turbulence with constant dynamic viscosity (`ρν`).
+
+# Fields
+
+$(DocStringExtensions.FIELDS)
+"""
+struct ConstantViscousSponge{FT} <: TurbulenceClosure
+    "Dynamic Viscosity [kg/m/s]"
+    ρν::FT
+    "Maximum domain altitude (m)"
+    z_max::FT
+    "Altitude at with sponge starts (m)"
+    z_sponge::FT
+    "Sponge Strength 0 ⩽ α_max ⩽ 1"
+    α_max::FT
+    "Sponge exponent"
+    γ::FT
+end
+
+# Default calling option
+# ConstantViscousSponge{FT}(<viscous coeff>, 30000, 15000, 1, 4)
+
+vars_gradient(::ConstantViscousSponge, FT) = @vars()
+vars_diffusive(::ConstantViscousSponge, FT) =
+    @vars(S::SHermitianCompact{3, FT, 6})
+
+function diffusive!(
+    ::ConstantViscousSponge,
+    ::Orientation,
+    diffusive::Vars,
+    ∇transform::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+
+    diffusive.turbulence.S = symmetrize(∇transform.u)
+end
+
+function turbulence_tensors(
+    atmos::AtmosModel,
+    m::ConstantViscousSponge,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+)
+
+    S = diffusive.turbulence.S
+    z = altitude(atmos.orientation, aux)
+    ν = m.ρν / state.ρ
+    if z >= m.z_sponge
+        r = (z - m.z_sponge) / (m.z_max - m.z_sponge)
+        β_sponge = m.α_max * sinpi(r / 2)^m.γ
+        ν += β_sponge * ν
+    end
+    τ = (-2 * ν) * S
+    return ν, τ
+end
 
 
 # ### [Smagorinsky-Lilly](@id smagorinsky-lilly)
