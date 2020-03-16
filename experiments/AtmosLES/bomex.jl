@@ -357,7 +357,7 @@ function config_bomex(FT, N, resolution, xmax, ymax, zmax)
 
     ics = init_bomex!     # Initial conditions
 
-    C_smag = FT(0.20)     # Smagorinsky coefficient
+    C_smag = FT(0.17)     # Smagorinsky coefficient
 
     u_star = FT(0.28)     # Friction velocity
 
@@ -471,8 +471,8 @@ function main()
     # DG polynomial order
     N = 4
     # Domain resolution and size
-    Δh = FT(75)
-    Δv = FT(20)
+    Δh = FT(100)
+    Δv = FT(40)
 
     resolution = (Δh, Δh, Δv)
 
@@ -498,7 +498,7 @@ function main()
     )
     dgn_config = config_diagnostics(driver_config)
 
-    cbtmarfilter = GenericCallbacks.EveryXSimulationSteps(1) do (init = false)
+    cbtmarfilter = GenericCallbacks.EveryXSimulationSteps(100) do (init = false)
         Filters.apply!(solver_config.Q, 6, solver_config.dg.grid, TMARFilter())
         nothing
     end

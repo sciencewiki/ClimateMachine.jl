@@ -147,6 +147,7 @@ function compute_horzsums!(
     end
 
     ν, _ = turbulence_tensors(
+        atmos,
         atmos.turbulence,
         state,
         diffusive_flux,

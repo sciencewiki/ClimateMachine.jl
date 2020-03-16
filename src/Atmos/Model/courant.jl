@@ -54,7 +54,7 @@ function diffusive_courant(
     Δt,
     direction,
 )
-    ν, τ = turbulence_tensors(m.turbulence, state, diffusive, aux, 0)
+    ν, τ = turbulence_tensors(m, m.turbulence, state, diffusive, aux, 0)
     FT = eltype(state)
 
     if ν isa Real
