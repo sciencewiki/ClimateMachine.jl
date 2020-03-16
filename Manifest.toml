@@ -274,11 +274,19 @@ git-tree-sha1 = "b34d7cef7b337321e97d22242c3c2b91f476748e"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.21.0"
 
+[[KAShim_jll]]
+deps = ["LibUV_jll", "Libdl", "Pkg"]
+git-tree-sha1 = "83de89261899a9dec4e5224b8d98a62c47a74429"
+uuid = "652de3ec-ffb6-5c91-88b5-9e9ede6ab7e4"
+version = "0.1.0+0"
+
 [[KernelAbstractions]]
-deps = ["Adapt", "CUDAapi", "CUDAdrv", "CUDAnative", "Cassette", "MacroTools", "Requires", "StaticArrays"]
-git-tree-sha1 = "8c0e248a12224626ddd046343df66ba865337203"
+deps = ["Adapt", "CUDAapi", "CUDAdrv", "CUDAnative", "Cassette", "KAShim_jll", "MacroTools", "Requires", "StaticArrays"]
+git-tree-sha1 = "2f927f3aa6c0f031e38dc4d42d78b3d019f333a3"
+repo-rev = "vc/events3"
+repo-url = "https://github.com/JuliaGPU/KernelAbstractions.jl.git"
 uuid = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
-version = "0.1.3"
+version = "0.1.6"
 
 [[LLVM]]
 deps = ["CEnum", "Libdl", "Printf", "Unicode"]
@@ -294,6 +302,12 @@ version = "0.15.0"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
+
+[[LibUV_jll]]
+deps = ["Libdl", "Pkg"]
+git-tree-sha1 = "fceaa51d56b8a2b6e8b0fb345bbd716ad7067602"
+uuid = "183b4373-6708-53ba-ad28-60e28bb38547"
+version = "2.0.0+1"
 
 [[Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
