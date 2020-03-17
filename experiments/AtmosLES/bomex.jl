@@ -357,7 +357,7 @@ function config_bomex(FT, N, resolution, xmax, ymax, zmax)
 
     ics = init_bomex!     # Initial conditions
 
-    C_smag = FT(0.25)     # Smagorinsky coefficient
+    C_smag = FT(0.18)     # Smagorinsky coefficient
 
     u_star = FT(0.28)     # Friction velocity
 
@@ -471,8 +471,8 @@ function main()
     # DG polynomial order
     N = 4
     # Domain resolution and size
-    Δh = FT(100)
-    Δv = FT(40)
+    Δh = FT(50)
+    Δv = FT(20)
 
     resolution = (Δh, Δh, Δv)
 
