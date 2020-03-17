@@ -5,6 +5,7 @@ using Test
 using CLIMA
 using CLIMA.Atmos
 using CLIMA.ConfigTypes
+using CLIMA.Diagnostics
 using CLIMA.GenericCallbacks
 using CLIMA.ODESolvers
 using CLIMA.Mesh.Filters
@@ -107,6 +108,12 @@ function config_risingbubble(FT, N, resolution, xmax, ymax, zmax)
     return config
 end
 
+function config_diagnostics(driver_config)
+    interval = 10000 # in time steps
+    dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
+    return CLIMA.setup_diagnostics([dgngrp])
+end
+
 function main()
     CLIMA.init()
 
@@ -119,9 +126,9 @@ function main()
     Δv = FT(50)
     resolution = (Δh, Δh, Δv)
     # Domain extents
-    xmax = 2500
-    ymax = 2500
-    zmax = 2500
+    xmax = FT(2500)
+    ymax = FT(2500)
+    zmax = FT(2500)
     # Simulation time
     t0 = FT(0)
     timeend = FT(1000)
@@ -137,6 +144,7 @@ function main()
         init_on_cpu = true,
         Courant_number = CFL,
     )
+    dgn_config = config_diagnostics(driver_config)
 
     # User defined filter (TMAR positivity preserving filter)
     cbtmarfilter = GenericCallbacks.EveryXSimulationSteps(1) do (init = false)
@@ -147,6 +155,7 @@ function main()
     # Invoke solver (calls solve! function for time-integrator)
     result = CLIMA.invoke!(
         solver_config;
+        diagnostics_config = dgn_config,
         user_callbacks = (cbtmarfilter,),
         check_euclidean_distance = true,
     )

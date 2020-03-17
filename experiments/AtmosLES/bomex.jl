@@ -60,9 +60,11 @@ using CLIMA.Atmos
 using CLIMA.ConfigTypes
 using CLIMA.Diagnostics
 using CLIMA.DGmethods.NumericalFluxes
+using CLIMA.Diagnostics
 using CLIMA.GenericCallbacks
 using CLIMA.ODESolvers
 using CLIMA.Mesh.Filters
+using CLIMA.ODESolvers
 using CLIMA.MoistThermodynamics
 using CLIMA.PlanetParameters
 using CLIMA.VariableTemplates
@@ -477,9 +479,9 @@ function main()
     resolution = (Δh, Δh, Δv)
 
     # Prescribe domain parameters
-    xmax = 6400
-    ymax = 6400
-    zmax = 3000
+    xmax = FT(6400)
+    ymax = FT(6400)
+    zmax = FT(3000)
 
     t0 = FT(0)
 
