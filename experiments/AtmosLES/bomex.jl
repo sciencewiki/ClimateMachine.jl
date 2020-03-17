@@ -357,7 +357,7 @@ function config_bomex(FT, N, resolution, xmax, ymax, zmax)
 
     ics = init_bomex!     # Initial conditions
 
-    C_smag = FT(0.17)     # Smagorinsky coefficient
+    C_smag = FT(0.25)     # Smagorinsky coefficient
 
     u_star = FT(0.28)     # Friction velocity
 
@@ -486,7 +486,7 @@ function main()
     # For a full-run, please set the timeend to 3600*6 seconds
     # For the test we set this to == 30 minutes
     timeend = FT(3600 * 6)
-    CFLmax = FT(10)
+    CFLmax = FT(10.5)
 
     driver_config = config_bomex(FT, N, resolution, xmax, ymax, zmax)
     solver_config = CLIMA.setup_solver(
@@ -499,7 +499,7 @@ function main()
     dgn_config = config_diagnostics(driver_config)
 
     cbtmarfilter = GenericCallbacks.EveryXSimulationSteps(100) do (init = false)
-        Filters.apply!(solver_config.Q, 6, solver_config.dg.grid, TMARFilter())
+        #Filters.apply!(solver_config.Q, 6, solver_config.dg.grid, TMARFilter())
         nothing
     end
 
