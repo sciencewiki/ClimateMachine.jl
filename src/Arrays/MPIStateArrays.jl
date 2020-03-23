@@ -475,6 +475,28 @@ function fillsendbuf!(
     return event
 end
 
+function __precompile_fillsendbuf(sendbuf, buf, vmapsend)
+    if length(vmapsend) == 0
+        return
+    end
+
+    Np = size(buf, 1)
+    nvar = size(buf, 2)
+
+    KernelAbstractions.precompile(
+        knl_fillsendbuf!(device(buf), 256),
+        Val(Np),
+        Val(nvar),
+        sendbuf,
+        buf,
+        vmapsend,
+        length(vmapsend);
+        ndrange = length(vmapsend),
+    )
+
+    return
+end
+
 function transferrecvbuf!(
     buf,
     recvbuf,
@@ -502,6 +524,29 @@ function transferrecvbuf!(
     )
 
     return event
+end
+
+
+function __precompile_transferrecvbuf(buf, recvbuf, vmaprecv;)
+    if length(vmaprecv) == 0
+        return
+    end
+
+    Np = size(buf, 1)
+    nvar = size(buf, 2)
+
+    KernelAbstractions.precompile(
+        knl_transferrecvbuf!(device(buf), 256),
+        Val(Np),
+        Val(nvar),
+        buf,
+        recvbuf,
+        vmaprecv,
+        length(vmaprecv);
+        ndrange = length(vmaprecv),
+    )
+
+    return
 end
 
 # }}}
@@ -546,6 +591,12 @@ function ghost_exchange!(Q::MPIStateArray; dependencies = nothing)
         Event(__testall!, Q.sendreq; dependencies = event, progress = progress)
 
     return recv_event, send_event
+end
+
+
+function precompile_ghost_exchange(Q::MPIStateArray)
+    __precompile_transferrecvbuf(Q.data, get_stage(Q.recv_buffer), Q.vmaprecv)
+    __precompile_fillsendbuf(get_stage(Q.send_buffer), Q.data, Q.vmapsend)
 end
 
 # Integral based metrics
