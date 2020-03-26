@@ -317,9 +317,16 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
         init_state = ics,
         param_set = param_set,
     )
-
+    #=
     ode_solver =
         CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
+    =# 
+    ode_solver = CLIMA.MultirateSolverType(
+        linear_model = AtmosAcousticGravityLinearModel,
+        slow_method = LSRK144NiegemannDiehlBusch,
+        fast_method = LSRK144NiegemannDiehlBusch,
+        timestep_ratio = 10,
+    )
 
     config = CLIMA.AtmosLESConfiguration(
         "DYCOMS",
@@ -344,7 +351,7 @@ end
 function main()
     CLIMA.init()
 
-    FT = Float64
+    FT = Float32
 
     # DG polynomial order
     N = 4

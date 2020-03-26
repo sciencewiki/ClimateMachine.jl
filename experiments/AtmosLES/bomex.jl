@@ -196,7 +196,7 @@ function atmos_source!(
     FT = eltype(state)
     ρ = state.ρ
     z = altitude(atmos.orientation, aux)
-    _e_int_v0 = e_int_v0(atmos.param_set)
+    _e_int_v0 = FT(e_int_v0(atmos.param_set))
 
     # Establish thermodynamic state
     TS = thermo_state(atmos, state, aux)
@@ -274,10 +274,10 @@ function init_bomex!(bl, state, aux, (x, y, z), t)
     P_sfc::FT = 1.015e5 # Surface air pressure
     qg::FT = 22.45e-3 # Total moisture at surface
     q_pt_sfc = PhasePartition(qg) # Surface moisture partitioning
-    Rm_sfc = gas_constant_air(q_pt_sfc, bl.param_set) # Moist gas constant
+    Rm_sfc::FT = gas_constant_air(q_pt_sfc, bl.param_set) # Moist gas constant
     θ_liq_sfc = FT(299.1) # Prescribed θ_liq at surface
     T_sfc = FT(300.4) # Surface temperature
-    _grav = grav(bl.param_set)
+    _grav = FT(grav(bl.param_set))
 
     # Initialise speeds [u = Eastward, v = Northward, w = Vertical]
     u::FT = 0
@@ -329,8 +329,8 @@ function init_bomex!(bl, state, aux, (x, y, z), t)
 
     # Establish thermodynamic state and moist phase partitioning
     TS = LiquidIcePotTempSHumEquil_given_pressure(θ_liq, P, q_tot, bl.param_set)
-    T = air_temperature(TS)
-    ρ = air_density(TS)
+    T:FT = air_temperature(TS)
+    ρ::FT = air_density(TS)
     q_pt = PhasePartition(TS)
 
     # Compute momentum contributions
@@ -468,7 +468,7 @@ end
 function main()
     CLIMA.init()
 
-    FT = Float64
+    FT = Float32
 
     # DG polynomial order
     N = 4

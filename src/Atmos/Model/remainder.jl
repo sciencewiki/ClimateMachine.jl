@@ -125,7 +125,7 @@ function flux_nondiffusive!(
     m_s = getfield(flux_s, :array)
 
     for sub in rem.subs
-        fill!(m_s, 0)
+        fill!(m_s, -zero(eltype(state)))
         flux_nondiffusive!(sub, flux_s, state, aux, t)
         m .-= m_s
     end
@@ -147,7 +147,7 @@ function source!(
     m_s = getfield(source_s, :array)
 
     for sub in rem.subs
-        fill!(m_s, 0)
+        fill!(m_s, -zero(eltype(state)))
         source!(sub, source_s, state, diffusive, aux, t)
         m .-= m_s
     end
