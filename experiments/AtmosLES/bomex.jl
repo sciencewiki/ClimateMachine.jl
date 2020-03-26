@@ -58,13 +58,11 @@ using LinearAlgebra
 using CLIMA
 using CLIMA.Atmos
 using CLIMA.ConfigTypes
-using CLIMA.Diagnostics
 using CLIMA.DGmethods.NumericalFluxes
 using CLIMA.Diagnostics
 using CLIMA.GenericCallbacks
 using CLIMA.ODESolvers
 using CLIMA.Mesh.Filters
-using CLIMA.ODESolvers
 using CLIMA.MoistThermodynamics
 using CLIMA.VariableTemplates
 
