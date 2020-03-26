@@ -470,7 +470,7 @@ end
 function main()
     CLIMA.init()
 
-    FT = Float32
+    FT = Float64
 
     # DG polynomial order
     N = 4
@@ -503,7 +503,7 @@ function main()
     dgn_config = config_diagnostics(driver_config)
 
     cbtmarfilter = GenericCallbacks.EveryXSimulationSteps(100) do (init = false)
-        #Filters.apply!(solver_config.Q, 6, solver_config.dg.grid, TMARFilter())
+        Filters.apply!(solver_config.Q, 6, solver_config.dg.grid, TMARFilter())
         nothing
     end
 
