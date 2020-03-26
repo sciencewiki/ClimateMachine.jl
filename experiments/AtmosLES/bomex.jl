@@ -19,9 +19,8 @@
 #
 # Upcoming changes:
 # 1) Atomic sources
-# 2) Improved boundary conditions
-# 3) Collapsed experiment design
-# 4) Updates to generally keep this in sync with master
+# 2) Collapsed experiment design
+# 3) Updates to generally keep this in sync with master
 
 @article{doi:10.1175/1520-0469(2003)60<1201:ALESIS>2.0.CO;2,
 author = {Siebesma, A. Pier and Bretherton,
@@ -414,7 +413,12 @@ function config_bomex(FT, N, resolution, xmax, ymax, zmax)
     )
 
     # Assemble timestepper components
-    ode_solver_type = CLIMA.DefaultSolverType()
+    ode_solver = CLIMA.MultirateSolverType(
+        linear_model = AtmosAcousticGravityLinearModel,
+        slow_method = LSRK144NiegemannDiehlBusch,
+        fast_method = LSRK144NiegemannDiehlBusch,
+        timestep_ratio = 10,
+    )
 
     # Assemble model components
     model = AtmosModel{FT}(
@@ -485,7 +489,7 @@ function main()
     # For the test we set this to == 30 minutes
     timeend = FT(1800)
     #timeend = FT(3600 * 6)
-    CFLmax = FT(1.0)
+    CFLmax = FT(10)
 
     driver_config = config_bomex(FT, N, resolution, xmax, ymax, zmax)
     solver_config = CLIMA.SolverConfiguration(
