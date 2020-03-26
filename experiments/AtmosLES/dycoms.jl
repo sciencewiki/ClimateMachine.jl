@@ -317,16 +317,15 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
         init_state = ics,
         param_set = param_set,
     )
-    #=
-    ode_solver =
+    exp_solver =
         CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
-    =# 
-    ode_solver = CLIMA.MultirateSolverType(
+    mrrk_solver = CLIMA.MultirateSolverType(
         linear_model = AtmosAcousticGravityLinearModel,
         slow_method = LSRK144NiegemannDiehlBusch,
         fast_method = LSRK144NiegemannDiehlBusch,
-        timestep_ratio = 10,
-    )
+        timestep_ratio = 10
+       )
+    imex_solver= CLIMA.DefaultSolverType()
 
     config = CLIMA.AtmosLESConfiguration(
         "DYCOMS",
@@ -336,7 +335,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
         ymax,
         zmax,
         init_dycoms!,
-        solver_type = ode_solver,
+        solver_type = mrrk_solver,
         model = model,
     )
     return config
