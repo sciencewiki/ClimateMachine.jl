@@ -90,6 +90,13 @@ function config_surfacebubble(FT, N, resolution, xmax, ymax, zmax)
 
     ode_solver =
         CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
+    # Choose explicit solver
+    mrrk_solver = CLIMA.MultirateSolverType(
+        linear_model = AtmosAcousticGravityLinearModel,
+        slow_method = LSRK144NiegemannDiehlBusch,
+        fast_method = LSRK144NiegemannDiehlBusch,
+        timestep_ratio = 10,
+    )
 
     model = AtmosModel{FT}(
         AtmosLESConfigType;
@@ -126,7 +133,7 @@ end
 
 function main()
     CLIMA.init()
-    FT = Float64
+    FT = Float32
     # DG polynomial order
     N = 4
     # Domain resolution and size
@@ -138,6 +145,7 @@ function main()
     zmax = FT(2000)
     t0 = FT(0)
     timeend = FT(2000)
+    CFL = 0.4
 
     driver_config = config_surfacebubble(FT, N, resolution, xmax, ymax, zmax)
     solver_config = CLIMA.SolverConfiguration(
@@ -145,6 +153,7 @@ function main()
         timeend,
         driver_config,
         init_on_cpu = true,
+        Courant_number = CFL
     )
     dgn_config = config_diagnostics(driver_config)
 
