@@ -453,7 +453,7 @@ function config_bomex(FT, N, resolution, xmax, ymax, zmax)
         ymax,
         zmax,
         init_bomex!,
-        solver_type = ode_solver_type,
+        solver_type = ode_solver,
         model = model,
     )
     return config
