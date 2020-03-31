@@ -17,13 +17,13 @@ function dump_state_and_aux_collect(dgngrp, currtime)
         dgngrp.interpol,
         Q.data,
         istate,
-        project = dgngrp.project,
+        dgngrp.project,
     )
     interpolate_local!(
         dgngrp.interpol,
         dg.auxstate.data,
         iaux,
-        project = dgngrp.project,
+        dgngrp.project,
     )
 
     # filename (may also want to take out)

@@ -456,10 +456,18 @@ function config_bomex(FT, N, resolution, xmax, ymax, zmax)
     return config
 end
 
-function config_diagnostics(driver_config)
+function config_diagnostics(FT, driver_config)
     interval = 10000 # in time steps
-    #dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
-    dgngrp = setup_dump_state_and_aux(interval, driver_config.name)
+    boundaries = [
+                  FT(0) FT(0) FT(0)
+                  FT(6400) FT(6400) FT(3000)
+                  ]
+    resolution = (FT(20), FT(20), FT(20))
+    interpol =
+        CLIMA.InterpolationConfiguration(driver_config, boundaries, resolution)
+    dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
+    #dgngrp = setup_dump_state_and_aux_diagnostics(interval, 
+    #                                              driver_config.name;interpol = interpol, project=false)
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end
 
@@ -497,7 +505,7 @@ function main()
         init_on_cpu = true,
         Courant_number = CFLmax,
     )
-    dgn_config = config_diagnostics(driver_config)
+    dgn_config = config_diagnostics(FT, driver_config)
 
     cbtmarfilter = GenericCallbacks.EveryXSimulationSteps(1) do (init = false)
         Filters.apply!(solver_config.Q, 6, solver_config.dg.grid, TMARFilter())

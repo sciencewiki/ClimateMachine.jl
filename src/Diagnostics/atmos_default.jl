@@ -418,6 +418,7 @@ function atmos_default_collect(dgngrp::DiagnosticsGroup, currtime)
 
     # write diagnostics
     if mpirank == 0
+      @show(dgngrp.writer)
         write_data(
             dgngrp.writer,
             dfull,
