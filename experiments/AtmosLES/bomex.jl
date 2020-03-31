@@ -458,7 +458,8 @@ end
 
 function config_diagnostics(driver_config)
     interval = 10000 # in time steps
-    dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
+    #dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
+    dgngrp = setup_dump_state_and_aux(interval, driver_config.name)
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end
 

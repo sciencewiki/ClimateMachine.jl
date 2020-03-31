@@ -127,7 +127,7 @@ TODO: this will be refactored soon.
 function setup_atmos_default_diagnostics(
     interval::Int,
     out_prefix::String;
-    writer = JLD2Writer(),
+    writer = NetCDFWriter(),
     interpol = nothing,
     project = true,
 )
