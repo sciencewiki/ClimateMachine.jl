@@ -547,6 +547,7 @@ function indefinite_stack_integral!(
     Q::MPIStateArray,
     auxstate::MPIStateArray,
     t::Real,
+    elems::UnitRange = dg.grid.topology.elems,
 )
 
     device = typeof(Q.data) <: Array ? CPU() : CUDA()
@@ -562,9 +563,9 @@ function indefinite_stack_integral!(
     FT = eltype(Q)
 
     # do integrals
-    nelem = length(topology.elems)
+    nelem = length(elems)
     nvertelem = topology.stacksize
-    nhorzelem = div(nelem, nvertelem)
+    horzelems = fld1(first(elems), nvertelem):fld1(last(elems), nvertelem)
 
     event = Event(device)
     event = knl_indefinite_stack_integral!(device, (Nq, Nqk))(
@@ -576,8 +577,8 @@ function indefinite_stack_integral!(
         auxstate.data,
         grid.vgeo,
         grid.Imat,
-        1:nhorzelem;
-        ndrange = (nhorzelem * Nq, Nqk),
+        horzelems;
+        ndrange = (length(horzelems) * Nq, Nqk),
         dependencies = (event,),
     )
     wait(device, event)
@@ -589,6 +590,7 @@ function reverse_indefinite_stack_integral!(
     Q::MPIStateArray,
     auxstate::MPIStateArray,
     t::Real,
+    elems::UnitRange = dg.grid.topology.elems,
 )
 
     device = typeof(auxstate.data) <: Array ? CPU() : CUDA()
@@ -604,9 +606,9 @@ function reverse_indefinite_stack_integral!(
     FT = eltype(auxstate)
 
     # do integrals
-    nelem = length(topology.elems)
+    nelem = length(elems)
     nvertelem = topology.stacksize
-    nhorzelem = div(nelem, nvertelem)
+    horzelems = fld1(first(elems), nvertelem):fld1(last(elems), nvertelem)
 
     event = Event(device)
     event = knl_reverse_indefinite_stack_integral!(device, (Nq, Nqk))(
@@ -616,8 +618,8 @@ function reverse_indefinite_stack_integral!(
         Val(nvertelem),
         Q.data,
         auxstate.data,
-        1:nhorzelem;
-        ndrange = (nhorzelem * Nq, Nqk),
+        horzelems;
+        ndrange = (length(horzelems) * Nq, Nqk),
         dependencies = (event,),
     )
     wait(device, event)
@@ -628,7 +630,8 @@ function nodal_update_aux!(
     dg::DGModel,
     m::BalanceLaw,
     Q::MPIStateArray,
-    t::Real;
+    t::Real,
+    elems::UnitRange = dg.grid.topology.realelems;
     diffusive = false,
 )
     device = typeof(Q.data) <: Array ? CPU() : CUDA()
@@ -639,7 +642,7 @@ function nodal_update_aux!(
     dim = dimensionality(grid)
     N = polynomialorder(grid)
     Nq = N + 1
-    nrealelem = length(topology.realelems)
+    nelem = length(elems)
 
     Np = dofs_per_element(grid)
 
@@ -656,9 +659,9 @@ function nodal_update_aux!(
             dg.auxstate.data,
             dg.diffstate.data,
             t,
-            topology.realelems,
+            elems,
             grid.activedofs;
-            ndrange = Np * nrealelem,
+            ndrange = Np * nelem,
             dependencies = (event,),
         )
     else
@@ -670,9 +673,9 @@ function nodal_update_aux!(
             Q.data,
             dg.auxstate.data,
             t,
-            topology.realelems,
+            elems,
             grid.activedofs;
-            ndrange = Np * nrealelem,
+            ndrange = Np * nelem,
             dependencies = (event,),
         )
     end
