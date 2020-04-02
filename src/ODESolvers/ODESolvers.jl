@@ -155,6 +155,7 @@ end
 include("LowStorageRungeKuttaMethod.jl")
 include("StrongStabilityPreservingRungeKuttaMethod.jl")
 include("AdditiveRungeKuttaMethod.jl")
+include("StormerVerletMethod.jl")
 include("MultirateInfinitesimalStepMethod.jl")
 include("MultirateRungeKuttaMethod.jl")
 
