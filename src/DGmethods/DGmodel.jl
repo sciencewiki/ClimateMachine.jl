@@ -75,8 +75,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
     communicate =
         !(isstacked(topology) && typeof(dg.direction) <: VerticalDirection)
 
-    aux_comm = update_aux!(dg, bl, Q, t, dg.grid.topology.realelems)
-    @assert typeof(aux_comm) == Bool
+    update_aux!(dg, bl, Q, t, dg.grid.topology.realelems)
 
     if nhyperviscstate > 0
         hypervisc_indexmap = create_hypervisc_indexmap(bl)
@@ -85,7 +84,6 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
     end
 
     exchange_Q = NoneEvent()
-    exchange_auxstate = NoneEvent()
     exchange_Qvisc = NoneEvent()
     exchange_Qhypervisc_grad = NoneEvent()
     exchange_Qhypervisc_div = NoneEvent()
@@ -98,12 +96,6 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
     if communicate
         exchange_Q =
             MPIStateArrays.begin_ghost_exchange!(Q; dependencies = comp_stream)
-        if aux_comm
-            exchange_auxstate = MPIStateArrays.begin_ghost_exchange!(
-                auxstate;
-                dependencies = comp_stream,
-            )
-        end
     end
 
     if nviscstate > 0 || nhyperviscstate > 0
@@ -151,12 +143,10 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
         if communicate
             exchange_Q =
                 MPIStateArrays.end_ghost_exchange!(Q; dependencies = exchange_Q)
-            if aux_comm
-                exchange_auxstate = MPIStateArrays.end_ghost_exchange!(
-                    auxstate;
-                    dependencies = exchange_auxstate,
-                )
-            end
+
+            wait(device, exchange_Q)
+            update_aux!(dg, bl, Q, t, dg.grid.topology.ghostelems)
+            exchange_Q = Event(device)
         end
 
         comp_stream = faceviscterms!(device, workgroups_surface)(
@@ -178,7 +168,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
             hypervisc_indexmap,
             grid.exteriorelems;
             ndrange = ndrange_exterior_surface,
-            dependencies = (comp_stream, exchange_Q, exchange_auxstate),
+            dependencies = (comp_stream, exchange_Q),
         )
 
         if communicate
@@ -198,17 +188,8 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
 
         if nviscstate > 0
             wait(device, comp_stream)
-            aux_comm =
-                update_aux_diffusive!(dg, bl, Q, t, dg.grid.topology.realelems)
-            @assert typeof(aux_comm) == Bool
+            update_aux_diffusive!(dg, bl, Q, t, dg.grid.topology.realelems)
             comp_stream = Event(device)
-
-            if communicate && aux_comm
-                exchange_auxstate = MPIStateArrays.begin_ghost_exchange!(
-                    auxstate,
-                    dependencies = comp_stream,
-                )
-            end
         end
     end
 
@@ -414,12 +395,10 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
                     Qvisc;
                     dependencies = exchange_Qvisc,
                 )
-                if aux_comm
-                    exchange_auxstate = MPIStateArrays.end_ghost_exchange!(
-                        auxstate;
-                        dependencies = exchange_auxstate,
-                    )
-                end
+
+                wait(device, exchange_Qvisc)
+                update_aux_diffusive!(dg, bl, Q, t, dg.grid.topology.ghostelems)
+                exchange_Qvisc = Event(device)
             end
             if nhyperviscstate > 0
                 exchange_Qhypervisc_grad = MPIStateArrays.end_ghost_exchange!(
@@ -430,12 +409,10 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
         else
             exchange_Q =
                 MPIStateArrays.end_ghost_exchange!(Q; dependencies = exchange_Q)
-            if aux_comm
-                exchange_auxstate = MPIStateArrays.end_ghost_exchange!(
-                    auxstate;
-                    dependencies = exchange_auxstate,
-                )
-            end
+
+            wait(device, exchange_Q)
+            update_aux!(dg, bl, Q, t, dg.grid.topology.ghostelems)
+            exchange_Q = Event(device)
         end
     end
 
@@ -464,7 +441,6 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
             exchange_Q,
             exchange_Qvisc,
             exchange_Qhypervisc_grad,
-            exchange_auxstate,
         ),
     )
     wait(device, comp_stream)
