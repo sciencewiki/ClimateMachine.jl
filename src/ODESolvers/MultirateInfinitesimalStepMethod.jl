@@ -1,19 +1,31 @@
 
-export MIS2, MIS3C, MIS4, MIS4a, TVDMISA, TVDMISB
+export MultirateInfinitesimalStep, TimeScaledRHS, MIS2, MIS3C, MISRK3, MIS4, MIS4a, TVDMISA, TVDMISB, MISKWRK43
 
 """
     TimeScaledRHS(a, b, rhs!)
 
 When evaluate at time `t`, evaluates `rhs!` at time `a + bt`.
 """
-mutable struct TimeScaledRHS{RT}
+mutable struct TimeScaledRHS{N,RT}
     a::RT
     b::RT
     rhs!
+    function TimeScaledRHS(a,b,rhs!)
+    RT = typeof(a)
+    if isa(rhs!, Tuple)
+      N=length(rhs!)
+    else
+      N=1
+    end
+    new{N,RT}(a, b, rhs!)
+  end
 end
 
-function (o::TimeScaledRHS)(dQ, Q, params, tau; increment)
-    o.rhs!(dQ, Q, params, o.a + o.b * tau; increment = increment)
+function (o::TimeScaledRHS{1,RT} where {RT})(dQ, Q, params, tau; increment)
+  o.rhs!(dQ, Q, params, o.a + o.b*tau; increment=increment)
+end
+function (o::TimeScaledRHS{2,RT} where {RT})(dQ, Q, params, tau, i; increment)
+  o.rhs![i](dQ, Q, params, o.a + o.b*tau; increment=increment)
 end
 
 """
@@ -74,8 +86,8 @@ mutable struct MultirateInfinitesimalStep{
     tsfastrhs!::TimeScaledRHS{RT}
     "fast rhs method"
     fastsolver::FS
-    "number of substeps per stage"
-    nsubsteps::Int
+    "number of steps"
+    nsteps::Int
     α::SArray{NTuple{2, Nstages}, RT, 2, Nstages_sq}
     β::SArray{NTuple{2, Nstages}, RT, 2, Nstages_sq}
     γ::SArray{NTuple{2, Nstages}, RT, 2, Nstages_sq}
@@ -86,7 +98,7 @@ mutable struct MultirateInfinitesimalStep{
         slowrhs!,
         fastrhs!,
         fastmethod,
-        nsubsteps,
+        nsteps,
         α,
         β,
         γ,
@@ -137,7 +149,7 @@ mutable struct MultirateInfinitesimalStep{
             slowrhs!,
             tsfastrhs!,
             fastsolver,
-            nsubsteps,
+            nsteps,
             α,
             β,
             γ,
@@ -163,6 +175,7 @@ function dostep!(Q, mis::MultirateInfinitesimalStep, p, time, dt)
     slowrhs! = mis.slowrhs!
     fastsolver = mis.fastsolver
     fastrhs! = mis.tsfastrhs!
+    nsteps = mis.nsteps
 
     nstages = size(α, 1)
 
@@ -192,17 +205,12 @@ function dostep!(Q, mis::MultirateInfinitesimalStep, p, time, dt)
         fastrhs!.a = time + c̃[i] * dt
         fastrhs!.b = (c[i] - c̃[i]) / d[i]
 
-        τ = zero(FT)
-        dτ = d[i] * dt / mis.nsubsteps
-        updatetime!(fastsolver, τ)
-        updatedt!(fastsolver, dτ)
-        # TODO: we want to be able to write
-        #   solve!(Q, fastsolver, p; numberofsteps = mis.nsubsteps)  #(1c)
-        # especially if we want to use StormerVerlet, but need some way to pass in `offset`
-        for k in 1:(mis.nsubsteps)
-            dostep!(Q, fastsolver, p, τ, dτ, FT(1), realview(offset))  #(1c)
-            τ += dτ
-        end
+        τ = zero(FT) #time struct mit Wert für tau und für a und b, direkt in SV aufrufen und im Wrapper von ARK
+
+        nstepsLoc=ceil(Int,nsteps*d[i]);
+        dτ = d[i] * dt / nstepsLoc
+
+        ODEs.dostep!(Q, fastsolver, p, τ, dτ, nstepsLoc, FT(1), realview(offset), nothing)  #(1c)
     end
 end
 
@@ -239,7 +247,7 @@ function MIS2(
     slowrhs!,
     fastrhs!,
     fastmethod,
-    nsubsteps,
+    nsteps,
     Q::AT;
     dt = 0,
     t0 = 0,
@@ -269,7 +277,7 @@ function MIS2(
         slowrhs!,
         fastrhs!,
         fastmethod,
-        nsubsteps,
+        nsteps,
         α,
         β,
         γ,
@@ -283,7 +291,7 @@ function MIS3C(
     slowrhs!,
     fastrhs!,
     fastmethod,
-    nsubsteps,
+    nsteps,
     Q::AT;
     dt = 0,
     t0 = 0,
@@ -313,7 +321,7 @@ function MIS3C(
         slowrhs!,
         fastrhs!,
         fastmethod,
-        nsubsteps,
+        nsteps,
         α,
         β,
         γ,
@@ -323,11 +331,33 @@ function MIS3C(
     )
 end
 
+function MISRK3(slowrhs!, fastrhs!, fastmethod, nsteps,  Q::AT; dt=0, t0=0) where {AT <: AbstractArray}
+  #=
+  α = [0 0 0 0;
+       0 0 0 0;
+       0 0 0 0;
+       0 0 0 0]
+  =#
+  α = zeros(4,4)
+  β = [ 0                     0                0              0;
+        0.3333333333333333    0                0              0;
+        0                     0.5              0              0;
+        0                     0                1              0]
+  #=
+  γ = [0  0  0  0;
+       0  0  0  0;
+       0  0  0  0;
+       0  0  0  0]
+  =#
+  γ = zeros(4,4)
+  MultirateInfinitesimalStep(slowrhs!, fastrhs!, fastmethod, nsteps,  α, β, γ, Q; dt=dt, t0=t0)
+end
+
 function MIS4(
     slowrhs!,
     fastrhs!,
     fastmethod,
-    nsubsteps,
+    nsteps,
     Q::AT;
     dt = 0,
     t0 = 0,
@@ -360,7 +390,7 @@ function MIS4(
         slowrhs!,
         fastrhs!,
         fastmethod,
-        nsubsteps,
+        nsteps,
         α,
         β,
         γ,
@@ -374,7 +404,7 @@ function MIS4a(
     slowrhs!,
     fastrhs!,
     fastmethod,
-    nsubsteps,
+    nsteps,
     Q::AT;
     dt = 0,
     t0 = 0,
@@ -409,7 +439,7 @@ function MIS4a(
         slowrhs!,
         fastrhs!,
         fastmethod,
-        nsubsteps,
+        nsteps,
         α,
         β,
         γ,
@@ -423,7 +453,7 @@ function TVDMISA(
     slowrhs!,
     fastrhs!,
     fastmethod,
-    nsubsteps,
+    nsteps,
     Q::AT;
     dt = 0,
     t0 = 0,
@@ -456,7 +486,7 @@ function TVDMISA(
         slowrhs!,
         fastrhs!,
         fastmethod,
-        nsubsteps,
+        nsteps,
         α,
         β,
         γ,
@@ -470,7 +500,7 @@ function TVDMISB(
     slowrhs!,
     fastrhs!,
     fastmethod,
-    nsubsteps,
+    nsteps,
     Q::AT;
     dt = 0,
     t0 = 0,
@@ -503,7 +533,7 @@ function TVDMISB(
         slowrhs!,
         fastrhs!,
         fastmethod,
-        nsubsteps,
+        nsteps,
         α,
         β,
         γ,
@@ -511,4 +541,26 @@ function TVDMISB(
         dt = dt,
         t0 = t0,
     )
+end
+
+function MISKWRK43(slowrhs!, fastrhs!, fastmethod, nsteps,  Q::AT; dt=0, t0=0) where {AT <: AbstractArray}
+
+  FT = eltype(Q)
+  RT = real(FT)
+
+  α = [0      0                     0                   0                   0;
+       0      0                     0                   0                   0;
+       0      1.0                   0                   0                   0;
+       0      0                     1.0                 0                   0;
+       0      0                     0                   1.0                 0]
+
+  β = [ 0           0            0                   0                   0;
+        0.5         0            0                   0                   0;
+       -RT(2//3)    RT(2//3)     0                   0                   0;
+        0.5         -1.0         1.0                 0                   0;
+       -RT(1//6)    RT(2//3)    -RT(2//3)            RT(1//6)             0]
+
+  γ = zeros(5,5)
+
+  MultirateInfinitesimalStep(slowrhs!, fastrhs!, fastmethod, nsteps, α, β, γ, Q; dt=dt, t0=t0)
 end
