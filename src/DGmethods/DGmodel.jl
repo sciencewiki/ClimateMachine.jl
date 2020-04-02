@@ -75,7 +75,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
     communicate =
         !(isstacked(topology) && typeof(dg.direction) <: VerticalDirection)
 
-    aux_comm = update_aux!(dg, bl, Q, t)
+    aux_comm = update_aux!(dg, bl, Q, t, dg.grid.topology.realelems)
     @assert typeof(aux_comm) == Bool
 
     if nhyperviscstate > 0
@@ -198,7 +198,8 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
 
         if nviscstate > 0
             wait(device, comp_stream)
-            aux_comm = update_aux_diffusive!(dg, bl, Q, t)
+            aux_comm =
+                update_aux_diffusive!(dg, bl, Q, t, dg.grid.topology.realelems)
             @assert typeof(aux_comm) == Bool
             comp_stream = Event(device)
 
@@ -528,7 +529,13 @@ function init_ode_state(dg::DGModel, args...; init_on_cpu = false)
 end
 
 # fallback
-function update_aux!(dg::DGModel, bl::BalanceLaw, Q::MPIStateArray, t::Real)
+function update_aux!(
+    dg::DGModel,
+    bl::BalanceLaw,
+    Q::MPIStateArray,
+    t::Real,
+    elems::UnitRange,
+)
     return false
 end
 
@@ -537,6 +544,7 @@ function update_aux_diffusive!(
     bl::BalanceLaw,
     Q::MPIStateArray,
     t::Real,
+    elems::UnitRange,
 )
     return false
 end
@@ -760,6 +768,7 @@ function copy_stack_field_down!(
     auxstate::MPIStateArray,
     fldin,
     fldout,
+    elems = topology.elems,
 )
 
     device = typeof(auxstate.data) <: Array ? CPU() : CUDA()
@@ -773,9 +782,9 @@ function copy_stack_field_down!(
     Nqk = dim == 2 ? 1 : Nq
 
     # do integrals
-    nelem = length(topology.elems)
+    nelem = length(elems)
     nvertelem = topology.stacksize
-    nhorzelem = div(nelem, nvertelem)
+    horzelems = fld1(first(elems), nvertelem):fld1(last(elems), nvertelem)
 
     event = Event(device)
     event = knl_copy_stack_field_down!(device, (Nq, Nqk))(
@@ -783,10 +792,10 @@ function copy_stack_field_down!(
         Val(N),
         Val(nvertelem),
         auxstate.data,
-        1:nhorzelem,
+        horzelems,
         Val(fldin),
         Val(fldout);
-        ndrange = (nhorzelem * Nq, Nqk),
+        ndrange = (length(horzelems) * Nq, Nqk),
         dependencies = (event,),
     )
     wait(device, event)

@@ -15,8 +15,13 @@ vars_aux(rem::RemainderModel, FT) = vars_aux(rem.main, FT)
 vars_integrals(rem::RemainderModel, FT) = vars_integrals(rem.main, FT)
 vars_reverse_integrals(rem::RemainderModel, FT) = vars_integrals(rem.main, FT)
 
-update_aux!(dg::DGModel, rem::RemainderModel, Q::MPIStateArray, t::Real) =
-    update_aux!(dg, rem.main, Q, t)
+update_aux!(
+    dg::DGModel,
+    rem::RemainderModel,
+    Q::MPIStateArray,
+    t::Real,
+    elems::UnitRange,
+) = update_aux!(dg, rem.main, Q, t, elems)
 
 integral_load_aux!(rem::RemainderModel, integ::Vars, state::Vars, aux::Vars) =
     integral_load_aux!(rem.main, integ, state, aux)
