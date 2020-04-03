@@ -346,7 +346,7 @@ function run(
     timestepper = ARK548L2SA2KennedyCarpenter(
         spacedisc,
         lin_spacedisc,
-        linearsolver,
+        LinearBackwardEulerSolver(linearsolver; isadjustable = true),
         Q;
         dt = dt,
         t0 = 0,
