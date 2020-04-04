@@ -4,6 +4,7 @@ export AtmosModel,
     AtmosAcousticLinearModel, AtmosAcousticGravityLinearModel, RemainderModel
 
 using LinearAlgebra, StaticArrays
+using KernelAbstractions
 using ..ConfigTypes
 using ..VariableTemplates
 using ..Parameters
@@ -393,19 +394,22 @@ function update_aux!(
     m::AtmosModel,
     Q::MPIStateArray,
     t::Real,
-    elems::UnitRange,
+    elems::UnitRange;
+    dependencies = nothing
 )
     FT = eltype(Q)
     auxstate = dg.auxstate
 
+    event = MultiEvent(dependencies)
+
     if num_integrals(m, FT) > 0
-        indefinite_stack_integral!(dg, m, Q, auxstate, t, elems)
-        reverse_indefinite_stack_integral!(dg, m, Q, auxstate, t, elems)
+        event = indefinite_stack_integral!(dg, m, Q, auxstate, t, elems; dependencies=event)
+        event = reverse_indefinite_stack_integral!(dg, m, Q, auxstate, t; dependencies = event)
     end
 
-    nodal_update_aux!(atmos_nodal_update_aux!, dg, m, Q, t, elems)
+    event = nodal_update_aux!(atmos_nodal_update_aux!, dg, m, Q, t, elems; dependencies = event)
 
-    return true
+    return event
 end
 
 function atmos_nodal_update_aux!(m::AtmosModel, state::Vars, aux::Vars, t::Real)

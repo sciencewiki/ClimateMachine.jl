@@ -143,10 +143,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
         if communicate
             exchange_Q =
                 MPIStateArrays.end_ghost_exchange!(Q; dependencies = exchange_Q)
-
-            wait(device, exchange_Q)
-            update_aux!(dg, bl, Q, t, dg.grid.topology.ghostelems)
-            exchange_Q = Event(device)
+            exchange_Q = update_aux!(dg, bl, Q, t, dg.grid.topology.ghostelems; dependencies = exchange_Q)
         end
 
         comp_stream = faceviscterms!(device, workgroups_surface)(
@@ -187,9 +184,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
         end
 
         if nviscstate > 0
-            wait(device, comp_stream)
-            update_aux_diffusive!(dg, bl, Q, t, dg.grid.topology.realelems)
-            comp_stream = Event(device)
+            comp_stream = update_aux_diffusive!(dg, bl, Q, t, dg.grid.topology.realelems; dependencies = comp_stream)
         end
     end
 
@@ -396,9 +391,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
                     dependencies = exchange_Qvisc,
                 )
 
-                wait(device, exchange_Qvisc)
-                update_aux_diffusive!(dg, bl, Q, t, dg.grid.topology.ghostelems)
-                exchange_Qvisc = Event(device)
+                exchange_Qvisc = update_aux_diffusive!(dg, bl, Q, t, dg.grid.topology.ghostelems; dependencies = exchange_Qvisc)
             end
             if nhyperviscstate > 0
                 exchange_Qhypervisc_grad = MPIStateArrays.end_ghost_exchange!(
@@ -410,9 +403,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
             exchange_Q =
                 MPIStateArrays.end_ghost_exchange!(Q; dependencies = exchange_Q)
 
-            wait(device, exchange_Q)
-            update_aux!(dg, bl, Q, t, dg.grid.topology.ghostelems)
-            exchange_Q = Event(device)
+            exchange_Q = update_aux!(dg, bl, Q, t, dg.grid.topology.ghostelems; dependencies = exchange_Q)
         end
     end
 
@@ -510,9 +501,10 @@ function update_aux!(
     bl::BalanceLaw,
     Q::MPIStateArray,
     t::Real,
-    elems::UnitRange,
+    elems::UnitRange;
+    dependencies = nothing,
 )
-    return false
+    return MultiEvent(dependencies)
 end
 
 function update_aux_diffusive!(
@@ -520,9 +512,10 @@ function update_aux_diffusive!(
     bl::BalanceLaw,
     Q::MPIStateArray,
     t::Real,
-    elems::UnitRange,
+    elems::UnitRange;
+    dependencies = nothing,
 )
-    return false
+    return MultiEvent(dependencies)
 end
 
 function indefinite_stack_integral!(
@@ -531,7 +524,8 @@ function indefinite_stack_integral!(
     Q::MPIStateArray,
     auxstate::MPIStateArray,
     t::Real,
-    elems::UnitRange = dg.grid.topology.elems,
+    elems::UnitRange = dg.grid.topology.elems;
+    dependencies = nothing,
 )
 
     device = typeof(Q.data) <: Array ? CPU() : CUDA()
@@ -551,7 +545,6 @@ function indefinite_stack_integral!(
     nvertelem = topology.stacksize
     horzelems = fld1(first(elems), nvertelem):fld1(last(elems), nvertelem)
 
-    event = Event(device)
     event = knl_indefinite_stack_integral!(device, (Nq, Nqk))(
         m,
         Val(dim),
@@ -563,9 +556,10 @@ function indefinite_stack_integral!(
         grid.Imat,
         horzelems;
         ndrange = (length(horzelems) * Nq, Nqk),
-        dependencies = (event,),
+        dependencies = dependencies,
     )
-    wait(device, event)
+
+    return event
 end
 
 function reverse_indefinite_stack_integral!(
@@ -574,7 +568,8 @@ function reverse_indefinite_stack_integral!(
     Q::MPIStateArray,
     auxstate::MPIStateArray,
     t::Real,
-    elems::UnitRange = dg.grid.topology.elems,
+    elems::UnitRange = dg.grid.topology.elems;
+    dependencies = nothing,
 )
 
     device = typeof(auxstate.data) <: Array ? CPU() : CUDA()
@@ -594,7 +589,6 @@ function reverse_indefinite_stack_integral!(
     nvertelem = topology.stacksize
     horzelems = fld1(first(elems), nvertelem):fld1(last(elems), nvertelem)
 
-    event = Event(device)
     event = knl_reverse_indefinite_stack_integral!(device, (Nq, Nqk))(
         m,
         Val(dim),
@@ -604,9 +598,10 @@ function reverse_indefinite_stack_integral!(
         auxstate.data,
         horzelems;
         ndrange = (length(horzelems) * Nq, Nqk),
-        dependencies = (event,),
+        dependencies = dependencies,
     )
-    wait(device, event)
+
+    return event
 end
 
 function nodal_update_aux!(
@@ -617,6 +612,7 @@ function nodal_update_aux!(
     t::Real,
     elems::UnitRange = dg.grid.topology.realelems;
     diffusive = false,
+    dependencies = nothing
 )
     device = typeof(Q.data) <: Array ? CPU() : CUDA()
 
@@ -632,7 +628,6 @@ function nodal_update_aux!(
 
     nodal_update_aux! = knl_nodal_update_aux!(device, Np)
     ### update aux variables
-    event = Event(device)
     if diffusive
         event = nodal_update_aux!(
             m,
@@ -646,7 +641,7 @@ function nodal_update_aux!(
             elems,
             grid.activedofs;
             ndrange = Np * nelem,
-            dependencies = (event,),
+            dependencies = dependencies,
         )
     else
         event = nodal_update_aux!(
@@ -660,10 +655,11 @@ function nodal_update_aux!(
             elems,
             grid.activedofs;
             ndrange = Np * nelem,
-            dependencies = (event,),
+            dependencies = dependencies,
         )
     end
-    wait(device, event)
+
+    return event
 end
 
 """
@@ -744,7 +740,8 @@ function copy_stack_field_down!(
     auxstate::MPIStateArray,
     fldin,
     fldout,
-    elems = topology.elems,
+    elems = topology.elems;
+    dependencies = nothing
 )
 
     device = typeof(auxstate.data) <: Array ? CPU() : CUDA()
@@ -762,7 +759,6 @@ function copy_stack_field_down!(
     nvertelem = topology.stacksize
     horzelems = fld1(first(elems), nvertelem):fld1(last(elems), nvertelem)
 
-    event = Event(device)
     event = knl_copy_stack_field_down!(device, (Nq, Nqk))(
         Val(dim),
         Val(N),
@@ -772,9 +768,10 @@ function copy_stack_field_down!(
         Val(fldin),
         Val(fldout);
         ndrange = (length(horzelems) * Nq, Nqk),
-        dependencies = (event,),
+        dependencies = dependencies,
     )
-    wait(device, event)
+
+    return event
 end
 
 function MPIStateArrays.MPIStateArray(dg::DGModel)
