@@ -349,16 +349,16 @@ function main()
     N = 4
 
     # Domain resolution and size
-    Δh = FT(40)
-    Δv = FT(20)
+    Δh = FT(35)
+    Δv = FT(5)
     resolution = (Δh, Δh, Δv)
 
-    xmax = FT(1000)
-    ymax = FT(1000)
+    xmax = FT(3820)
+    ymax = FT(3820)
     zmax = FT(2500)
 
     t0 = FT(0)
-    timeend = FT(100)
+    timeend = FT(1)
 
     driver_config = config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     solver_config = CLIMA.SolverConfiguration(

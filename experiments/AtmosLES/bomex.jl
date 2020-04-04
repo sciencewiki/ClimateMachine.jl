@@ -473,15 +473,15 @@ function main()
     resolution = (Δh, Δh, Δv)
 
     # Prescribe domain parameters
-    xmax = FT(6400)
-    ymax = FT(6400)
+    xmax = FT(12800)
+    ymax = FT(12800)
     zmax = FT(3000)
 
     t0 = FT(0)
 
     # For a full-run, please set the timeend to 3600*6 seconds
     # For the test we set this to == 30 minutes
-    timeend = FT(1800)
+    timeend = FT(180)
     #timeend = FT(3600 * 6)
     CFLmax = FT(1.0)
 
