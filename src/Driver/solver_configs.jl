@@ -160,25 +160,51 @@ function SolverConfiguration(
         fast_solver = ode_solver_type.fast_method(fast_dg, Q; dt = fast_dt)
         solver = ode_solver_type.solver_method((slow_solver, fast_solver))
     elseif isa(ode_solver_type, MISSolverType)
-        fast_dg = DGModel(
-            linmodel,
-            grid,
-            numfluxnondiff,
-            numfluxdiff,
-            gradnumflux,
-            auxstate = dg.auxstate,
-        )
-        slow_model = RemainderModel(bl, (linmodel,))
-        slow_dg = DGModel(
-            slow_model,
-            grid,
-            numfluxnondiff,
-            numfluxdiff,
-            gradnumflux,
-            auxstate = dg.auxstate,
-        )
-        fast_solver = ode_solver_type.fast_method
-        solver = ode_solver_type.solver_method(slow_dg, fast_dg, fast_solver, ode_solver_type.number_of_steps, Q; dt = ode_dt, t0 = t0)
+        if isa(linmodel,AtmosLinearModelSplit)
+            fast_dg_momentum = DGModel(
+                linmodel.momentum,
+                grid,
+                numfluxnondiff,
+                numfluxdiff,
+                gradnumflux,
+                auxstate = dg.auxstate,
+            )
+            fast_dg_thermo = DGModel(
+                linmodel.thermo,
+                grid,
+                numfluxnondiff,
+                numfluxdiff,
+                gradnumflux,
+                auxstate = dg.auxstate,
+            )
+            fast_dg = (fast_dg_momentum, fast_dg_thermo)
+            slow_model = RemainderModel(bl, (linmodel.linear,))
+        else
+            fast_dg = DGModel(
+                linmodel,
+                grid,
+                numfluxnondiff,
+                numfluxdiff,
+                gradnumflux,
+                auxstate = dg.auxstate,
+            )
+            slow_model = RemainderModel(bl, (linmodel,))
+        end
+            slow_dg = DGModel(
+                slow_model,
+                grid,
+                numfluxnondiff,
+                numfluxdiff,
+                gradnumflux,
+                auxstate = dg.auxstate,
+            )
+            solver = ode_solver_type.solver_method(
+                slow_dg,
+                fast_dg,
+                ode_solver_type.fast_method,
+                ode_solver_type.number_of_steps,
+                Q; dt = ode_dt, t0 = t0,
+            )
     else # solver_type === IMEXSolverType
         vdg = DGModel(
             linmodel,
