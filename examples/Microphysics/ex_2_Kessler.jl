@@ -33,15 +33,15 @@ function vars_aux(m::KinematicModel, FT)
         S::FT
         RH::FT
         rain_w::FT
-        # uncomment below for more diagnostics
-        #src_cloud_liq::FT
-        #src_cloud_ice::FT
-        #src_acnv::FT
-        #src_accr::FT
-        #src_rain_evap::FT
-        #flag_rain::FT
-        #flag_cloud_liq::FT
-        #flag_cloud_ice::FT
+
+        src_cloud_liq::FT
+        src_cloud_ice::FT
+        src_acnv::FT
+        src_accr::FT
+        src_rain_evap::FT
+        flag_rain::FT
+        flag_cloud_liq::FT
+        flag_cloud_ice::FT
     end
 end
 
@@ -116,25 +116,24 @@ function kinematic_model_nodal_update_aux!(
 
     aux.rain_w = terminal_velocity(aux.q_rai, state.ρ)
 
-    # uncomment below for more diagnostics
-    #q_eq = PhasePartition_equil(aux.T, state.ρ, aux.q_tot)
-    #aux.src_cloud_liq = conv_q_vap_to_q_liq(q_eq, q)
-    #aux.src_cloud_ice = conv_q_vap_to_q_ice(q_eq, q)
-    #aux.src_acnv = conv_q_liq_to_q_rai_acnv(aux.q_liq)
-    #aux.src_accr = conv_q_liq_to_q_rai_accr(aux.q_liq, aux.q_rai, state.ρ)
-    #aux.src_rain_evap = conv_q_rai_to_q_vap(aux.q_rai, q, aux.T, aux.p, state.ρ)
-    #aux.flag_cloud_liq = FT(0)
-    #aux.flag_cloud_ice = FT(0)
-    #aux.flag_rain = FT(0)
-    #if (aux.q_liq >= FT(0))
-    #    aux.flag_cloud_liq = FT(1)
-    #end
-    #if (aux.q_ice >= FT(0))
-    #    aux.flag_cloud_ice = FT(1)
-    #end
-    #if (aux.q_rai >= FT(0))
-    #    aux.flag_rain = FT(1)
-    #end
+    q_eq = PhasePartition_equil(aux.T, state.ρ, aux.q_tot)
+    aux.src_cloud_liq = conv_q_vap_to_q_liq(q_eq, q)
+    aux.src_cloud_ice = conv_q_vap_to_q_ice(q_eq, q)
+    aux.src_acnv = conv_q_liq_to_q_rai_acnv(aux.q_liq)
+    aux.src_accr = conv_q_liq_to_q_rai_accr(aux.q_liq, aux.q_rai, state.ρ)
+    aux.src_rain_evap = conv_q_rai_to_q_vap(aux.q_rai, q, aux.T, aux.p, state.ρ)
+    aux.flag_cloud_liq = FT(0)
+    aux.flag_cloud_ice = FT(0)
+    aux.flag_rain = FT(0)
+    if (aux.q_liq >= FT(0))
+        aux.flag_cloud_liq = FT(1)
+    end
+    if (aux.q_ice >= FT(0))
+        aux.flag_cloud_ice = FT(1)
+    end
+    if (aux.q_rai >= FT(0))
+        aux.flag_rain = FT(1)
+    end
 end
 
 function boundary_state!(
@@ -390,21 +389,21 @@ function main()
     max_q_ice = maximum(abs.(solver_config.dg.auxstate[:, q_ice_ind, :]))
     @test isequal(max_q_ice, FT(0))
 
-    # q_liq ∈ reference range
-    max_q_liq = max(solver_config.dg.auxstate[:, q_liq_ind, :]...)
-    min_q_liq = min(solver_config.dg.auxstate[:, q_liq_ind, :]...)
+    # q_liq is in reference range
+    max_q_liq = maximum(solver_config.dg.auxstate[:, q_liq_ind, :])
+    min_q_liq = minimum(solver_config.dg.auxstate[:, q_liq_ind, :])
     @test max_q_liq < FT(1e-3)
     @test abs(min_q_liq) < FT(1e-5)
 
-    # q_rai ∈ reference range
-    max_q_rai = max(solver_config.dg.auxstate[:, q_rai_ind, :]...)
-    min_q_rai = min(solver_config.dg.auxstate[:, q_rai_ind, :]...)
+    # q_rai is in reference range
+    max_q_rai = maximum(solver_config.dg.auxstate[:, q_rai_ind, :])
+    min_q_rai = minimum(solver_config.dg.auxstate[:, q_rai_ind, :])
     @test max_q_rai < FT(3e-5)
     @test abs(min_q_rai) < FT(3e-8)
 
-    # terminal velocity ∈ reference range
-    max_rain_w = max(solver_config.dg.auxstate[:, rain_w_ind, :]...)
-    min_rain_w = min(solver_config.dg.auxstate[:, rain_w_ind, :]...)
+    # terminal velocity is in reference range
+    max_rain_w = maximum(solver_config.dg.auxstate[:, rain_w_ind, :])
+    min_rain_w = minimum(solver_config.dg.auxstate[:, rain_w_ind, :])
     @test max_rain_w < FT(4)
     @test isequal(min_rain_w, FT(0))
 end
