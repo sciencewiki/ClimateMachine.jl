@@ -139,28 +139,42 @@ function conv_q_liq_to_q_rai_accr(
 
     accr_rate = FT(0)
 
-    if (q_rai > FT(0) && q_liq > FT(0))
-        # terminal_vel_of_individual_drop = v_drop_coeff * drop_radius^(1/2)
-        v_c = terminal_velocity_single_drop_coeff(ρ)
+    if (q_rai > FT(0))
+        if (q_liq > FT(0))
 
-        #gamma(7/2)
-        gamma_7_2 = FT(3.3233509704478426)
+            accr_coeff::FT =
+                FT(8)^FT(-7 / 8) *
+                π^FT(1 / 8) *
+                (ρ / ρ_cloud_liq)^FT(7 / 8)
 
-        accr_coeff::FT =
-            gamma_7_2 *
-            FT(8)^FT(-7 / 8) *
-            π^FT(1 / 8) *
-            v_c *
-            E_col *
-            (ρ / ρ_cloud_liq)^FT(7 / 8)
-
-        accr_rate =
-            accr_coeff *
-            FT(MP_n_0)^FT(1 / 8) *
-            sqrt(FT(grav)) *
-            q_liq *
-            q_rai^FT(7 / 8)
+            accr_rate = FT(MP_n_0)^FT(1 / 8)
+        end
     end
+
+    #if (q_rai > FT(0))
+    #    if (q_liq > FT(0))
+    #        # terminal_vel_of_individual_drop = v_drop_coeff * drop_radius^(1/2)
+    #        v_c = terminal_velocity_single_drop_coeff(ρ)
+    #
+    #        #gamma(7/2)
+    #        gamma_7_2 = FT(3.3233509704478426)
+    #
+    #        accr_coeff::FT =
+    #            gamma_7_2 *
+    #            FT(8)^FT(-7 / 8) *
+    #            π^FT(1 / 8) *
+    #            v_c *
+    #            E_col *
+    #            (ρ / ρ_cloud_liq)^FT(7 / 8)
+    #
+    #        accr_rate =
+    #            accr_coeff *
+    #            FT(MP_n_0)^FT(1 / 8) *
+    #            sqrt(FT(grav)) *
+    #            q_rai^FT(7 / 8) *
+    #            q_liq *
+    #    end
+    #end
     return accr_rate
 end
 

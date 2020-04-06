@@ -80,6 +80,8 @@ end
 
 @testset "RainAccretion" begin
 
+    FT = Float64
+
     # eq. 5b in Smolarkiewicz and Grabowski 1996
     # https://doi.org/10.1175/1520-0493(1996)124<0487:TTLSLM>2.0.CO;2
     function accretion_empir(q_rai::FT, q_liq::FT, q_tot::FT) where {FT <: Real}
@@ -93,10 +95,33 @@ end
     ρ_air, q_liq, q_tot = 1.2, 5e-4, 20e-3
 
     for q_rai in q_rain_range
-        @test conv_q_liq_to_q_rai_accr(q_liq, q_rai, ρ_air) ≈
+        @test conv_q_liq_to_q_rai_accr(FT(q_liq), FT(q_rai), FT(ρ_air)) ≈
               accretion_empir(q_rai, q_liq, q_tot) atol =
             0.1 * accretion_empir(q_rai, q_liq, q_tot)
     end
+    @test conv_q_liq_to_q_rai_accr(FT(0), FT(1e-6), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(1e-6), FT(0), ρ_air) ≈ FT(0) atol = FT(1e-12)
+
+    @test conv_q_liq_to_q_rai_accr(FT(1e-12), FT(1e-12), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(1e-24), FT(1e-24), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(1e-36), FT(1e-36), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(1e-48), FT(1e-48), ρ_air) ≈ FT(0) atol = FT(1e-12)
+
+    @test conv_q_liq_to_q_rai_accr(FT(-1e-12), FT(-1e-12), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(-1e-24), FT(-1e-24), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(-1e-36), FT(-1e-36), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(-1e-48), FT(-1e-48), ρ_air) ≈ FT(0) atol = FT(1e-12)
+
+    @test conv_q_liq_to_q_rai_accr(FT(1e-12), FT(-1e-12), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(1e-24), FT(-1e-24), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(1e-36), FT(-1e-36), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(1e-48), FT(-1e-48), ρ_air) ≈ FT(0) atol = FT(1e-12)
+
+    @test conv_q_liq_to_q_rai_accr(FT(-1e-12), FT(1e-12), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(-1e-24), FT(1e-24), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(-1e-36), FT(1e-36), ρ_air) ≈ FT(0) atol = FT(1e-12)
+    @test conv_q_liq_to_q_rai_accr(FT(-1e-48), FT(1e-48), ρ_air) ≈ FT(0) atol = FT(1e-12)
+
 end
 
 @testset "RainEvaporation" begin
