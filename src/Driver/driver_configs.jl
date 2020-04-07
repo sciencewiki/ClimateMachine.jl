@@ -58,18 +58,21 @@ end
 
 struct MISSolverType <: AbstractSolverType
     linear_model::Type
-    solver_method::Function
+    solver_method::Type
+    slow_method::Function
     fast_method::Function
     number_of_steps::Int
     function MISSolverType(;
         linear_model = AtmosAcousticGravityLinearModel,
-        solver_method = MIS2,
+        solver_method = MultirateRungeKutta,
+        slow_method = MIS2,
         fast_method = (dg,Q) -> StormerVerlet(dg, [1,5], 2:4, Q),
         number_of_steps = 15,
     )
         return new(
             linear_model,
             solver_method,
+            slow_method,
             fast_method,
             number_of_steps,
         )

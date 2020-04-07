@@ -221,6 +221,7 @@ function SolverConfiguration(
             )
             fast_dg = (fast_dg_momentum, fast_dg_thermo)
             slow_model = RemainderModel(bl, (linmodel.linear,))
+            fast_method = ode_solver_type.fast_method
         else
             fast_dg = DGModel(
                 linmodel,
@@ -231,6 +232,30 @@ function SolverConfiguration(
                 auxstate = dg.auxstate,
             )
             slow_model = RemainderModel(bl, (linmodel,))
+            if ode_solver_type.solver_method==MISSolverType
+                fast_dg_h = DGModel(
+                    linmodel,
+                    grid,
+                    numfluxnondiff,
+                    numfluxdiff,
+                    gradnumflux;
+                    direction=HorizontalDirection(),
+                    auxstate=dg.auxstate,
+                )
+
+                fast_dg_v = DGModel(
+                    linmodel,
+                    grid,
+                    numfluxnondiff,
+                    numfluxdiff,
+                    gradnumflux;
+                    direction=VerticalDirection(),
+                    auxstate=dg.auxstate
+                )
+                fast_method = (dg,Q) -> ode_solver_type.fast_method(fast_dg_h, fast_dg_v, Q)
+            else
+                fast_method = ode_solver_type.fast_method
+            end
         end
             slow_dg = DGModel(
                 slow_model,
@@ -240,10 +265,10 @@ function SolverConfiguration(
                 gradnumflux,
                 auxstate = dg.auxstate,
             )
-            solver = ode_solver_type.solver_method(
+            solver = ode_solver_type.slow_method(
                 slow_dg,
                 fast_dg,
-                ode_solver_type.fast_method,
+                fast_method,
                 ode_solver_type.number_of_steps,
                 Q; dt = ode_dt, t0 = t0,
             )
