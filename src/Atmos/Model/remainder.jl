@@ -173,6 +173,7 @@ function source!(
     nothing
 end
 
+#=
 import ..DGmethods.NumericalFluxes: numerical_flux_nondiffusive!, Rusanov
 function numerical_flux_nondiffusive!(
     nf::Rusanov,
@@ -225,3 +226,4 @@ function numerical_flux_nondiffusive!(
         a_fluxᵀn .-= a_fluxᵀn_r
     end
 end
+=#

@@ -2,7 +2,10 @@ using CLIMA
 using CLIMA.ConfigTypes
 using CLIMA.Mesh.Topologies: StackedCubedSphereTopology, cubedshellwarp, grid1d
 using CLIMA.Mesh.Grids:
-    DiscontinuousSpectralElementGrid, VerticalDirection, HorizontalDirection
+    DiscontinuousSpectralElementGrid,
+    VerticalDirection,
+    HorizontalDirection,
+    min_node_distance
 using CLIMA.Mesh.Filters
 using CLIMA.DGmethods: DGModel, init_ode_state
 using CLIMA.DGmethods.NumericalFluxes:
@@ -48,6 +51,11 @@ using MPI, Logging, StaticArrays, LinearAlgebra, Printf, Dates, Test
 
 const output_vtk = false
 
+"""
+    main()
+
+Run this test problem
+"""
 function main()
     CLIMA.init()
     ArrayType = CLIMA.array_type()
@@ -58,16 +66,21 @@ function main()
     numelem_horz = 10
     numelem_vert = 5
 
+    # Real test should be run for 33 hour, which is approximate time for the
+    # pulse to go around the whole sphere
+    # but for CI we only run 1 hour
     timeend = 60 * 60
-    # timeend = 33 * 60 * 60 # Full simulation
+
+    # Do the output every hour
     outputtime = 60 * 60
 
+    # Expected result is L2-norm of the final solution
     expected_result = Dict()
     expected_result[Float32] = 9.5064378310656000e+13
-    expected_result[Float64] = 9.5073452847081828e+13
+    expected_result[Float64] = 9.5073559883839516e+13
 
     @testset "acoustic wave" begin
-        for FT in (Float32, Float64)
+        for FT in (Float64, Float32)
             result = run(
                 mpicomm,
                 polynomialorder,
@@ -83,6 +96,20 @@ function main()
     end
 end
 
+"""
+    run(
+        mpicomm,
+        polynomialorder,
+        numelem_horz,
+        numelem_vert,
+        timeend,
+        outputtime,
+        ArrayType,
+        FT,
+    )
+
+Run the actual simulation.
+"""
 function run(
     mpicomm,
     polynomialorder,
@@ -94,8 +121,10 @@ function run(
     FT,
 )
 
+    # Structure to pass around to setup the simulation
     setup = AcousticWaveSetup{FT}()
 
+    # Create the cubed sphere mesh
     _planet_radius::FT = planet_radius(param_set)
     vert_range = grid1d(
         _planet_radius,
@@ -111,8 +140,12 @@ function run(
         polynomialorder = polynomialorder,
         meshwarp = cubedshellwarp,
     )
+    hmnd = min_node_distance(grid, HorizontalDirection())
+    vmnd = min_node_distance(grid, VerticalDirection())
 
-    model = AtmosModel{FT}(
+    # This is the base model which defines all the data (all other DGModels
+    # for substepping components will piggy-back off of this models data)
+    fullmodel = AtmosModel{FT}(
         AtmosLESConfigType;
         orientation = SphericalOrientation(),
         ref_state = HydrostaticState(IsothermalProfile(setup.T_ref), FT(0)),
@@ -122,33 +155,20 @@ function run(
         init_state = setup,
         param_set = param_set,
     )
-    # acousticmodel = AtmosAcousticLinearModel(model)
-    acousticmodel = AtmosAcousticGravityLinearModel(model)
-
-    advection_model = RemainderModel(model, (acousticmodel,))
     dg = DGModel(
-        model,
+        fullmodel,
         grid,
         Rusanov(),
         CentralNumericalFluxDiffusive(),
         CentralNumericalFluxGradient(),
     )
-    advection_dg = DGModel(
-        advection_model,
-        grid,
-        Rusanov(),
-        CentralNumericalFluxDiffusive(),
-        CentralNumericalFluxGradient();
-        auxstate = dg.auxstate,
-    )
-    acoustic_dg = DGModel(
-        acousticmodel,
-        grid,
-        Rusanov(),
-        CentralNumericalFluxDiffusive(),
-        CentralNumericalFluxGradient();
-        auxstate = dg.auxstate,
-    )
+    Q = init_ode_state(dg, FT(0))
+
+    # The linear model which contains the fast modes
+    # acousticmodel = AtmosAcousticLinearModel(fullmodel)
+    acousticmodel = AtmosAcousticGravityLinearModel(fullmodel)
+
+    # Vertical acoustic model will be handle with implicit time stepping
     vacoustic_dg = DGModel(
         acousticmodel,
         grid,
@@ -158,6 +178,7 @@ function run(
         direction = VerticalDirection(),
         auxstate = dg.auxstate,
     )
+    # Horizontal acoustic model will be handle with explicit substepping
     hacoustic_dg = DGModel(
         acousticmodel,
         grid,
@@ -168,76 +189,84 @@ function run(
         auxstate = dg.auxstate,
     )
 
-    # determine the time step
-    element_size = (setup.domain_height / numelem_vert)
-    acoustic_speed = soundspeed_air(FT(setup.T_ref), model.param_set)
-    dt_factor = 2
-    dt = dt_factor * element_size / acoustic_speed / polynomialorder^2
-    # Adjust the time step so we exactly hit 1 hour for VTK output
-    dt = 60 * 60 / ceil(60 * 60 / dt)
-    hacoustic_dt = vacoustic_dt = advection_dt = dt
-    nsteps = ceil(Int, timeend / dt)
+    # Advection model is the difference between the fullmodel and acousticmodel.
+    # This will be handled with explicit substepping (time step in between the
+    # vertical and horizontally acoustic models)
+    advection_model = RemainderModel(fullmodel, (acousticmodel,))
+    advection_dg = DGModel(
+        advection_model,
+        grid,
+        Rusanov(),
+        CentralNumericalFluxDiffusive(),
+        CentralNumericalFluxGradient();
+        auxstate = dg.auxstate,
+    )
+
+    # determine the time step for the horizontally acoustic model and set up the
+    # inner (fast) solver
+    acoustic_speed = soundspeed_air(FT(setup.T_ref), fullmodel.param_set)
+    hacoustic_dt = hmnd / acoustic_speed
+    hacoustic_solver =
+        LSRK144NiegemannDiehlBusch(hacoustic_dg, Q; dt = hacoustic_dt)
+
+    # determine the time step for the advection model and set up the middle
+    # (fast) solver
+    advection_speed = 1 # FIXME: What's a reasonable number here?
+    advection_dt = min(hmnd, vmnd) / advection_speed
+    advection_solver =
+        MRIGARKERK45aSandu(advection_dg, hacoustic_solver, Q; dt = advection_dt)
+    # @assert advection_dt > hacoustic_dt
+
+    # The time step for the vertical acoustic model is set to the twice the
+    # advection model, and then fixed up to hit exactly the output time 
+    vacoustic_dt = advection_dt
+    vacoustic_dt = 10vmnd / acoustic_speed
+
+    nsteps_output = ceil(outputtime / vacoustic_dt)
+    vacoustic_dt = outputtime / nsteps_output
+    nsteps = ceil(Int, timeend / vacoustic_dt)
+    @assert nsteps * vacoustic_dt ≈ timeend
     nsteps = 2
+    @show (vacoustic_dt, advection_dt, hacoustic_dt)
 
-    Q = init_ode_state(dg, FT(0))
+    vacoustic_solver = MRIGARKESDIRK46aSandu(
+        vacoustic_dg,
+        LinearBackwardEulerSolver(ManyColumnLU(); isadjustable = false),
+        advection_solver,
+        Q;
+        dt = vacoustic_dt,
+        t0 = 0,
+    )
+    odesolver = vacoustic_solver
 
-    # hacoustic_solver = LSRK144NiegemannDiehlBusch(
-    #                                               hacoustic_dg,
-    #                                               Q;
-    #                                               dt = hacoustic_dt)
-    # advection_solver = MRIGARKERK45aSandu(
-    #                                       advection_dg,
-    #                                       hacoustic_solver,
-    #                                       Q;
-    #                                       dt = advection_dt)
-    # vacoustic_solver = MRIGARKIRK21aSandu(
-    #     vacoustic_dg,
-    #     LinearBackwardEulerSolver(ManyColumnLU(); isadjustable = false),
-    #     advection_solver,
-    #     Q;
-    #     dt = vacoustic_dt,
-    #     t0 = 0,
-    # )
-    # odesolver = vacoustic_solver
+    # print some initial diagnostic information
+    eng0 = norm(Q)
+    @info @sprintf(
+        """Starting
+           ArrayType       = %s
+           FT              = %s
+           polynomialorder = %d
+           numelem_horz    = %d
+           numelem_vert    = %d
+           dt              = %.16e
+           norm(Q₀)        = %.16e
+           """,
+        "$ArrayType",
+        "$FT",
+        polynomialorder,
+        numelem_horz,
+        numelem_vert,
+        vacoustic_dt,
+        eng0
+    )
 
-    # acoustic_solver =
-    #     LSRK144NiegemannDiehlBusch(acoustic_dg, Q; dt = hacoustic_dt)
-    # advection_solver = MRIGARKERK45aSandu(
-    #     advection_dg,
-    #     acoustic_solver,
-    #     Q;
-    #     dt = advection_dt,
-    #     t0 = 0,
-    # )
-    # odesolver = advection_solver
-    # odesolver = LSRK144NiegemannDiehlBusch(dg, Q; dt = dt, t0 = 0)
-
-    function rhs!(dQ, Q, p, time; increment)
-        advection_dg(dQ, Q, p, time; increment = increment)
-        # acoustic_dg(dQ, Q, p, time; increment = true)
-        vacoustic_dg(dQ, Q, p, time; increment = true)
-        hacoustic_dg(dQ, Q, p, time; increment = true)
-        # dg(dQ, Q, p, time; increment = increment)
-    end
-    odesolver = LSRK144NiegemannDiehlBusch(rhs!, Q; dt = dt, t0 = 0)
-
+    # Setup the filtering callback
     filterorder = 18
     filter = ExponentialFilter(grid, 0, filterorder)
     cbfilter = EveryXSimulationSteps(1) do
         Filters.apply!(Q, 1:size(Q, 2), grid, filter, VerticalDirection())
         nothing
     end
-
-    eng0 = norm(Q)
-    @info @sprintf """Starting
-                      ArrayType       = %s
-                      FT              = %s
-                      polynomialorder = %d
-                      numelem_horz    = %d
-                      numelem_vert    = %d
-                      dt              = %.16e
-                      norm(Q₀)        = %.16e
-                      """ "$ArrayType" "$FT" polynomialorder numelem_horz numelem_vert dt eng0
 
     # Set up the information callback
     starttime = Ref(now())
@@ -259,6 +288,7 @@ function run(
     end
     callbacks = (cbinfo, cbfilter)
 
+    # Setup the vtk callback
     if output_vtk
         # create vtk dir
         vtkdir =
@@ -269,17 +299,18 @@ function run(
 
         vtkstep = 0
         # output initial step
-        do_output(mpicomm, vtkdir, vtkstep, dg, Q, model)
+        do_output(mpicomm, vtkdir, vtkstep, dg, Q, fullmodel)
 
         # setup the output callback
-        cbvtk = EveryXSimulationSteps(floor(outputtime / dt)) do
+        cbvtk = EveryXSimulationSteps(nsteps_output) do
             vtkstep += 1
             Qe = init_ode_state(dg, gettime(odesolver))
-            do_output(mpicomm, vtkdir, vtkstep, dg, Q, model)
+            do_output(mpicomm, vtkdir, vtkstep, dg, Q, fullmodel)
         end
         callbacks = (callbacks..., cbvtk)
     end
 
+    # Solve the ode
     solve!(
         Q,
         odesolver;
