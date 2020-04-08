@@ -41,7 +41,7 @@ function DGModel(
     )
 end
 
-function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
+function (dg::DGModel)(dQdt, Q, ::Any, t; increment = false)
 
     bl = dg.balancelaw
     device = typeof(Q.data) <: Array ? CPU() : CUDA()

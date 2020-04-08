@@ -1,7 +1,8 @@
 """
     RemainderModel(main::BalanceLaw, subcomponents::Tuple)
 
-Compute the "remainder" contribution of the `main` model, after subtracting `subcomponents`.
+Compute the "remainder" contribution of the `main` model, after subtracting
+`subcomponents`.
 """
 struct RemainderModel{M, S} <: BalanceLaw
     main::M
@@ -170,4 +171,57 @@ function source!(
         m .-= m_s
     end
     nothing
+end
+
+import ..DGmethods.NumericalFluxes: numerical_flux_nondiffusive!, Rusanov
+function numerical_flux_nondiffusive!(
+    nf::Rusanov,
+    rem::RemainderModel,
+    fluxᵀn::Vars{S},
+    n::SVector,
+    state⁻::Vars{S},
+    aux⁻::Vars{A},
+    state⁺::Vars{S},
+    aux⁺::Vars{A},
+    t,
+) where {S, A}
+    a_state⁺ = getfield(state⁺, :array)
+    a_aux⁺ = getfield(aux⁺, :array)
+    FT = eltype(a_state⁺)
+
+    a_back_state⁺ = copy(a_state⁺)
+    a_back_aux⁺ = copy(a_aux⁺)
+
+    numerical_flux_nondiffusive!(
+        nf,
+        rem.main,
+        fluxᵀn,
+        n,
+        state⁻,
+        aux⁻,
+        state⁺,
+        aux⁺,
+        t,
+    )
+
+    a_fluxᵀn = getfield(fluxᵀn, :array)
+    fluxᵀn_r = similar(fluxᵀn)
+    a_fluxᵀn_r = getfield(fluxᵀn_r, :array)
+    for sub in rem.subs
+        fill!(a_fluxᵀn_r, -zero(FT))
+        a_state⁺ .= a_back_state⁺
+        a_aux⁺ .= a_back_aux⁺
+        numerical_flux_nondiffusive!(
+            nf,
+            sub,
+            fluxᵀn_r,
+            n,
+            state⁻,
+            aux⁻,
+            state⁺,
+            aux⁺,
+            t,
+        )
+        a_fluxᵀn .-= a_fluxᵀn_r
+    end
 end
