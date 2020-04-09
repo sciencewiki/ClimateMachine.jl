@@ -308,9 +308,11 @@ function flux_nondiffusive!(lm::AtmosAcousticGravityLinearModelMomentum, flux::G
   #flux.ρe = ((ref.ρe + ref.p)/ref.ρ)*state.ρu
   nothing
 end
-function source!(lm::AtmosAcousticGravityLinearModelMomentum, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real)
-  ∇Φ = ∇gravitational_potential(lm.atmos.orientation, aux)
-  source.ρu -= state.ρ * ∇Φ
+function source!(lm::AtmosAcousticGravityLinearModelMomentum, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real, direction)
+  if direction isa VerticalDirection || direction isa EveryDirection
+      ∇Φ = ∇gravitational_potential(lm.atmos.orientation, aux)
+      source.ρu -= state.ρ * ∇Φ
+  end
   nothing
 end
 
@@ -334,9 +336,11 @@ function flux_nondiffusive!(lm::AtmosAcousticGravityLinearModelThermo, flux::Gra
   flux.ρe = ((ref.ρe + ref.p)/ref.ρ)*state.ρu
   nothing
 end
-function source!(lm::AtmosAcousticGravityLinearModelThermo, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real)
-  #∇Φ = ∇gravitational_potential(lm.atmos.orientation, aux)
-  #source.ρu -= state.ρ * ∇Φ
+function source!(lm::AtmosAcousticGravityLinearModelThermo, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real, direction)
+    #if direction isa VerticalDirection || direction isa EveryDirection
+    #    ∇Φ = ∇gravitational_potential(lm.atmos.orientation, aux)
+    #    source.ρu -= state.ρ * ∇Φ
+    #end
   nothing
 end
 
