@@ -1,10 +1,32 @@
-#### Turbulence closures
+# ## Turbulence Closures
+# In `turbulence.jl` we specify turbulence closures. Currently, 
+# pointwise models of the eddy viscosity/eddy diffusivity type are
+# supported for turbulent shear and tracer diffusivity. Methods currently supported
+# are:\
+# [`ConstantViscosityWithDivergence`](@ref constant-viscosity)\
+# [`SmagorinskyLilly`](@ref smagorinsky-lilly)\
+# [`Vreman`](@ref vreman)\
+# [`AnisoMinDiss`](@ref aniso-min-diss)\
+
+#md # !!! note
+#md #     Usage: This is a quick-ref guide to using turbulence models as a subcomponent
+#md #     of `AtmosModel` \
+#md #     $\nu$ is the kinematic viscosity, $C_smag$ is the Smagorinsky Model coefficient,
+#md #     `turbulence=ConstantViscosityWithDivergence(ν)`\
+#md #     `turbulence=SmagorinskyLilly(C_smag)`\
+#md #     `turbulence=Vreman(C_smag)`\
+#md #     `turbulence=AnisoMinDiss(C_poincare)`
+
 using DocStringExtensions
-using CLIMA.PlanetParameters: grav
-using CLIMA.SubgridScaleParameters
+using ..PlanetParameters: grav
+using CLIMA.SubgridScaleParameters: inv_Pr_turb
 export ConstantViscosityWithDivergence, SmagorinskyLilly, Vreman, AnisoMinDiss
 export turbulence_tensors
 
+# ### Abstract Type
+# We define a `TurbulenceClosure` abstract type and 
+# default functions for the generic turbulence closure 
+# which will be overloaded with model specific functions. 
 abstract type TurbulenceClosure end
 
 vars_state(::TurbulenceClosure, FT) = @vars()
@@ -47,6 +69,11 @@ Compute the kinematic viscosity tensor (`ν`) and SGS momentum flux tensor (`τ`
 """
 function turbulence_tensors end
 
+# We also provide generic math functions for use within the turbulence closures, 
+# commonly used quantities such as the [principal tensor invariants](@ref tensor-invariants), handling of 
+# [symmetric tensors](@ref symmetric-tensors) and [tensor norms](@ref tensor-norms)are addressed. 
+
+# ### [Pricipal Invariants](@id tensor-invariants)
 """
     principal_invariants(X)
 
@@ -59,6 +86,10 @@ function principal_invariants(X)
     return (first, second, third)
 end
 
+# ### [Symmetrize](@id symmetric-tensors)
+# ```math 
+# \frac{\mathrm{X} + \mathrm{X}^{T}}{2}
+# ```
 """
     symmetrize(X)
 
@@ -75,6 +106,10 @@ function symmetrize(X::StaticArray{Tuple{3, 3}})
     ))
 end
 
+# ### [2-Norm](@id tensor-norms)
+# ```math
+# \sum_{i,j} S_{ij}^2
+# ```
 """
     norm2(X)
 
@@ -103,6 +138,12 @@ function norm2(X::SHermitianCompact{3, FT, 6}) where {FT}
     abs2(X[3, 3])
 end
 
+# ### [Strain-rate Magnitude](@id strain-rate-magnitude)
+# By definition, the strain-rate magnitude, as defined in 
+# standard turbulence modelling is computed such that 
+# ```math
+# |\mathrm{S}| = \sqrt{2 \sum_{i,j} \mathrm{S}_{ij}^2}
+# ```
 """
     strain_rate_magnitude(S)
 
@@ -115,6 +156,13 @@ function strain_rate_magnitude(S::SHermitianCompact{3, FT, 6}) where {FT}
     return sqrt(2 * norm2(S))
 end
 
+# ### [Constant Viscosity Model](@id constant-viscosity)
+# `ConstantViscosityWithDivergence` requires a user to specify the constant viscosity (kinematic) 
+# and appropriately computes the turbulent stress tensor based on this term. Diffusivity can be 
+# computed using the turbulent Prandtl number for the appropriate problem regime. 
+# ```math
+# \tau = - 2 \nu \mathrm{S}
+# ```
 """
     ConstantViscosityWithDivergence <: TurbulenceClosure
 
@@ -158,11 +206,31 @@ function turbulence_tensors(
     S = diffusive.turbulence.S
     ν = m.ρν / state.ρ
     τ = (-2 * ν) * S + (2 * ν / 3) * tr(S) * I
-    return ν, τ
+    D_t = (ν isa Real ? ν : diag(ν)) * inv_Pr_turb
+    return ν, D_t, τ
 end
 
 
 
+# ### [Smagorinsky-Lilly](@id smagorinsky-lilly)
+# The Smagorinsky turbulence model, with Lilly's correction to
+# stratified atmospheric flows, is included in CLIMA. 
+# The input parameter to this model is the Smagorinsky coefficient.
+# For atmospheric flows, the coefficient `C_smag` typically takes values between
+# 0.15 and 0.23. Flow dependent `C_smag` are currently not supported (e.g. Germano's
+# extension). The Smagorinsky-Lilly model does not contain explicit filtered terms.
+# ```math
+# \nu = (C_{s} \mathrm{f}_{b} \Delta)^2 \sqrt{|\mathrm{S}|}
+# ```
+# with the stratification correction term 
+# ```math
+# \mathrm{f}_{b} = \sqrt{1 - \frac{\mathrm{Ri}}{\mathrm{Pr}_{t}}}
+# ```\
+# $\mathrm{Ri}$ and $\mathrm{Pr}_{t}$ are the Richardson and 
+# turbulent Prandtl numbers respectively.  $\Delta$ is the mixing length in the 
+# relevant coordinate direction. We use the DG metric terms to determine the 
+# local effective resolution (see `src/Mesh/Geometry.jl`), and modify the vertical lengthscale by the 
+# stratification correction factor $\mathrm{f}_{b}$. 
 """
     SmagorinskyLilly <: TurbulenceClosure
 
@@ -261,17 +329,35 @@ function turbulence_tensors(
     FT = eltype(state)
     S = diffusive.turbulence.S
     normS = strain_rate_magnitude(S)
+    k̂ = aux.orientation.∇Φ / grav
 
     # squared buoyancy correction
     Richardson = diffusive.turbulence.N² / (normS^2 + eps(normS))
-    f_b² = sqrt(clamp(1 - Richardson * inv_Pr_turb, 0, 1))
-    ν = normS * f_b² * FT(m.C_smag * aux.turbulence.Δ)^2
-    τ = (-2 * ν) * S
-    return ν, τ
+    f_b² = sqrt(clamp(FT(1) - Richardson * inv_Pr_turb, FT(0), FT(1)))
+    ν₀ = normS * (m.C_smag * aux.turbulence.Δ)^2 + FT(1e-5)
+    ν = SVector{3, FT}(ν₀, ν₀, ν₀)
+    ν_v = k̂ .* dot(ν, f_b² * k̂)
+    ν_h = ν₀ .- ν_v
+    ν = SDiagonal(ν_h + ν_v)
+    τ = -2 * ν * S
+    D_t = (ν isa Real ? ν : diag(ν)) * inv_Pr_turb
+    return ν, D_t, τ
 end
 
-
-
+# ### [Vreman Model](@id vreman)
+# Vreman's turbulence model for anisotropic flows, which provides a 
+# less dissipative solution (specifically in the near-wall and transitional regions) 
+# than the Smagorinsky-Lilly method. This model
+# relies of first derivatives of the velocity vector (i.e., the gradient tensor).
+# By design, the Vreman model handles transitional as well as fully turbulent flows adequately.
+# The input parameter to this model is the Smagorinsky coefficient - the coefficient is modified 
+# within the model functions to account for differences in model construction. 
+# #### Equations
+# ```math
+# \nu = 2.5 \mathrm{C}_{smag} \sqrt{\frac{\mathrm{B}_{\beta}}{\alpha_{i}\alpha_{j}}}
+# ```
+# where $\mathrm{B}_{\beta}$ and $\alpha$ are functions of the velocity
+# gradient tensor terms.
 """
     Vreman{FT} <: TurbulenceClosure
 
@@ -345,6 +431,7 @@ function turbulence_tensors(
     FT = eltype(state)
     α = diffusive.turbulence.∇u
     S = symmetrize(α)
+    k̂ = aux.orientation.∇Φ / grav
 
     normS = strain_rate_magnitude(S)
     Richardson = diffusive.turbulence.N² / (normS^2 + eps(normS))
@@ -353,13 +440,25 @@ function turbulence_tensors(
     β = f_b² * (aux.turbulence.Δ)^2 * (α' * α)
     Bβ = principal_invariants(β)[2]
 
-    ν = max(0, m.C_smag^2 * FT(2.5) * sqrt(abs(Bβ / (norm2(α) + eps(FT)))))
-    τ = (-2 * ν) * S
+    ν₀ = m.C_smag^2 * FT(2.5) * sqrt(abs(Bβ / (norm2(α) + eps(FT))))
 
-    return ν, τ
+    ν₀ = SVector{3, FT}(ν₀, ν₀, ν₀)
+    ν_h = cross(k̂, cross(ν₀, k̂))
+    ν_v = k̂ .* dot(ν₀, f_b² * k̂)
+    ν = SDiagonal(ν_h + ν_v)
+    τ = -2 * ν * S
+    D_t = (ν isa Real ? ν : diag(ν)) * inv_Pr_turb
+    return ν, D_t, τ
 end
 
-
+# ### [Anisotropic Minimum Dissipation](@id aniso-min-diss)
+# This method is based Vreugdenhil and Taylor's minimum-dissipation eddy-viscosity model. 
+# The principles of the Rayleigh quotient minimizer are applied to the energy dissipation terms in the 
+# conservation equations, resulting in a maximum dissipation bound, and a model for 
+# eddy viscosity and eddy diffusivity. 
+# ```math
+# \nu_e = (\mathrm{C}\delta)^2  \mathrm{max}\left[0, - \frac{\hat{\partial}_k \hat{u}_{i} \hat{\partial}_k \hat{u}_{j} \mathrm{\hat{S}}_{ij}}{\hat{\partial}_p \hat{u}_{q}} \right]
+# ```
 """
     AnisoMinDiss{FT} <: TurbulenceClosure
 
@@ -368,43 +467,30 @@ Filter width Δ is the local grid resolution calculated from the mesh metric ten
 is specified and used to compute the equivalent AnisoMinDiss coefficient (computed as the solution to the
 eigenvalue problem for the Laplacian operator).
 
-@article{doi:10.1063/1.4928700,
-author = {Rozema,Wybe  and Bae,Hyun J.  and Moin,Parviz  and Verstappen,Roel },
-title = {Minimum-dissipation models for large-eddy simulation},
+@article{
+doi:10.1063/1.5037039,
+author = {Vreugdenhil,Catherine A.  and Taylor,John R. },
+title = {Large-eddy simulations of stratified plane Couette flow using the anisotropic minimum-dissipation model},
 journal = {Physics of Fluids},
-volume = {27},
+volume = {30},
 number = {8},
-pages = {085107},
-year = {2015},
-doi = {10.1063/1.4928700},
-URL = {https://aip.scitation.org/doi/abs/10.1063/1.4928700},
-eprint = {https://aip.scitation.org/doi/pdf/10.1063/1.4928700}
-}
--------------------------------------------------------------------------------------
-# TODO: Future versions will include modifications of Abkar(2016), Verstappen(2018)
-@article{PhysRevFluids.1.041701,
-title = {Minimum-dissipation scalar transport model for large-eddy simulation of turbulent flows},
-author = {Abkar, Mahdi and Bae, Hyun J. and Moin, Parviz},
-journal = {Phys. Rev. Fluids},
-volume = {1},
-issue = {4},
-pages = {041701},
-numpages = {10},
-year = {2016},
-month = {Aug},
-publisher = {American Physical Society},
-doi = {10.1103/PhysRevFluids.1.041701},
-url = {https://link.aps.org/doi/10.1103/PhysRevFluids.1.041701}
+pages = {085104},
+year = {2018},
+doi = {10.1063/1.5037039},
+URL = { 
+        https://doi.org/10.1063/1.5037039
+},
 }
 
+Fields
+$(DocStringExtensions.FIELDS)
 """
 struct AnisoMinDiss{FT} <: TurbulenceClosure
     C_poincare::FT
 end
 vars_aux(::AnisoMinDiss, FT) = @vars(Δ::FT)
-vars_gradient(::AnisoMinDiss, FT) = @vars()
-vars_diffusive(::AnisoMinDiss, FT) = @vars(∇u::SMatrix{3, 3, FT, 9})
-
+vars_gradient(::AnisoMinDiss, FT) = @vars(θ_v::FT)
+vars_diffusive(::AnisoMinDiss, FT) = @vars(∇u::SMatrix{3, 3, FT, 9}, N²::FT)
 function atmos_init_aux!(
     ::AnisoMinDiss,
     ::AtmosModel,
@@ -419,19 +505,23 @@ function gradvariables!(
     state::Vars,
     aux::Vars,
     t::Real,
-) end
+)
+    transform.turbulence.θ_v = aux.moisture.θ_v
+end
 function diffusive!(
     ::AnisoMinDiss,
-    ::Orientation,
+    orientation::Orientation,
     diffusive::Vars,
     ∇transform::Grad,
     state::Vars,
     aux::Vars,
     t::Real,
 )
+    ∇Φ = ∇gravitational_potential(orientation, aux)
     diffusive.turbulence.∇u = ∇transform.u
+    diffusive.turbulence.N² =
+        dot(∇transform.turbulence.θ_v, ∇Φ) / aux.moisture.θ_v
 end
-
 function turbulence_tensors(
     m::AnisoMinDiss,
     state::Vars,
@@ -440,13 +530,29 @@ function turbulence_tensors(
     t::Real,
 )
     FT = eltype(state)
-    α = diffusive.turbulence.∇u
-    S = symmetrize(α)
+    k̂ = aux.orientation.∇Φ / grav
 
-    coeff = (aux.turbulence.Δ * m.C_poincare)^2
-    βij = -(α' * α)
-    ν = max(0, coeff * (dot(βij, S) / (norm2(α) + eps(FT))))
-    τ = (-2 * ν) * S
+    ∇u = diffusive.turbulence.∇u
+    S = symmetrize(∇u)
+    normS = strain_rate_magnitude(S)
 
-    return ν, τ
+    δ = aux.turbulence.Δ
+    Richardson = diffusive.turbulence.N² / (normS^2 + eps(normS))
+    f_b² = sqrt(clamp(1 - Richardson * inv_Pr_turb, 0, 1))
+
+    δ_vec = SVector(δ, δ, δ)
+    δ_m = δ_vec ./ transpose(δ_vec)
+    ∇û = ∇u .* δ_m
+    Ŝ = symmetrize(∇û)
+    ν₀ =
+        (m.C_poincare .* δ_vec) .^ 2 * max(
+            FT(1e-5),
+            -dot(transpose(∇û) * (∇û), Ŝ) / (dot(∇û, ∇û) .+ eps(normS)),
+        )
+    ν_h = cross(k̂, cross(ν₀, k̂))
+    ν_v = k̂ .* dot(ν₀, f_b² * k̂)
+    ν = SDiagonal(ν_h + ν_v)
+    τ = -2 * ν * S
+    D_t = (ν isa Real ? ν : diag(ν)) * inv_Pr_turb
+    return ν, D_t, τ
 end

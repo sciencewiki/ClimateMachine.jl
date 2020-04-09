@@ -1,10 +1,6 @@
-using CLIMA.PlanetParameters
+using ..PlanetParameters
 
 export BoundaryCondition, InitStateBC
-
-
-using CLIMA.PlanetParameters
-export InitStateBC, DYCOMS_BC, RayleighBenardBC
 
 export AtmosBC,
     Impenetrable,
@@ -33,6 +29,15 @@ end
 function boundary_state!(nf, atmos::AtmosModel, args...)
     atmos_boundary_state!(nf, atmos.boundarycondition, atmos, args...)
 end
+
+function boundary_state!(
+    nf::Union{CentralHyperDiffusiveFlux, CentralDivPenalty},
+    m::AtmosModel,
+    x...,
+)
+    nothing
+end
+
 @generated function atmos_boundary_state!(
     nf,
     tup::Tuple,

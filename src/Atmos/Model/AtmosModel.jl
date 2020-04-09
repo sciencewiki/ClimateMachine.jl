@@ -13,16 +13,18 @@ using ..Parameters
 using ..MoistThermodynamics
 using ..PlanetParameters
 import ..MoistThermodynamics: internal_energy
-using ..SubgridScaleParameters
 using ..MPIStateArrays: MPIStateArray
-using ..Mesh.Grids: VerticalDirection, HorizontalDirection, min_node_distance
+using ..Mesh.Grids:
+    VerticalDirection, HorizontalDirection, min_node_distance, EveryDirection
 
 import CLIMA.DGmethods:
     BalanceLaw,
     vars_aux,
     vars_state,
     vars_gradient,
+    vars_gradient_laplacian,
     vars_diffusive,
+    vars_hyperdiffusive,
     flux_nondiffusive!,
     flux_diffusive!,
     source!,
@@ -30,6 +32,7 @@ import CLIMA.DGmethods:
     boundary_state!,
     gradvariables!,
     diffusive!,
+    hyperdiffusive!,
     init_aux!,
     init_state!,
     update_aux!,
@@ -54,7 +57,9 @@ import ..DGmethods.NumericalFluxes:
     normal_boundary_flux_diffusive!,
     NumericalFluxNonDiffusive,
     NumericalFluxGradient,
-    NumericalFluxDiffusive
+    NumericalFluxDiffusive,
+    CentralHyperDiffusiveFlux,
+    CentralDivPenalty
 
 import ..Courant: advective_courant, nondiffusive_courant, diffusive_courant
 
@@ -65,15 +70,16 @@ A `BalanceLaw` for atmosphere modeling.
 
 # Usage
 
-    AtmosModel(orientation, ref_state, turbulence, moisture, radiation, source,
+    AtmosModel(orientation, ref_state, turbulence, hyperdiffusion, moisture, radiation, source,
                boundarycondition, init_state)
 
 """
-struct AtmosModel{FT, PS, O, RS, T, M, P, R, S, BC, IS, DC} <: BalanceLaw
+struct AtmosModel{FT, PS, O, RS, T, HD, M, P, R, S, BC, IS, DC} <: BalanceLaw
     param_set::PS
     orientation::O
     ref_state::RS
     turbulence::T
+    hyperdiffusion::HD
     moisture::M
     precipitation::P
     radiation::R
@@ -92,6 +98,7 @@ function AtmosModel{FT}(
         FT(0),
     ),
     turbulence::T = SmagorinskyLilly{FT}(0.21),
+    hyperdiffusion::HD = NoHyperDiffusion(),
     moisture::M = EquilMoist{FT}(),
     precipitation::P = NoPrecipitation(),
     radiation::R = NoRadiation(),
@@ -101,7 +108,7 @@ function AtmosModel{FT}(
     init_state::IS = nothing,
     data_config::DC = nothing,
     param_set::PS = nothing,
-) where {FT <: AbstractFloat, O, RS, T, M, P, R, S, BC, IS, DC, PS}
+) where {FT <: AbstractFloat, O, RS, T, HD, M, P, R, S, BC, IS, DC, PS}
     @assert param_set ≠ nothing
     @assert init_state ≠ nothing
 
@@ -110,6 +117,7 @@ function AtmosModel{FT}(
         orientation,
         ref_state,
         turbulence,
+        hyperdiffusion,
         moisture,
         precipitation,
         radiation,
@@ -129,6 +137,7 @@ function AtmosModel{FT}(
         FT(0),
     ),
     turbulence::T = SmagorinskyLilly{FT}(0.21),
+    hyperdiffusion::HD = NoHyperDiffusion(),
     moisture::M = EquilMoist{FT}(),
     precipitation::P = NoPrecipitation(),
     radiation::R = NoRadiation(),
@@ -137,7 +146,7 @@ function AtmosModel{FT}(
     init_state::IS = nothing,
     data_config::DC = nothing,
     param_set::PS = nothing,
-) where {FT <: AbstractFloat, O, RS, T, M, P, R, S, BC, IS, DC, PS}
+) where {FT <: AbstractFloat, O, RS, T, HD, M, P, R, S, BC, IS, DC, PS}
     @assert param_set ≠ nothing
     @assert init_state ≠ nothing
     atmos = (
@@ -145,6 +154,7 @@ function AtmosModel{FT}(
         orientation,
         ref_state,
         turbulence,
+        hyperdiffusion,
         moisture,
         precipitation,
         radiation,
@@ -157,13 +167,13 @@ function AtmosModel{FT}(
     return AtmosModel{FT, typeof.(atmos)...}(atmos...)
 end
 
-
 function vars_state(m::AtmosModel, FT)
     @vars begin
         ρ::FT
         ρu::SVector{3, FT}
         ρe::FT
         turbulence::vars_state(m.turbulence, FT)
+        hyperdiffusion::vars_state(m.hyperdiffusion, FT)
         moisture::vars_state(m.moisture, FT)
         radiation::vars_state(m.radiation, FT)
     end
@@ -173,6 +183,7 @@ function vars_gradient(m::AtmosModel, FT)
         u::SVector{3, FT}
         h_tot::FT
         turbulence::vars_gradient(m.turbulence, FT)
+        hyperdiffusion::vars_gradient(m.hyperdiffusion, FT)
         moisture::vars_gradient(m.moisture, FT)
     end
 end
@@ -180,11 +191,20 @@ function vars_diffusive(m::AtmosModel, FT)
     @vars begin
         ∇h_tot::SVector{3, FT}
         turbulence::vars_diffusive(m.turbulence, FT)
+        hyperdiffusion::vars_diffusive(m.hyperdiffusion, FT)
         moisture::vars_diffusive(m.moisture, FT)
     end
 end
-
-
+function vars_gradient_laplacian(m::AtmosModel, FT)
+    @vars begin
+        hyperdiffusion::vars_gradient_laplacian(m.hyperdiffusion, FT)
+    end
+end
+function vars_hyperdiffusive(m::AtmosModel, FT)
+    @vars begin
+        hyperdiffusion::vars_hyperdiffusive(m.hyperdiffusion, FT)
+    end
+end
 function vars_aux(m::AtmosModel, FT)
     @vars begin
         ∫dz::vars_integrals(m, FT)
@@ -193,6 +213,7 @@ function vars_aux(m::AtmosModel, FT)
         orientation::vars_aux(m.orientation, FT)
         ref_state::vars_aux(m.ref_state, FT)
         turbulence::vars_aux(m.turbulence, FT)
+        hyperdiffusion::vars_aux(m.hyperdiffusion, FT)
         moisture::vars_aux(m.moisture, FT)
         radiation::vars_aux(m.radiation, FT)
     end
@@ -211,6 +232,7 @@ end
 include("orientation.jl")
 include("ref_state.jl")
 include("turbulence.jl")
+include("hyperdiffusion.jl")
 include("moisture.jl")
 include("precipitation.jl")
 include("radiation.jl")
@@ -256,7 +278,6 @@ Where
 
     # pressure terms
     p = pressure(m, m.moisture, state, aux)
-
     if m.ref_state isa HydrostaticState
         flux.ρu += (p - aux.ref_state.p) * I
     else
@@ -280,6 +301,7 @@ function gradvariables!(
 
     gradvariables!(atmos.moisture, transform, state, aux, t)
     gradvariables!(atmos.turbulence, transform, state, aux, t)
+    gradvariables!(atmos.hyperdiffusion, transform, state, aux, t)
 end
 
 function diffusive!(
@@ -306,6 +328,24 @@ function diffusive!(
     diffusive!(atmos.moisture, diffusive, ∇transform, state, aux, t)
 end
 
+function hyperdiffusive!(
+    atmos::AtmosModel,
+    hyperdiffusive::Vars,
+    hypertransform::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    hyperdiffusive!(
+        atmos.hyperdiffusion,
+        hyperdiffusive,
+        hypertransform,
+        state,
+        aux,
+        t,
+    )
+end
+
 @inline function flux_diffusive!(
     atmos::AtmosModel,
     flux::Grad,
@@ -315,11 +355,19 @@ end
     aux::Vars,
     t::Real,
 )
-    ν, τ = turbulence_tensors(atmos.turbulence, state, diffusive, aux, t)
-    D_t = (ν isa Real ? ν : diag(ν)) * inv_Pr_turb
+    ν, D_t, τ = turbulence_tensors(atmos.turbulence, state, diffusive, aux, t)
     d_h_tot = -D_t .* diffusive.∇h_tot
     flux_diffusive!(atmos, flux, state, τ, d_h_tot)
     flux_diffusive!(atmos.moisture, flux, state, diffusive, aux, t, D_t)
+    flux_diffusive!(
+        atmos.hyperdiffusion,
+        flux,
+        state,
+        diffusive,
+        hyperdiffusive,
+        aux,
+        t,
+    )
 end
 
 #TODO: Consider whether to not pass ρ and ρu (not state), foc BCs reasons
@@ -342,16 +390,22 @@ end
 end
 
 
-function update_aux!(dg::DGModel, m::AtmosModel, Q::MPIStateArray, t::Real)
+function update_aux!(
+    dg::DGModel,
+    m::AtmosModel,
+    Q::MPIStateArray,
+    t::Real,
+    elems::UnitRange,
+)
     FT = eltype(Q)
     auxstate = dg.auxstate
 
     if num_integrals(m, FT) > 0
-        indefinite_stack_integral!(dg, m, Q, auxstate, t)
-        reverse_indefinite_stack_integral!(dg, m, Q, auxstate, t)
+        indefinite_stack_integral!(dg, m, Q, auxstate, t, elems)
+        reverse_indefinite_stack_integral!(dg, m, Q, auxstate, t, elems)
     end
 
-    nodal_update_aux!(atmos_nodal_update_aux!, dg, m, Q, t)
+    nodal_update_aux!(atmos_nodal_update_aux!, dg, m, Q, t, elems)
 
     return true
 end
@@ -389,10 +443,12 @@ function init_aux!(m::AtmosModel, aux::Vars, geom::LocalGeometry)
     atmos_init_aux!(m.orientation, m, aux, geom)
     atmos_init_aux!(m.ref_state, m, aux, geom)
     atmos_init_aux!(m.turbulence, m, aux, geom)
+    atmos_init_aux!(m.hyperdiffusion, m, aux, geom)
 end
 
 """
-    source!(m::AtmosModel, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real)
+    source!(m::AtmosModel, source::Vars, state::Vars, diffusive::Vars,
+            aux::Vars, t::Real, direction::Direction)
 Computes flux `S(Y)` in:
 ```
 ∂Y
@@ -407,12 +463,12 @@ function source!(
     diffusive::Vars,
     aux::Vars,
     t::Real,
+    direction,
 )
-    atmos_source!(m.source, m, source, state, diffusive, aux, t)
+    atmos_source!(m.source, m, source, state, diffusive, aux, t, direction)
 end
 
 function init_state!(m::AtmosModel, state::Vars, aux::Vars, coords, t, args...)
     m.init_state(m, state, aux, coords, t, args...)
 end
-
 end # module

@@ -183,12 +183,15 @@ function dostep!(Q, mis::MultirateInfinitesimalStep, p, time::Real, dt::Real, ns
   else
     mis.slowrhs! = OffsetRHS(slow_rv_dQ, mis.slowrhs!)
   end
+  mis.dt = dt;
   for i in 1:nsteps
-    dostep!(Q, mis, p, time, dt)
+    dostep!(Q, mis, p, time)
   end
 end
 
-function dostep!(Q, mis::MultirateInfinitesimalStep, p, time, dt)
+function dostep!(Q, mis::MultirateInfinitesimalStep, p, time)
+
+    dt = mis.dt
     FT = eltype(dt)
     α = mis.α
     β = mis.β

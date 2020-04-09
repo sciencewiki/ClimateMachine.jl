@@ -8,6 +8,7 @@ using Printf
 using Requires
 
 using ..Atmos
+using ..Callbacks
 using ..ColumnwiseLUSolver
 using ..ConfigTypes
 using ..Courant
@@ -31,13 +32,14 @@ using ..VTK
 # command line argument defaults in `parse_commandline()`.
 Base.@kwdef mutable struct CLIMA_Settings
     disable_gpu::Bool = false
-    mpi_knows_cuda::Bool = false
     show_updates::Bool = true
     update_interval::Int = 60
     enable_diagnostics::Bool = false
     diagnostics_interval::Int = 10000
     enable_vtk::Bool = false
     vtk_interval::Int = 10000
+    enable_wall_clock::Bool = false
+    wall_clock_interval::Int = 10000
     monitor_courant_numbers::Bool = false
     monitor_courant_interval::Int = 10
     log_level::String = "INFO"
@@ -99,9 +101,6 @@ function parse_commandline()
         "--disable-gpu"
         help = "do not use the GPU"
         action = :store_true
-        "--mpi-knows-cuda"
-        help = "MPI is CUDA-enabled"
-        action = :store_true
         "--no-show-updates"
         help = "do not show simulation updates"
         action = :store_true
@@ -121,6 +120,13 @@ function parse_commandline()
         action = :store_true
         "--vtk-interval"
         help = "interval in simulation steps for VTK output"
+        arg_type = Int
+        default = 10000
+        "--enable-wall-clock"
+        help = "output wall-clock time per time-step every <wall-clock-interval> simulation steps"
+        action = :store_true
+        "--wall-clock-interval"
+        help = "interval in simulation steps for wall-clock time per time-step output"
         arg_type = Int
         default = 10000
         "--monitor-courant-numbers"
@@ -167,13 +173,14 @@ function init(; disable_gpu = false)
     try
         parsed_args = parse_commandline()
         Settings.disable_gpu = disable_gpu || parsed_args["disable-gpu"]
-        Settings.mpi_knows_cuda = parsed_args["mpi-knows-cuda"]
         Settings.show_updates = !parsed_args["no-show-updates"]
         Settings.update_interval = parsed_args["update-interval"]
         Settings.enable_diagnostics = parsed_args["enable-diagnostics"]
         Settings.diagnostics_interval = parsed_args["diagnostics-interval"]
         Settings.enable_vtk = parsed_args["enable-vtk"]
         Settings.vtk_interval = parsed_args["vtk-interval"]
+        Settings.enable_wall_clock = parsed_args["enable-wall-clock"]
+        Settings.wall_clock_interval = parsed_args["wall-clock-interval"]
         Settings.output_dir = parsed_args["output-dir"]
         Settings.monitor_courant_numbers =
             parsed_args["monitor-courant-numbers"]
@@ -297,38 +304,36 @@ function invoke!(
         callbacks = (callbacks..., cbinfo)
     end
 
-    dia_starttime = ""
+    dgn_starttime = ""
     if Settings.enable_diagnostics && diagnostics_config !== nothing
-        dia_starttime = replace(string(now()), ":" => ".")
-        Diagnostics.init(mpicomm, dg, Q, dia_starttime, Settings.output_dir)
+        dgn_starttime = replace(string(now()), ":" => ".")
+        Diagnostics.init(mpicomm, dg, Q, dgn_starttime, Settings.output_dir)
 
         # set up a callback for each diagnostics group
-        diacbs = ()
-        for diagrp in diagnostics_config.groups
+        dgncbs = ()
+        for dgngrp in diagnostics_config.groups
             if Settings.diagnostics_interval > 0
                 interval = Settings.diagnostics_interval
             else
-                interval = diagrp.interval
+                interval = dgngrp.interval
             end
             fn = GenericCallbacks.EveryXSimulationSteps(
                 interval,
             ) do (init = false)
                 currtime = ODESolvers.gettime(solver)
-                if init
-                    diagrp(currtime, init = true)
-                end
                 @info @sprintf(
                     """Diagnostics: %s
-                    collecting at %s""",
-                    diagrp.name,
+                    %s at %s""",
+                    dgngrp.name,
+                    init ? "initializing" : "collecting",
                     string(currtime)
                 )
-                diagrp(currtime)
+                dgngrp(currtime, init = init)
                 nothing
             end
-            diacbs = (diacbs..., fn)
+            dgncbs = (dgncbs..., fn)
         end
-        callbacks = (callbacks..., diacbs...)
+        callbacks = (callbacks..., dgncbs...)
     end
 
     if Settings.enable_vtk
@@ -375,6 +380,15 @@ function invoke!(
         callbacks = (callbacks..., cbvtk)
     end
 
+    if Settings.enable_wall_clock
+        cbwall = Callbacks.wall_clock_time_per_time_step(
+            Settings.wall_clock_interval,
+            Settings.array_type,
+            mpicomm,
+        )
+        callbacks = (callbacks..., cbwall)
+    end
+
     if Settings.monitor_courant_numbers
         # set up the callback for Courant number calculations
         cbcfl =
@@ -385,32 +399,38 @@ function invoke!(
                 Δt = solver_config.dt
                 c_v = DGmethods.courant(
                     nondiffusive_courant,
-                    solver_config;
+                    solver_config,
+                    simtime;
                     direction = VerticalDirection(),
                 )
                 c_h = DGmethods.courant(
                     nondiffusive_courant,
-                    solver_config;
+                    solver_config,
+                    simtime;
                     direction = HorizontalDirection(),
                 )
                 ca_v = DGmethods.courant(
                     advective_courant,
-                    solver_config;
+                    solver_config,
+                    simtime;
                     direction = VerticalDirection(),
                 )
                 ca_h = DGmethods.courant(
                     advective_courant,
-                    solver_config;
+                    solver_config,
+                    simtime;
                     direction = HorizontalDirection(),
                 )
                 cd_v = DGmethods.courant(
                     diffusive_courant,
-                    solver_config;
+                    solver_config,
+                    simtime;
                     direction = VerticalDirection(),
                 )
                 cd_h = DGmethods.courant(
                     diffusive_courant,
-                    solver_config;
+                    solver_config,
+                    simtime;
                     direction = HorizontalDirection(),
                 )
                 @info @sprintf """
@@ -434,7 +454,7 @@ function invoke!(
         callbacks = (callbacks..., cbcfl)
     end
 
-    callbacks = (callbacks..., user_callbacks...)
+    callbacks = (user_callbacks..., callbacks...)
 
     # initial condition norm
     eng0 = norm(Q)
@@ -465,8 +485,8 @@ function invoke!(
     # fini diagnostics groups
     if Settings.enable_diagnostics
         currtime = ODESolvers.gettime(solver)
-        for diagrp in diagnostics_config.groups
-            diagrp(currtime, fini = true)
+        for dgngrp in diagnostics_config.groups
+            dgngrp(currtime, fini = true)
         end
     end
 

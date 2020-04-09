@@ -20,7 +20,6 @@ using CLIMA.GenericCallbacks
 using CLIMA.Atmos
 using CLIMA.VariableTemplates
 using CLIMA.MoistThermodynamics
-using CLIMA.PlanetParameters: R_d, planet_radius, grav, MSLP
 using CLIMA.TicToc
 using LinearAlgebra
 using StaticArrays
@@ -29,10 +28,10 @@ using CLIMA.VTK
 
 using CLIMA.Atmos: vars_state, vars_aux
 
-using CLIMA.Parameters
-const clima_dir = dirname(pathof(CLIMA))
-include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
-param_set = ParameterSet()
+using CLIMAParameters
+using CLIMAParameters.Planet: R_d, planet_radius, grav, MSLP
+struct EarthParameterSet <: AbstractEarthParameterSet end
+const param_set = EarthParameterSet()
 
 
 using Random
@@ -73,10 +72,12 @@ end
 function (setup::TestSphereSetup)(bl, state, aux, coords, t)
     # callable to set initial conditions
     FT = eltype(state)
+    _grav::FT = grav(param_set)
+    _R_d::FT = R_d(param_set)
 
-    z = altitude(bl.orientation, aux)
+    z = altitude(bl, aux)
 
-    scale_height = R_d * setup.T_initial / grav
+    scale_height = _R_d * setup.T_initial / _grav
     p = setup.p_ground * exp(-z / scale_height)
     e_int = internal_energy(setup.T_initial, bl.param_set)
     e_pot = gravitational_potential(bl.orientation, aux)
@@ -185,24 +186,6 @@ function run_brick_interpolation_test()
         end
         interpolate_local!(intrp_brck, Q.data, iv)                    # interpolation
         accumulate_interpolated_data!(intrp_brck, iv, fiv)      # write interpolation data to file
-        if pid == 0
-            write_data(
-                filename,
-                ("x1", "x2", "x3"),
-                (
-                    length(intrp_brck.x1g),
-                    length(intrp_brck.x2g),
-                    length(intrp_brck.x3g),
-                ),
-                (
-                    Array(intrp_brck.x1g),
-                    Array(intrp_brck.x2g),
-                    Array(intrp_brck.x3g),
-                ),
-                varnames,
-                Array(fiv),
-            )
-        end
         #------------------------------
         err_inf_dom = zeros(FT, nvars)
 
@@ -279,9 +262,11 @@ function run_cubed_sphere_interpolation_test()
         CLIMA.Mesh.Grids.vgeoid.x3id
         _ρ, _ρu, _ρv, _ρw = 1, 2, 3, 4
         #-------------------------
+        _planet_radius::FT = planet_radius(param_set)
+
         vert_range = grid1d(
-            FT(planet_radius),
-            FT(planet_radius + domain_height),
+            _planet_radius,
+            FT(_planet_radius + domain_height),
             nelem = numelem_vert,
         )
 
@@ -290,7 +275,8 @@ function run_cubed_sphere_interpolation_test()
         nel_vert_grd = 20 #100 #50 #10#50
         rad_res = FT((vert_range[end] - vert_range[1]) / FT(nel_vert_grd)) #1000.00    # 1000 m vertical resolution
         #----------------------------------------------------------
-        setup = TestSphereSetup(FT(MSLP), FT(255), FT(30e3))
+        _MSLP::FT = MSLP(param_set)
+        setup = TestSphereSetup(_MSLP, FT(255), FT(30e3))
 
         topology = StackedCubedSphereTopology(mpicomm, numelem_horz, vert_range)
 
@@ -329,9 +315,9 @@ function run_cubed_sphere_interpolation_test()
         x2 = @view grid.vgeo[:, _y, :]
         x3 = @view grid.vgeo[:, _z, :]
 
-        xmax = FT(planet_radius)
-        ymax = FT(planet_radius)
-        zmax = FT(planet_radius)
+        xmax = _planet_radius
+        ymax = _planet_radius
+        zmax = _planet_radius
 
         fcn(x, y, z) = sin.(x) .* cos.(y) .* cos.(z) # sample function
 
@@ -377,20 +363,6 @@ function run_cubed_sphere_interpolation_test()
         interpolate_local!(intrp_cs, Q.data, iv)                   # interpolation
         project_cubed_sphere!(intrp_cs, iv, (_ρu, _ρv, _ρw))         # project velocity onto unit vectors along rad, lat & long
         accumulate_interpolated_data!(intrp_cs, iv, fiv)           # accumulate interpolated data on to proc# 0
-        if pid == 0
-            write_data(
-                filename,
-                ("rad", "lat", "long"),
-                (intrp_cs.n_rad, intrp_cs.n_lat, intrp_cs.n_long),
-                (
-                    Array(intrp_cs.rad_grd),
-                    Array(intrp_cs.lat_grd),
-                    Array(intrp_cs.long_grd),
-                ),
-                varnames,
-                Array(fiv),
-            )
-        end
         #----------------------------------------------------------
         # Testing
         err_inf_dom = zeros(FT, nvars)

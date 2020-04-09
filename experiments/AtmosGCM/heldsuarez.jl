@@ -16,13 +16,10 @@ using CLIMA.Mesh.Grids
 using CLIMA.MoistThermodynamics
 using CLIMA.VariableTemplates
 
-using CLIMA.Parameters
-using CLIMA.UniversalConstants
-const clima_dir = dirname(pathof(CLIMA))
-include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
-using CLIMA.Parameters.Planet
-
-param_set = ParameterSet()
+using CLIMAParameters
+using CLIMAParameters.Planet: R_d, day, grav, cp_d, cv_d, planet_radius
+struct EarthParameterSet <: AbstractEarthParameterSet end
+const param_set = EarthParameterSet()
 
 struct HeldSuarezDataConfig{FT}
     T_ref::FT
@@ -36,7 +33,7 @@ function init_heldsuarez!(bl, state, aux, coords, t)
     temp_profile = IsothermalProfile(T_ref)
 
     # Calculate the initial state variables
-    T, p = temp_profile(bl.orientation, aux)
+    T, p = temp_profile(bl.orientation, bl.param_set, aux)
     thermo_state = PhaseDry_given_pT(p, T, bl.param_set)
     ρ = air_density(thermo_state)
     e_int = internal_energy(thermo_state)
@@ -101,7 +98,15 @@ function config_heldsuarez(FT, poly_order, resolution)
     return config
 end
 
-function held_suarez_forcing!(bl, source, state, diffusive, aux, t::Real)
+function held_suarez_forcing!(
+    bl,
+    source,
+    state,
+    diffusive,
+    aux,
+    t::Real,
+    direction,
+)
     FT = eltype(state)
 
     # Parameters
@@ -130,9 +135,9 @@ function held_suarez_forcing!(bl, source, state, diffusive, aux, t::Real)
     T_equator = FT(315)
     T_min = FT(200)
     σ_b = FT(7 / 10)
-    λ = longitude(bl.orientation, aux)
-    φ = latitude(bl.orientation, aux)
-    z = altitude(bl.orientation, aux)
+    λ = longitude(bl, aux)
+    φ = latitude(bl, aux)
+    z = altitude(bl, aux)
     scale_height = _R_d * T_ref / _grav
     σ = exp(-z / scale_height)
 
@@ -148,7 +153,7 @@ function held_suarez_forcing!(bl, source, state, diffusive, aux, t::Real)
     k_v = k_f * height_factor
 
     # Apply Held-Suarez forcing
-    source.ρu -= k_v * projection_tangential(bl.orientation, aux, ρu)
+    source.ρu -= k_v * projection_tangential(bl, aux, ρu)
     source.ρe -= k_T * ρ * _cv_d * (T - T_equil)
     return nothing
 end

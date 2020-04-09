@@ -46,7 +46,7 @@ See [`odefun!`](@ref) for usage.
     bl::BalanceLaw,
     ::Val{dim},
     ::Val{polyorder},
-    ::direction,
+    direction,
     rhs,
     Q,
     Qvisc,
@@ -58,7 +58,7 @@ See [`odefun!`](@ref) for usage.
     D,
     elems,
     increment,
-) where {dim, polyorder, direction}
+) where {dim, polyorder}
     @uniform begin
         N = polyorder
         FT = eltype(Q)
@@ -73,7 +73,7 @@ See [`odefun!`](@ref) for usage.
 
         Nqk = dim == 2 ? 1 : Nq
 
-        source! !== nothing && (l_S = MArray{Tuple{nstate}, FT}(undef))
+        l_S = MArray{Tuple{nstate}, FT}(undef)
         l_Q = MArray{Tuple{nstate}, FT}(undef)
         l_Qvisc = MArray{Tuple{nviscstate}, FT}(undef)
         l_Qhypervisc = MArray{Tuple{nhyperviscstate}, FT}(undef)
@@ -98,12 +98,12 @@ See [`odefun!`](@ref) for usage.
         ξ1x1 = vgeo[ijk, _ξ1x1, e]
         ξ1x2 = vgeo[ijk, _ξ1x2, e]
         ξ1x3 = vgeo[ijk, _ξ1x3, e]
-        if dim == 3 || (dim == 2 && direction == EveryDirection)
+        if dim == 3 || (dim == 2 && direction isa EveryDirection)
             ξ2x1 = vgeo[ijk, _ξ2x1, e]
             ξ2x2 = vgeo[ijk, _ξ2x2, e]
             ξ2x3 = vgeo[ijk, _ξ2x3, e]
         end
-        if dim == 3 && direction == EveryDirection
+        if dim == 3 && direction isa EveryDirection
             ξ3x1 = vgeo[ijk, _ξ3x1, e]
             ξ3x2 = vgeo[ijk, _ξ3x2, e]
             ξ3x3 = vgeo[ijk, _ξ3x3, e]
@@ -167,10 +167,10 @@ See [`odefun!`](@ref) for usage.
                 s_F[1, i, j, k, s], s_F[2, i, j, k, s], s_F[3, i, j, k, s]
 
             s_F[1, i, j, k, s] = M * (ξ1x1 * F1 + ξ1x2 * F2 + ξ1x3 * F3)
-            if dim == 3 || (dim == 2 && direction == EveryDirection)
+            if dim == 3 || (dim == 2 && direction isa EveryDirection)
                 s_F[2, i, j, k, s] = M * (ξ2x1 * F1 + ξ2x2 * F2 + ξ2x3 * F3)
             end
-            if dim == 3 && direction == EveryDirection
+            if dim == 3 && direction isa EveryDirection
                 s_F[3, i, j, k, s] = M * (ξ3x1 * F1 + ξ3x2 * F2 + ξ3x3 * F3)
             end
         end
@@ -183,6 +183,7 @@ See [`odefun!`](@ref) for usage.
             Vars{vars_diffusive(bl, FT)}(l_Qvisc),
             Vars{vars_aux(bl, FT)}(l_aux),
             t,
+            direction,
         )
 
         @unroll for s in 1:nstate
@@ -198,12 +199,12 @@ See [`odefun!`](@ref) for usage.
                 l_rhs[s] += MI * s_D[n, i] * s_F[1, n, j, k, s]
 
                 # ξ2-grid lines
-                if dim == 3 || (dim == 2 && direction == EveryDirection)
+                if dim == 3 || (dim == 2 && direction isa EveryDirection)
                     l_rhs[s] += MI * s_D[n, j] * s_F[2, i, n, k, s]
                 end
 
                 # ξ3-grid lines
-                if dim == 3 && direction == EveryDirection
+                if dim == 3 && direction isa EveryDirection
                     l_rhs[s] += MI * s_D[n, k] * s_F[3, i, j, n, s]
                 end
             end
@@ -220,7 +221,7 @@ end
     bl::BalanceLaw,
     ::Val{dim},
     ::Val{polyorder},
-    ::VerticalDirection,
+    direction::VerticalDirection,
     rhs,
     Q,
     Qvisc,
@@ -248,7 +249,7 @@ end
 
         Nqk = dim == 2 ? 1 : Nq
 
-        source! !== nothing && (l_S = MArray{Tuple{nstate}, FT}(undef))
+        l_S = MArray{Tuple{nstate}, FT}(undef)
         l_Q = MArray{Tuple{nstate}, FT}(undef)
         l_Qvisc = MArray{Tuple{nviscstate}, FT}(undef)
         l_Qhypervisc = MArray{Tuple{nhyperviscstate}, FT}(undef)
@@ -337,7 +338,6 @@ end
             s_F[3, i, j, k, s] = M * (ζx1 * F1 + ζx2 * F2 + ζx3 * F3)
         end
 
-        # if source! !== nothing
         fill!(l_S, -zero(eltype(l_S)))
         source!(
             bl,
@@ -346,6 +346,7 @@ end
             Vars{vars_diffusive(bl, FT)}(l_Qvisc),
             Vars{vars_aux(bl, FT)}(l_aux),
             t,
+            direction,
         )
 
         @unroll for s in 1:nstate
@@ -390,7 +391,7 @@ See [`odefun!`](@ref) for usage.
     bl::BalanceLaw,
     ::Val{dim},
     ::Val{polyorder},
-    ::direction,
+    direction,
     numfluxnondiff::NumericalFluxNonDiffusive,
     numfluxdiff::NumericalFluxDiffusive,
     rhs,
@@ -405,7 +406,7 @@ See [`odefun!`](@ref) for usage.
     vmap⁺,
     elemtobndy,
     elems,
-) where {dim, polyorder, direction}
+) where {dim, polyorder}
     @uniform begin
         N = polyorder
         FT = eltype(Q)
@@ -430,9 +431,9 @@ See [`odefun!`](@ref) for usage.
         end
 
         faces = 1:nface
-        if direction == VerticalDirection
+        if direction isa VerticalDirection
             faces = (nface - 1):nface
-        elseif direction == HorizontalDirection
+        elseif direction isa HorizontalDirection
             faces = 1:(nface - 2)
         end
 
@@ -462,15 +463,23 @@ See [`odefun!`](@ref) for usage.
         l_F = MArray{Tuple{nstate}, FT}(undef)
     end
 
-    e = @index(Group, Linear)
+    eI = @index(Group, Linear)
     n = @index(Local, Linear)
 
-    @inbounds for f in faces
-        n⁻ = SVector(sgeo[_n1, n, f, e], sgeo[_n2, n, f, e], sgeo[_n3, n, f, e])
-        sM, vMI = sgeo[_sM, n, f, e], sgeo[_vMI, n, f, e]
-        id⁻, id⁺ = vmap⁻[n, f, e], vmap⁺[n, f, e]
+    e = @private Int (1,)
+    @inbounds e[1] = elems[eI]
 
-        e⁻, e⁺ = e, ((id⁺ - 1) ÷ Np) + 1
+    @inbounds for f in faces
+        e⁻ = e[1]
+        n⁻ = SVector(
+            sgeo[_n1, n, f, e⁻],
+            sgeo[_n2, n, f, e⁻],
+            sgeo[_n3, n, f, e⁻],
+        )
+        sM, vMI = sgeo[_sM, n, f, e⁻], sgeo[_vMI, n, f, e⁻]
+        id⁻, id⁺ = vmap⁻[n, f, e⁻], vmap⁺[n, f, e⁻]
+        e⁺ = ((id⁺ - 1) ÷ Np) + 1
+
         vid⁻, vid⁺ = ((id⁻ - 1) % Np) + 1, ((id⁺ - 1) % Np) + 1
 
         # Load minus side data
@@ -507,7 +516,7 @@ See [`odefun!`](@ref) for usage.
             l_aux⁺diff[s] = l_aux⁺nondiff[s] = auxstate[vid⁺, s, e⁺]
         end
 
-        bctype = elemtobndy[f, e]
+        bctype = elemtobndy[f, e⁻]
         fill!(l_F, -zero(eltype(l_F)))
         if bctype == 0
             numerical_flux_nondiffusive!(
@@ -540,13 +549,13 @@ See [`odefun!`](@ref) for usage.
             if (dim == 2 && f == 3) || (dim == 3 && f == 5)
                 # Loop up the first element along all horizontal elements
                 @unroll for s in 1:nstate
-                    l_Q_bot1[s] = Q[n + Nqk^2, s, e]
+                    l_Q_bot1[s] = Q[n + Nqk^2, s, e⁻]
                 end
                 @unroll for s in 1:nviscstate
-                    l_Qvisc_bot1[s] = Qvisc[n + Nqk^2, s, e]
+                    l_Qvisc_bot1[s] = Qvisc[n + Nqk^2, s, e⁻]
                 end
                 @unroll for s in 1:nauxstate
-                    l_aux_bot1[s] = auxstate[n + Nqk^2, s, e]
+                    l_aux_bot1[s] = auxstate[n + Nqk^2, s, e⁻]
                 end
             end
             numerical_boundary_flux_nondiffusive!(
@@ -598,7 +607,7 @@ end
     bl::BalanceLaw,
     ::Val{dim},
     ::Val{polyorder},
-    ::direction,
+    direction,
     Q,
     Qvisc,
     Qhypervisc_grad,
@@ -608,7 +617,7 @@ end
     D,
     hypervisc_indexmap,
     elems,
-) where {dim, polyorder, direction}
+) where {dim, polyorder}
     @uniform begin
         N = polyorder
 
@@ -667,11 +676,11 @@ end
         # Compute gradient of each state
         ξ1x1, ξ1x2, ξ1x3 =
             vgeo[ijk, _ξ1x1, e], vgeo[ijk, _ξ1x2, e], vgeo[ijk, _ξ1x3, e]
-        if dim == 3 || (dim == 2 && direction == EveryDirection)
+        if dim == 3 || (dim == 2 && direction isa EveryDirection)
             ξ2x1, ξ2x2, ξ2x3 =
                 vgeo[ijk, _ξ2x1, e], vgeo[ijk, _ξ2x2, e], vgeo[ijk, _ξ2x3, e]
         end
-        if dim == 3 && direction == EveryDirection
+        if dim == 3 && direction isa EveryDirection
             ξ3x1, ξ3x2, ξ3x3 =
                 vgeo[ijk, _ξ3x1, e], vgeo[ijk, _ξ3x2, e], vgeo[ijk, _ξ3x3, e]
         end
@@ -680,10 +689,10 @@ end
             Gξ1 = Gξ2 = Gξ3 = zero(FT)
             @unroll for n in 1:Nq
                 Gξ1 += s_D[i, n] * s_G[n, j, k, s]
-                if dim == 3 || (dim == 2 && direction == EveryDirection)
+                if dim == 3 || (dim == 2 && direction isa EveryDirection)
                     Gξ2 += s_D[j, n] * s_G[i, n, k, s]
                 end
-                if dim == 3 && direction == EveryDirection
+                if dim == 3 && direction isa EveryDirection
                     Gξ3 += s_D[k, n] * s_G[i, j, n, s]
                 end
             end
@@ -691,13 +700,13 @@ end
             l_gradG[2, s] = ξ1x2 * Gξ1
             l_gradG[3, s] = ξ1x3 * Gξ1
 
-            if dim == 3 || (dim == 2 && direction == EveryDirection)
+            if dim == 3 || (dim == 2 && direction isa EveryDirection)
                 l_gradG[1, s] += ξ2x1 * Gξ2
                 l_gradG[2, s] += ξ2x2 * Gξ2
                 l_gradG[3, s] += ξ2x3 * Gξ2
             end
 
-            if dim == 3 && direction == EveryDirection
+            if dim == 3 && direction isa EveryDirection
                 l_gradG[1, s] += ξ3x1 * Gξ3
                 l_gradG[2, s] += ξ3x2 * Gξ3
                 l_gradG[3, s] += ξ3x3 * Gξ3
@@ -855,7 +864,7 @@ end
     bl::BalanceLaw,
     ::Val{dim},
     ::Val{polyorder},
-    ::direction,
+    direction,
     gradnumflux::NumericalFluxGradient,
     Q,
     Qvisc,
@@ -869,7 +878,7 @@ end
     elemtobndy,
     hypervisc_indexmap,
     elems,
-) where {dim, polyorder, direction}
+) where {dim, polyorder}
     @uniform begin
         N = polyorder
         FT = eltype(Q)
@@ -894,9 +903,9 @@ end
         end
 
         faces = 1:nface
-        if direction == VerticalDirection
+        if direction isa VerticalDirection
             faces = (nface - 1):nface
-        elseif direction == HorizontalDirection
+        elseif direction isa HorizontalDirection
             faces = 1:(nface - 2)
         end
 
@@ -922,15 +931,23 @@ end
         l_aux_bot1 = MArray{Tuple{nauxstate}, FT}(undef)
     end
 
-    e = @index(Group, Linear)
+    eI = @index(Group, Linear)
     n = @index(Local, Linear)
 
-    @inbounds for f in faces
-        n⁻ = SVector(sgeo[_n1, n, f, e], sgeo[_n2, n, f, e], sgeo[_n3, n, f, e])
-        sM, vMI = sgeo[_sM, n, f, e], sgeo[_vMI, n, f, e]
-        id⁻, id⁺ = vmap⁻[n, f, e], vmap⁺[n, f, e]
+    e = @private Int (1,)
+    @inbounds e[1] = elems[eI]
 
-        e⁻, e⁺ = e, ((id⁺ - 1) ÷ Np) + 1
+    @inbounds for f in faces
+        e⁻ = e[1]
+        n⁻ = SVector(
+            sgeo[_n1, n, f, e⁻],
+            sgeo[_n2, n, f, e⁻],
+            sgeo[_n3, n, f, e⁻],
+        )
+        sM, vMI = sgeo[_sM, n, f, e⁻], sgeo[_vMI, n, f, e⁻]
+        id⁻, id⁺ = vmap⁻[n, f, e⁻], vmap⁺[n, f, e⁻]
+        e⁺ = ((id⁺ - 1) ÷ Np) + 1
+
         vid⁻, vid⁺ = ((id⁻ - 1) % Np) + 1, ((id⁺ - 1) % Np) + 1
 
         # Load minus side data
@@ -969,7 +986,7 @@ end
             t,
         )
 
-        bctype = elemtobndy[f, e]
+        bctype = elemtobndy[f, e⁻]
         fill!(l_Qvisc, -zero(eltype(l_Qvisc)))
         if bctype == 0
             numerical_flux_gradient!(
@@ -999,10 +1016,10 @@ end
             if (dim == 2 && f == 3) || (dim == 3 && f == 5)
                 # Loop up the first element along all horizontal elements
                 @unroll for s in 1:nstate
-                    l_Q_bot1[s] = Q[n + Nqk^2, s, e]
+                    l_Q_bot1[s] = Q[n + Nqk^2, s, e⁻]
                 end
                 @unroll for s in 1:nauxstate
-                    l_aux_bot1[s] = auxstate[n + Nqk^2, s, e]
+                    l_aux_bot1[s] = auxstate[n + Nqk^2, s, e⁻]
                 end
             end
             numerical_boundary_flux_gradient!(
@@ -1161,7 +1178,7 @@ end
 
 @doc """
     knl_nodal_update_aux!(bl::BalanceLaw, ::Val{dim}, ::Val{N}, f!, Q, auxstate,
-                          t, elems) where {dim, N}
+                          t, elems, activedofs) where {dim, N}
 
 Update the auxiliary state array
 """ knl_nodal_update_aux!
@@ -1174,6 +1191,7 @@ Update the auxiliary state array
     auxstate,
     t,
     elems,
+    activedofs,
 ) where {dim, N}
     FT = eltype(Q)
     nstate = num_state(bl, FT)
@@ -1188,29 +1206,40 @@ Update the auxiliary state array
     l_Q = MArray{Tuple{nstate}, FT}(undef)
     l_aux = MArray{Tuple{nauxstate}, FT}(undef)
 
-    e = @index(Group, Linear)
+    eI = @index(Group, Linear)
     n = @index(Local, Linear)
 
     @inbounds begin
-        @unroll for s in 1:nstate
-            l_Q[s] = Q[n, s, e]
-        end
+        e = elems[eI]
 
-        @unroll for s in 1:nauxstate
-            l_aux[s] = auxstate[n, s, e]
-        end
+        active = activedofs[n + (e - 1) * Np]
 
-        f!(bl, Vars{vars_state(bl, FT)}(l_Q), Vars{vars_aux(bl, FT)}(l_aux), t)
+        if active
+            @unroll for s in 1:nstate
+                l_Q[s] = Q[n, s, e]
+            end
 
-        @unroll for s in 1:nauxstate
-            auxstate[n, s, e] = l_aux[s]
+            @unroll for s in 1:nauxstate
+                l_aux[s] = auxstate[n, s, e]
+            end
+
+            f!(
+                bl,
+                Vars{vars_state(bl, FT)}(l_Q),
+                Vars{vars_aux(bl, FT)}(l_aux),
+                t,
+            )
+
+            @unroll for s in 1:nauxstate
+                auxstate[n, s, e] = l_aux[s]
+            end
         end
     end
 end
 
 @doc """
     knl_nodal_update_aux!(bl::BalanceLaw, ::Val{dim}, ::Val{N}, f!, Q, auxstate, diffstate,
-                          t, elems) where {dim, N}
+                          t, elems, activedofs) where {dim, N}
 
 Update the auxiliary state array
 """ knl_nodal_update_aux!
@@ -1224,6 +1253,7 @@ Update the auxiliary state array
     diffstate,
     t,
     elems,
+    activedofs,
 ) where {dim, N}
     FT = eltype(Q)
     nstate = num_state(bl, FT)
@@ -1240,32 +1270,38 @@ Update the auxiliary state array
     l_aux = MArray{Tuple{nauxstate}, FT}(undef)
     l_diff = MArray{Tuple{nviscstate}, FT}(undef)
 
-    e = @index(Group, Linear)
+    eI = @index(Group, Linear)
     n = @index(Local, Linear)
 
     @inbounds begin
-        @unroll for s in 1:nstate
-            l_Q[s] = Q[n, s, e]
-        end
+        e = elems[eI]
 
-        @unroll for s in 1:nauxstate
-            l_aux[s] = auxstate[n, s, e]
-        end
+        active = activedofs[n + (e - 1) * Np]
 
-        @unroll for s in 1:nviscstate
-            l_diff[s] = diffstate[n, s, e]
-        end
+        if active
+            @unroll for s in 1:nstate
+                l_Q[s] = Q[n, s, e]
+            end
 
-        f!(
-            bl,
-            Vars{vars_state(bl, FT)}(l_Q),
-            Vars{vars_aux(bl, FT)}(l_aux),
-            Vars{vars_diffusive(bl, FT)}(l_diff),
-            t,
-        )
+            @unroll for s in 1:nauxstate
+                l_aux[s] = auxstate[n, s, e]
+            end
 
-        @unroll for s in 1:nauxstate
-            auxstate[n, s, e] = l_aux[s]
+            @unroll for s in 1:nviscstate
+                l_diff[s] = diffstate[n, s, e]
+            end
+
+            f!(
+                bl,
+                Vars{vars_state(bl, FT)}(l_Q),
+                Vars{vars_aux(bl, FT)}(l_aux),
+                Vars{vars_diffusive(bl, FT)}(l_diff),
+                t,
+            )
+
+            @unroll for s in 1:nauxstate
+                auxstate[n, s, e] = l_aux[s]
+            end
         end
     end
 end
@@ -1305,7 +1341,7 @@ See [`DGBalanceLaw`](@ref) for usage.
     l_int = @private FT (nout, Nq)
     s_I = @localmem FT (Nq, Nq)
 
-    eh = @index(Group, Linear)
+    _eh = @index(Group, Linear)
     i, j = @index(Local, NTuple)
 
     @inbounds begin
@@ -1320,6 +1356,9 @@ See [`DGBalanceLaw`](@ref) for usage.
                 l_int[s, k] = 0
             end
         end
+
+        eh = elems[_eh]
+
         # Loop up the stack of elements
         for ev in 1:nvertelem
             e = ev + (eh - 1) * nvertelem
@@ -1400,10 +1439,12 @@ end
         l_V = MArray{Tuple{nout}, FT}(undef)
     end
 
-    eh = @index(Group, Linear)
+    _eh = @index(Group, Linear)
     i, j = @index(Local, NTuple)
 
     @inbounds begin
+        eh = elems[_eh]
+
         # Initialize the constant state at zero
         ijk = i + Nq * ((j - 1) + Nqj * (Nq - 1))
         et = nvertelem + (eh - 1) * nvertelem
@@ -1451,7 +1492,7 @@ end
     Nq = N + 1
     Nqj = dim == 2 ? 1 : Nq
 
-    eh = @index(Group, Linear)
+    _eh = @index(Group, Linear)
     i, j = @index(Local, NTuple)
 
     # note that k is the second not 4th index (since this is scratch memory and k
@@ -1459,6 +1500,7 @@ end
     @inbounds begin
         # Initialize the constant state at zero
         ijk = i + Nq * ((j - 1) + Nqj * (Nq - 1))
+        eh = elems[_eh]
         et = nvertelem + (eh - 1) * nvertelem
         val = auxstate[ijk, fldin, et]
 
@@ -1477,13 +1519,13 @@ end
     bl::BalanceLaw,
     ::Val{dim},
     ::Val{polyorder},
-    ::direction,
+    direction,
     Qhypervisc_grad,
     Qhypervisc_div,
     vgeo,
     D,
     elems,
-) where {dim, polyorder, direction}
+) where {dim, polyorder}
     @uniform begin
         N = polyorder
         FT = eltype(Qhypervisc_grad)
@@ -1515,11 +1557,11 @@ end
 
         ξ1x1, ξ1x2, ξ1x3 =
             vgeo[ijk, _ξ1x1, e], vgeo[ijk, _ξ1x2, e], vgeo[ijk, _ξ1x3, e]
-        if dim == 3 || (dim == 2 && direction == EveryDirection)
+        if dim == 3 || (dim == 2 && direction isa EveryDirection)
             ξ2x1, ξ2x2, ξ2x3 =
                 vgeo[ijk, _ξ2x1, e], vgeo[ijk, _ξ2x2, e], vgeo[ijk, _ξ2x3, e]
         end
-        if dim == 3 && direction == EveryDirection
+        if dim == 3 && direction isa EveryDirection
             ξ3x1, ξ3x2, ξ3x3 =
                 vgeo[ijk, _ξ3x1, e], vgeo[ijk, _ξ3x2, e], vgeo[ijk, _ξ3x3, e]
         end
@@ -1533,13 +1575,13 @@ end
                 g1ξ1 += Din * s_grad[n, j, k, s, 1]
                 g2ξ1 += Din * s_grad[n, j, k, s, 2]
                 g3ξ1 += Din * s_grad[n, j, k, s, 3]
-                if dim == 3 || (dim == 2 && direction == EveryDirection)
+                if dim == 3 || (dim == 2 && direction isa EveryDirection)
                     Djn = s_D[j, n]
                     g1ξ2 += Djn * s_grad[i, n, k, s, 1]
                     g2ξ2 += Djn * s_grad[i, n, k, s, 2]
                     g3ξ2 += Djn * s_grad[i, n, k, s, 3]
                 end
-                if dim == 3 && direction == EveryDirection
+                if dim == 3 && direction isa EveryDirection
                     Dkn = s_D[k, n]
                     g1ξ3 += Dkn * s_grad[i, j, n, s, 1]
                     g2ξ3 += Dkn * s_grad[i, j, n, s, 2]
@@ -1548,11 +1590,11 @@ end
             end
             l_div[s] = ξ1x1 * g1ξ1 + ξ1x2 * g2ξ1 + ξ1x3 * g3ξ1
 
-            if dim == 3 || (dim == 2 && direction == EveryDirection)
+            if dim == 3 || (dim == 2 && direction isa EveryDirection)
                 l_div[s] += ξ2x1 * g1ξ2 + ξ2x2 * g2ξ2 + ξ2x3 * g3ξ2
             end
 
-            if dim == 3 && direction == EveryDirection
+            if dim == 3 && direction isa EveryDirection
                 l_div[s] += ξ3x1 * g1ξ3 + ξ3x2 * g2ξ3 + ξ3x3 * g3ξ3
             end
         end
@@ -1645,7 +1687,7 @@ end
     bl::BalanceLaw,
     ::Val{dim},
     ::Val{polyorder},
-    ::direction,
+    direction,
     divgradnumpenalty,
     Qhypervisc_grad,
     Qhypervisc_div,
@@ -1655,7 +1697,7 @@ end
     vmap⁺,
     elemtobndy,
     elems,
-) where {dim, polyorder, direction}
+) where {dim, polyorder}
     @uniform begin
         N = polyorder
         FT = eltype(Qhypervisc_grad)
@@ -1676,9 +1718,9 @@ end
         end
 
         faces = 1:nface
-        if direction == VerticalDirection
+        if direction isa VerticalDirection
             faces = (nface - 1):nface
-        elseif direction == HorizontalDirection
+        elseif direction isa HorizontalDirection
             faces = 1:(nface - 2)
         end
 
@@ -1689,15 +1731,23 @@ end
         l_div = MArray{Tuple{ngradlapstate}, FT}(undef)
     end
 
-    e = @index(Group, Linear)
+    eI = @index(Group, Linear)
     n = @index(Local, Linear)
 
-    @inbounds for f in faces
-        n⁻ = SVector(sgeo[_n1, n, f, e], sgeo[_n2, n, f, e], sgeo[_n3, n, f, e])
-        sM, vMI = sgeo[_sM, n, f, e], sgeo[_vMI, n, f, e]
-        id⁻, id⁺ = vmap⁻[n, f, e], vmap⁺[n, f, e]
+    e = @private Int (1,)
+    @inbounds e[1] = elems[eI]
 
-        e⁻, e⁺ = e, ((id⁺ - 1) ÷ Np) + 1
+    @inbounds for f in faces
+        e⁻ = e[1]
+        n⁻ = SVector(
+            sgeo[_n1, n, f, e⁻],
+            sgeo[_n2, n, f, e⁻],
+            sgeo[_n3, n, f, e⁻],
+        )
+        sM, vMI = sgeo[_sM, n, f, e⁻], sgeo[_vMI, n, f, e⁻]
+        id⁻, id⁺ = vmap⁻[n, f, e⁻], vmap⁺[n, f, e⁻]
+        e⁺ = ((id⁺ - 1) ÷ Np) + 1
+
         vid⁻, vid⁺ = ((id⁻ - 1) % Np) + 1, ((id⁺ - 1) % Np) + 1
 
         # Load minus side data
@@ -1714,7 +1764,7 @@ end
             l_grad⁺[3, s] = Qhypervisc_grad[vid⁺, 3 * (s - 1) + 3, e⁺]
         end
 
-        bctype = elemtobndy[f, e]
+        bctype = elemtobndy[f, e⁻]
         if bctype == 0
             divergence_penalty!(
                 divgradnumpenalty,
@@ -1748,7 +1798,7 @@ end
     bl::BalanceLaw,
     ::Val{dim},
     ::Val{polyorder},
-    ::direction,
+    direction,
     Qhypervisc_grad,
     Qhypervisc_div,
     Q,
@@ -1758,7 +1808,7 @@ end
     D,
     elems,
     t,
-) where {dim, polyorder, direction}
+) where {dim, polyorder}
     @uniform begin
         N = polyorder
 
@@ -1805,11 +1855,11 @@ end
 
         ξ1x1, ξ1x2, ξ1x3 =
             vgeo[ijk, _ξ1x1, e], vgeo[ijk, _ξ1x2, e], vgeo[ijk, _ξ1x3, e]
-        if dim == 3 || (dim == 2 && direction == EveryDirection)
+        if dim == 3 || (dim == 2 && direction isa EveryDirection)
             ξ2x1, ξ2x2, ξ2x3 =
                 vgeo[ijk, _ξ2x1, e], vgeo[ijk, _ξ2x2, e], vgeo[ijk, _ξ2x3, e]
         end
-        if dim == 3 && direction == EveryDirection
+        if dim == 3 && direction isa EveryDirection
             ξ3x1, ξ3x2, ξ3x3 =
                 vgeo[ijk, _ξ3x1, e], vgeo[ijk, _ξ3x2, e], vgeo[ijk, _ξ3x3, e]
         end
@@ -1820,13 +1870,13 @@ end
                 Dni = s_D[n, i] * s_ω[n] / s_ω[i]
                 lap_njk = s_lap[n, j, k, s]
                 lap_ξ1 += Dni * lap_njk
-                if dim == 3 || (dim == 2 && direction == EveryDirection)
+                if dim == 3 || (dim == 2 && direction isa EveryDirection)
                     ink = i + Nq * ((n - 1) + Nq * (k - 1))
                     Dnj = s_D[n, j] * s_ω[n] / s_ω[j]
                     lap_ink = s_lap[i, n, k, s]
                     lap_ξ2 += Dnj * lap_ink
                 end
-                if dim == 3 && direction == EveryDirection
+                if dim == 3 && direction isa EveryDirection
                     ijn = i + Nq * ((j - 1) + Nq * (n - 1))
                     Dnk = s_D[n, k] * s_ω[n] / s_ω[k]
                     lap_ijn = s_lap[i, j, n, s]
@@ -1838,13 +1888,13 @@ end
             l_grad_lap[2, s] = -ξ1x2 * lap_ξ1
             l_grad_lap[3, s] = -ξ1x3 * lap_ξ1
 
-            if dim == 3 || (dim == 2 && direction == EveryDirection)
+            if dim == 3 || (dim == 2 && direction isa EveryDirection)
                 l_grad_lap[1, s] -= ξ2x1 * lap_ξ2
                 l_grad_lap[2, s] -= ξ2x2 * lap_ξ2
                 l_grad_lap[3, s] -= ξ2x3 * lap_ξ2
             end
 
-            if dim == 3 && direction == EveryDirection
+            if dim == 3 && direction isa EveryDirection
                 l_grad_lap[1, s] -= ξ3x1 * lap_ξ3
                 l_grad_lap[2, s] -= ξ3x2 * lap_ξ3
                 l_grad_lap[3, s] -= ξ3x3 * lap_ξ3
@@ -1974,7 +2024,7 @@ end
     bl::BalanceLaw,
     ::Val{dim},
     ::Val{polyorder},
-    ::direction,
+    direction,
     hyperviscnumflux,
     Qhypervisc_grad,
     Qhypervisc_div,
@@ -1987,7 +2037,7 @@ end
     elemtobndy,
     elems,
     t,
-) where {dim, polyorder, direction}
+) where {dim, polyorder}
     @uniform begin
         N = polyorder
         FT = eltype(Qhypervisc_grad)
@@ -2012,9 +2062,9 @@ end
         end
 
         faces = 1:nface
-        if direction == VerticalDirection
+        if direction isa VerticalDirection
             faces = (nface - 1):nface
-        elseif direction == HorizontalDirection
+        elseif direction isa HorizontalDirection
             faces = 1:(nface - 2)
         end
 
@@ -2031,14 +2081,23 @@ end
         l_aux⁺ = MArray{Tuple{nauxstate}, FT}(undef)
     end
 
-    e = @index(Group, Linear)
+    eI = @index(Group, Linear)
     n = @index(Local, Linear)
-    @inbounds for f in faces
-        n⁻ = SVector(sgeo[_n1, n, f, e], sgeo[_n2, n, f, e], sgeo[_n3, n, f, e])
-        sM, vMI = sgeo[_sM, n, f, e], sgeo[_vMI, n, f, e]
-        id⁻, id⁺ = vmap⁻[n, f, e], vmap⁺[n, f, e]
 
-        e⁻, e⁺ = e, ((id⁺ - 1) ÷ Np) + 1
+    e = @private Int (1,)
+    @inbounds e[1] = elems[eI]
+
+    @inbounds for f in faces
+        e⁻ = e[1]
+        n⁻ = SVector(
+            sgeo[_n1, n, f, e⁻],
+            sgeo[_n2, n, f, e⁻],
+            sgeo[_n3, n, f, e⁻],
+        )
+        sM, vMI = sgeo[_sM, n, f, e⁻], sgeo[_vMI, n, f, e⁻]
+        id⁻, id⁺ = vmap⁻[n, f, e⁻], vmap⁺[n, f, e⁻]
+        e⁺ = ((id⁺ - 1) ÷ Np) + 1
+
         vid⁻, vid⁺ = ((id⁻ - 1) % Np) + 1, ((id⁺ - 1) % Np) + 1
 
         # Load minus side data
@@ -2067,7 +2126,7 @@ end
             l_lap⁺[s] = Qhypervisc_div[vid⁺, s, e⁺]
         end
 
-        bctype = elemtobndy[f, e]
+        bctype = elemtobndy[f, e⁻]
         if bctype == 0
             numerical_flux_hyperdiffusive!(
                 hyperviscnumflux,
@@ -2117,8 +2176,9 @@ end
     auxstate,
     diffstate,
     elems,
-    direction,
     Δt,
+    simtime,
+    direction,
 ) where {dim, N}
     @uniform begin
         FT = eltype(Q)
@@ -2160,6 +2220,7 @@ end
             Vars{vars_diffusive(bl, FT)}(l_diff),
             Δx,
             Δt,
+            simtime,
             direction,
         )
 

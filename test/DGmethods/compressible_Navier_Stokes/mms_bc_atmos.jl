@@ -11,17 +11,15 @@ using CLIMA.GenericCallbacks
 using CLIMA.Atmos
 using CLIMA.VariableTemplates
 using CLIMA.MoistThermodynamics
-using CLIMA.PlanetParameters
 using LinearAlgebra
 using StaticArrays
 using Logging, Printf, Dates
 using CLIMA.VTK
 using Test
 
-using CLIMA.Parameters
-const clima_dir = dirname(pathof(CLIMA))
-include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
-param_set = ParameterSet()
+using CLIMAParameters
+struct EarthParameterSet <: AbstractEarthParameterSet end
+const param_set = EarthParameterSet()
 
 if !@isdefined integration_testing
     const integration_testing = parse(
@@ -101,6 +99,7 @@ function mms2_source!(
     diffusive::Vars,
     aux::Vars,
     t::Real,
+    direction,
 )
     x1, x2, x3 = aux.coord
     source.ρ = Sρ_g(t, x1, x2, x3, Val(2))
@@ -129,6 +128,7 @@ function mms3_source!(
     diffusive::Vars,
     aux::Vars,
     t::Real,
+    direction,
 )
     x1, x2, x3 = aux.coord
     source.ρ = Sρ_g(t, x1, x2, x3, Val(3))

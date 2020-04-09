@@ -8,6 +8,8 @@ cpu = [
   { file = "test/DGmethods/advection_diffusion/pseudo1D_heat_eqn.jl", slurmargs = ["--ntasks=3"], args = [] },
   { file = "test/DGmethods/advection_diffusion/periodic_3D_hyperdiffusion.jl", slurmargs = ["--ntasks=3"], args = [] },
   { file = "test/ODESolvers/ode_tests_convergence.jl", slurmargs = ["--ntasks=1"], args = [] },
+  { file = "examples/Microphysics/ex_1_saturation_adjustment.jl", slurmargs = ["--ntasks=3"], args = [] },
+  { file = "examples/Microphysics/ex_2_Kessler.jl", slurmargs = ["--ntasks=3"], args = [] },
 ]
 
 cpu_gpu = [
@@ -30,9 +32,7 @@ cpu_gpu = [
   { file = "test/DGmethods_old/Euler/isentropic_vortex_standalone_source.jl", slurmargs = ["--ntasks=3"], args = [] },
   { file = "test/DGmethods_old/compressible_Navier_Stokes/mms_bc.jl", slurmargs = ["--ntasks=3"], args = [] },
   { file = "test/DGmethods_old/conservation/sphere.jl", slurmargs = ["--ntasks=3"], args = [] },
-  { file = "test/DGmethods_old/sphere/advection_sphere_lsrk.jl", slurmargs = ["--ntasks=2"], args = [] },
-  { file = "test/DGmethods_old/sphere/advection_sphere_ssp33.jl", slurmargs = ["--ntasks=2"], args = [] },
-  { file = "test/DGmethods_old/sphere/advection_sphere_ssp34.jl", slurmargs = ["--ntasks=2"], args = [] },
+  { file = "test/DGmethods/advection_diffusion/advection_sphere.jl", slurmargs = ["--ntasks=2"], args = [] },
   { file = "test/Driver/gcm_driver_test.jl", slurmargs = ["--ntasks=1"], args = [] },
   { file = "test/LinearSolvers/poisson.jl", slurmargs = ["--ntasks=2"], args = [] },
   { file = "test/LinearSolvers/columnwiselu.jl", slurmargs = ["--ntasks=1"], args = []},
@@ -43,8 +43,6 @@ cpu_gpu = [
   { file = "examples/DGmethods_old/ex_002_solid_body_rotation.jl", slurmargs = ["--ntasks=3"], args = [] },
   { file = "examples/DGmethods_old/ex_003_acoustic_wave.jl", slurmargs = ["--ntasks=3"], args = [] },
   { file = "examples/DGmethods_old/ex_004_nonnegative.jl", slurmargs = ["--ntasks=3"], args = [] },
-  { file = "examples/Microphysics/ex_1_saturation_adjustment.jl", slurmargs = ["--ntasks=3"], args = [] },
-#  { file = "examples/Microphysics/ex_2_Kessler.jl", slurmargs = ["--ntasks=3"], args = [] },
 ]
 
 gpu = [

@@ -21,7 +21,7 @@ Subtypes `L` should define the following methods:
 - `gradvariables!(::L, transformstate::State, state::State, auxstate::State, t::Real)`: transformation of state variables to variables of which gradients are computed
 - `diffusive!(::L, diffstate::State, ∇transformstate::Grad, auxstate::State, t::Real)`: transformation of gradients to the diffusive variables
 - `hyperdiffusive!(::L, hyperdiffstate::State, ∇Δtransformstate::Grad, auxstate::State, t::Real)`: transformation of laplacian gradients to the hyperdiffusive variables
-- `source!(::L, source::State, state::State, diffusive::Vars, auxstate::State, t::Real)`
+- `source!(::L, source::State, state::State, diffusive::Vars, auxstate::State, t::Real, direction::Direction)
 - `wavespeed(::L, n⁻, state::State, aux::State, t::Real)`
 - `boundary_state!(::NumericalFluxGradient, ::L, state⁺::State, aux⁺::State, normal⁻, state⁻::State, aux⁻::State, bctype, t)`
 - `boundary_state!(::NumericalFluxNonDiffusive, ::L, state⁺::State, aux⁺::State, normal⁻, state⁻::State, aux⁻::State, bctype, t)`
@@ -71,19 +71,19 @@ function init_state! end
 
 using ..Courant
 """
-    calculate_dt(dg, model, Q, Courant_number, direction)
+    calculate_dt(dg, model, Q, Courant_number, direction, t)
 
 For a given model, compute a time step satisying the nondiffusive Courant number
 `Courant_number`
 """
-function calculate_dt(dg, model, Q, Courant_number, direction)
+function calculate_dt(dg, model, Q, Courant_number, t, direction)
     Δt = one(eltype(Q))
-    CFL = courant(nondiffusive_courant, dg, model, Q, Δt, direction)
+    CFL = courant(nondiffusive_courant, dg, model, Q, Δt, t, direction)
     return Courant_number / CFL
 end
 
 
-function create_state(bl::BalanceLaw, grid, commtag)
+function create_state(bl::BalanceLaw, grid)
     topology = grid.topology
     # FIXME: Remove after updating CUDA
     h_vgeo = Array(grid.vgeo)
@@ -109,12 +109,11 @@ function create_state(bl::BalanceLaw, grid, commtag)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
-        commtag = commtag,
     )
     return state
 end
 
-function create_auxstate(bl, grid, commtag = 222)
+function create_auxstate(bl, grid)
     topology = grid.topology
     Np = dofs_per_element(grid)
 
@@ -140,7 +139,6 @@ function create_auxstate(bl, grid, commtag = 222)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
-        commtag = commtag,
     )
 
     dim = dimensionality(grid)
@@ -158,14 +156,14 @@ function create_auxstate(bl, grid, commtag = 222)
         topology.realelems,
         dependencies = (event,),
     )
+    event = MPIStateArrays.begin_ghost_exchange!(auxstate; dependencies = event)
+    event = MPIStateArrays.end_ghost_exchange!(auxstate; dependencies = event)
     wait(device, event)
-    MPIStateArrays.start_ghost_exchange!(auxstate)
-    MPIStateArrays.finish_ghost_exchange!(auxstate)
 
     return auxstate
 end
 
-function create_diffstate(bl, grid, commtag = 111)
+function create_diffstate(bl, grid)
     topology = grid.topology
     Np = dofs_per_element(grid)
 
@@ -192,13 +190,12 @@ function create_diffstate(bl, grid, commtag = 111)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
-        commtag = commtag,
     )
 
     return diffstate
 end
 
-function create_hyperdiffstate(bl, grid, commtag = 333)
+function create_hyperdiffstate(bl, grid)
     topology = grid.topology
     Np = dofs_per_element(grid)
 
@@ -226,7 +223,6 @@ function create_hyperdiffstate(bl, grid, commtag = 333)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
-        commtag = commtag,
     )
 
     V = vars_hyperdiffusive(bl, FT)
@@ -244,7 +240,6 @@ function create_hyperdiffstate(bl, grid, commtag = 333)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
-        commtag = commtag + 111,
     )
     return Qhypervisc_grad, Qhypervisc_div
 end
