@@ -230,7 +230,7 @@ function dostep!(Q, mis::MultirateInfinitesimalStep, p, time, dt)
             )
             wait(device(Q), event)
 
-            Q .+= dt*offset
+            Q .+= dt.*offset
         else
             event = update!(device(Q), groupsize)(
                 realview(Q),
