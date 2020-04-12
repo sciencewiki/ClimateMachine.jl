@@ -34,6 +34,7 @@ import CLIMA.DGmethods:
     init_aux!,
     init_state!,
     update_aux!,
+    dynsgs!,
     LocalGeometry,
     lengthscale,
     resolutionmetric,

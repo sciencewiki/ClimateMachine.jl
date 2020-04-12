@@ -545,32 +545,31 @@ function dynsgs!(dg::DGModel, m::BalanceLaw,
                  Q::MPIStateArray,
                  auxstate::MPIStateArray, 
                  dQdt::MPIStateArray)
-
-  device = typeof(Q.data) <: Array ? CPU() : CUDA()
-
-  grid = dg.grid
-  topology = grid.topology
-
-  dim = dimensionality(grid)
-  N = polynomialorder(grid)
-  Nq = N + 1
-  Nqk = dim == 2 ? 1 : Nq
-
-  FT = eltype(Q)
-
-  vgeo = grid.vgeo
-  polyorder = polynomialorder(dg.grid)
-
-  # do integrals
-  nintegrals = num_integrals(m, FT)
-  nelem = length(topology.elems)
-  nvertelem = topology.stacksize
-  nhorzelem = div(nelem, nvertelem)
-
-  @launch(device, threads=(Nq, Nqk, 1), blocks=nhorzelem,
-          knl_dynsgs!(Val(dim), Val(N), Val(nvertelem), Val(nhorzelem), 
-                      m, vgeo, 
-                      Q.data, dQdt.data, auxstate))
+    device = typeof(Q.data) <: Array ? CPU() : CUDA()
+    grid = dg.grid
+    topology = grid.topology
+    dim = dimensionality(grid)
+    N = polynomialorder(grid)
+    Nq = N + 1
+    Nqk = dim == 2 ? 1 : Nq
+    FT = eltype(Q)
+    # do integrals
+    nelem = length(elems)
+    nvertelem = topology.stacksize
+    horzelems = fld1(first(elems), nvertelem):fld1(last(elems), nvertelem)
+    event = Event(device)
+    event = knl_dynsgs!(device, (Nq, Nqk))(
+        Val(dim),
+        Val(N),
+        Val(nvertelem),
+        Val(nhorzelem),
+        m,
+        vgeo,
+        Q.data, 
+        auxstate.data,
+        dependencies = (event,),
+    )
+    wait(device, event)
 end
 
 # fallback
