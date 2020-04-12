@@ -62,9 +62,9 @@ function diffusive!(
 ) end
 
 """
-    ν, τ = turbulence_tensors(::TurbulenceClosure, orientation::Orientation, param_set::AbstractParameterSet, state::Vars, diffusive::Vars, aux::Vars, t::Real)
+    ν, D_t, τ = turbulence_tensors(::TurbulenceClosure, orientation::Orientation, param_set::AbstractParameterSet, state::Vars, diffusive::Vars, aux::Vars, t::Real)
 
-Compute the kinematic viscosity tensor (`ν`) and SGS momentum flux tensor (`τ`).
+    Compute the kinematic viscosity (`ν`), the diffusivity (`D_t`) and SGS momentum flux tensor (`τ`).
 """
 function turbulence_tensors end
 
@@ -214,8 +214,8 @@ function turbulence_tensors(
     _inv_Pr_turb::FT = inv_Pr_turb(param_set)
     S = diffusive.turbulence.S
     ν = m.ρν / state.ρ
+    D_t = ν * _inv_Pr_turb
     τ = (-2 * ν) * S + (2 * ν / 3) * tr(S) * I
-    D_t = (ν isa Real ? ν : diag(ν)) * _inv_Pr_turb
     return ν, D_t, τ
 end
 
@@ -233,7 +233,7 @@ end
 # ```
 # with the stratification correction term
 # ```math
-# \mathrm{f}_{b} = \sqrt{1 - \frac{\mathrm{Ri}}{\mathrm{Pr}_{t}}}
+# \mathrm{f}_{b}^{2} = \sqrt{1 - \frac{\mathrm{Ri}}{\mathrm{Pr}_{t}}}
 # ```\
 # $\mathrm{Ri}$ and $\mathrm{Pr}_{t}$ are the Richardson and
 # turbulent Prandtl numbers respectively.  $\Delta$ is the mixing length in the
@@ -348,11 +348,11 @@ function turbulence_tensors(
     f_b² = sqrt(clamp(FT(1) - Richardson * _inv_Pr_turb, FT(0), FT(1)))
     ν₀ = normS * (m.C_smag * aux.turbulence.Δ)^2 + FT(1e-5)
     ν = SVector{3, FT}(ν₀, ν₀, ν₀)
-    ν_v = k̂ .* dot(ν, f_b² * k̂)
+    ν_v = k̂ .* dot(ν, k̂)
     ν_h = ν₀ .- ν_v
-    ν = SDiagonal(ν_h + ν_v)
+    ν = SDiagonal(ν_h + ν_v .* f_b²)
+    D_t = diag(ν) * _inv_Pr_turb
     τ = -2 * ν * S
-    D_t = (ν isa Real ? ν : diag(ν)) * _inv_Pr_turb
     return ν, D_t, τ
 end
 
@@ -457,12 +457,12 @@ function turbulence_tensors(
 
     ν₀ = m.C_smag^2 * FT(2.5) * sqrt(abs(Bβ / (norm2(α) + eps(FT))))
 
-    ν₀ = SVector{3, FT}(ν₀, ν₀, ν₀)
-    ν_h = cross(k̂, cross(ν₀, k̂))
-    ν_v = k̂ .* dot(ν₀, f_b² * k̂)
-    ν = SDiagonal(ν_h + ν_v)
+    ν = SVector{3, FT}(ν₀, ν₀, ν₀)
+    ν_v = k̂ .* dot(ν, k̂)
+    ν_h = ν₀ .- ν_v
+    ν = SDiagonal(ν_h + ν_v .* f_b²)
+    D_t = diag(ν) * _inv_Pr_turb
     τ = -2 * ν * S
-    D_t = (ν isa Real ? ν : diag(ν)) * _inv_Pr_turb
     return ν, D_t, τ
 end
 
@@ -537,17 +537,46 @@ function diffusive!(
     diffusive.turbulence.N² =
         dot(∇transform.turbulence.θ_v, ∇Φ) / aux.moisture.θ_v
 end
+function turbulence_tensors(
+    m::AnisoMinDiss,
+    orientation::Orientation,
+    param_set::AbstractParameterSet,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+)
+    FT = eltype(state)
+    k̂ = vertical_unit_vector(orientation, param_set, aux)
+    _inv_Pr_turb::FT = inv_Pr_turb(param_set)
 
-function turbulence_tensors(m::AnisoMinDiss, state::Vars, diffusive::Vars, aux::Vars, t::Real)
-  FT = eltype(state)
-  α = diffusive.turbulence.∇u
-  S = symmetrize(α)
-  coeff = (aux.turbulence.Δ * m.C_poincare)^2
-  βij = -(α' * α)
-  ν = max(0, coeff * (dot(βij, S) / (norm2(α) + eps(FT))))
-  τ = (-2*ν) * S
-  return ν, τ
+    ∇u = diffusive.turbulence.∇u
+    S = symmetrize(∇u)
+    normS = strain_rate_magnitude(S)
+
+    δ = aux.turbulence.Δ
+    Richardson = diffusive.turbulence.N² / (normS^2 + eps(normS))
+    f_b² = sqrt(clamp(1 - Richardson * _inv_Pr_turb, 0, 1))
+
+    δ_vec = SVector(δ, δ, δ)
+    δ_m = δ_vec ./ transpose(δ_vec)
+    ∇û = ∇u .* δ_m
+    Ŝ = symmetrize(∇û)
+    ν₀ =
+        (m.C_poincare .* δ_vec) .^ 2 * max(
+            FT(1e-5),
+            -dot(transpose(∇û) * (∇û), Ŝ) / (dot(∇û, ∇û) .+ eps(normS)),
+        )
+
+    ν_v = k̂ .* dot(ν₀, k̂)
+    ν_h = ν₀ .- ν_v
+    ν = SDiagonal(ν_h + ν_v .* f_b²)
+    D_t = diag(ν) * _inv_Pr_turb
+    τ = -2 * ν * S
+    return ν, D_t, τ
 end
+
+
 
 """
   DynamicSubgridStabilization <: TurbulenceClosure
