@@ -44,6 +44,8 @@ mutable struct MultirateRungeKutta{SS, FS, RT} <: AbstractODESolver
     dt::RT
     "time"
     t::RT
+    "number of substeps"
+    nsteps::Int
 
     function MultirateRungeKutta(
         slow_solver::LSRK2N,
@@ -51,11 +53,12 @@ mutable struct MultirateRungeKutta{SS, FS, RT} <: AbstractODESolver
         Q = nothing;
         dt = getdt(slow_solver),
         t0 = slow_solver.t,
+        nsteps::Int=1,
     ) where {AT <: AbstractArray}
         SS = typeof(slow_solver)
         FS = typeof(fast_solver)
         RT = real(eltype(slow_solver.dQ))
-        new{SS, FS, RT}(slow_solver, fast_solver, RT(dt), RT(t0))
+        new{SS, FS, RT}(slow_solver, fast_solver, RT(dt), RT(t0),nsteps)
     end
 end
 
@@ -76,6 +79,42 @@ function MultirateRungeKutta(
     slow_solver = solvers[1]
 
     MultirateRungeKutta(slow_solver, fast_solver, Q; dt = dt, t0 = t0)
+end
+
+function MultirateRungeKutta(
+    method::Symbol,
+    rhs!::TimeScaledRHS{2,RT} where RT,
+    Q=nothing;
+    dt=0,
+    t0=0,
+    nsteps=1,
+) where {AT<:AbstractArray}
+
+  rhs_fast! = (dQ, Q, params, tau; increment) -> rhs!(dQ, Q, params, tau, 2; increment=increment)
+  fast_solver = getfield(ODESolvers,method)(rhs_fast!, Q, dt=dt, t0=t0)
+  rhs_slow! = (dQ, Q, params, tau; increment) -> rhs!(dQ, Q, params, tau, 1; increment=increment)
+  slow_solver = getfield(ODESolvers,method)(rhs_slow!, Q, dt=dt, t0=t0)
+
+  MultirateRungeKutta(slow_solver, fast_solver, Q; dt = dt, t0=t0, nsteps=nsteps)
+end
+
+#Wrapper for MIS
+function dostep!(
+    Q,
+    mrrk::MultirateRungeKutta{SS},
+    p,
+    time::Real,
+    dt::Real,
+    nsteps::Int,
+    slow_δ = nothing,
+    slow_rv_dQ = nothing,
+    slow_scaling = nothing,
+) where {SS <: LSRK2N}
+  mrrk.fast_solver.dt=dt/mrrk.nsteps
+  mrrk.dt=dt;
+  for i in 1:nsteps
+    dostep!(Q, mrrk, p, time, slow_δ, slow_rv_dQ, slow_scaling)
+  end
 end
 
 function dostep!(
