@@ -2019,26 +2019,34 @@ end
     end
 end
 
-@kernel function knl_dynsgs!(::Val{dim}, ::Val{N}, ::Val{nvertelem}, ::Val{nhorzelem},
-                     bl::BalanceLaw, vgeo, 
-                     Q, rhs, auxstate) where {dim, N, nvertelem, nhorzelem}
+@kernel function knl_dynsgs!(
+    ::Val{dim},
+    ::Val{N},
+    ::Val{nvertelem},
+    ::Val{nhorzelem},
+    bl::BalanceLaw,
+    vgeo,
+    Q,
+    rhs,
+    auxstate,
+) where {dim, N, nvertelem, nhorzelem}
     @uniform begin
-        FT  = eltype(Q)
-        
-        Nq  = N+1 
+        FT = eltype(Q)
+
+        Nq = N + 1
         Nqj = dim == 2 ? 1 : Nq
 
         # Identify state, aux lengths
-        nstate    = num_state(bl,FT)
-        nauxstate = num_aux(bl,FT)
+        nstate = num_state(bl, FT)
+        nauxstate = num_aux(bl, FT)
 
         # Mutable storage 
-        l_δ̅   = MArray{Tuple{nstate, Nq, Nq, Nqj}, FT}(undef)
-        χ̅_max = MArray{Tuple{nhorzelem*nvertelem}, FT}(undef)
-        l_Q̅   = MArray{Tuple{nstate}, FT}(undef)
-        l_χ̅   = MArray{Tuple{nstate, nhorzelem*nvertelem}, FT}(undef)
-        l_ΣQ  = MArray{Tuple{nstate}, FT}(undef)
-        l_ΣM  = MArray{Tuple{nstate}, FT}(undef)
+        l_δ̅ = MArray{Tuple{nstate, Nq, Nq, Nqj}, FT}(undef)
+        χ̅_max = MArray{Tuple{nhorzelem * nvertelem}, FT}(undef)
+        l_Q̅ = MArray{Tuple{nstate}, FT}(undef)
+        l_χ̅ = MArray{Tuple{nstate, nhorzelem * nvertelem}, FT}(undef)
+        l_ΣQ = MArray{Tuple{nstate}, FT}(undef)
+        l_ΣM = MArray{Tuple{nstate}, FT}(undef)
     end
 
     fill!(l_δ̅, -zero(FT))
@@ -2054,19 +2062,19 @@ end
     eh = elems[_eh]
 
     # Accumulate sums for state variables
-    @inbounds begin 
+    @inbounds begin
         for eh in (1:nhorzelem; blockIdx().x)
             # Vertical stack loop
-            for ev = 1:nvertelem
+            for ev in 1:nvertelem
                 e = ev + (eh - 1) * nvertelem
-                    # Node loop
-                    for j in (1:Nqj; threadIdx().y)
-                        for i in (1:Nq; threadIdx().x)
-                            @unroll for k in 1:Nq
-                                ijk = i + Nq * ((j-1) + Nqj * (k-1))
-                                M = vgeo[ijk, _M, e]
-                                # State loop 
-                                @unroll for s = 1:nstate
+                # Node loop
+                for j in (1:Nqj; threadIdx().y)
+                    for i in (1:Nq; threadIdx().x)
+                        @unroll for k in 1:Nq
+                            ijk = i + Nq * ((j - 1) + Nqj * (k - 1))
+                            M = vgeo[ijk, _M, e]
+                            # State loop 
+                            @unroll for s in 1:nstate
                                 l_ΣM[s] += M
                                 l_ΣQ[s] += M * Q[ijk, s, e]
                             end
@@ -2082,26 +2090,28 @@ end
         # Compute residual ratios for dyn-sgs method
         @inbounds for eh in (1:nhorzelem; blockIdx().x)
             # Vertical stack loop
-            for ev = 1:nvertelem
+            for ev in 1:nvertelem
                 e = ev + (eh - 1) * nvertelem
                 # Node loop
                 for j in (1:Nqj; threadIdx().y)
                     for i in (1:Nq; threadIdx().x)
                         @unroll for k in 1:Nq
-                            ijk = i + Nq * ((j-1) + Nqj * (k-1))
+                            ijk = i + Nq * ((j - 1) + Nqj * (k - 1))
                             # State loop
-                            @unroll for s = 1:nstate
+                            @unroll for s in 1:nstate
                                 # Get mean values
                                 l_Q̅[s] = l_ΣQ[s] / l_ΣM[s]
                                 # Get deviations from mean values
                                 l_δ̅[s, i, j, k] = abs(Q[ijk, s, e] - l_Q̅[s])
                                 # Get ratio measure for DYNSGS method
-                                l_χ̅[s,e] = maximum(abs.(rhs[:, s, e])) /(maximum(abs.(l_δ̅[s,:,:,:]))+eps(FT))
+                                l_χ̅[s, e] =
+                                    maximum(abs.(rhs[:, s, e])) /
+                                    (maximum(abs.(l_δ̅[s, :, :, :])) + eps(FT))
                             end
                         end
                     end
                 end
-            χ̅_max[e] = maximum(l_χ̅[:,e])
+                χ̅_max[e] = maximum(l_χ̅[:, e])
             end
         end
 
@@ -2109,14 +2119,15 @@ end
         @synchronize
 
         @inbounds for eh in (nhorzelem; blockIdx().x)
-            for ev = 1:nvertelem
+            for ev in 1:nvertelem
                 e = ev + (eh - 1) * nvertelem
                 for j in (1:Nqj; threadIdx().y)
                     for i in (1:Nq; threadIdx().x)
                         @unroll for k in 1:Nq
                             # Store result in auxiliary state (first index)
-                            ijk = i + Nq * ((j-1) + Nqj * (k-1))
-                            auxstate[ijk, nauxstate, e] = max(maximum(χ̅_max),FT(0))
+                            ijk = i + Nq * ((j - 1) + Nqj * (k - 1))
+                            auxstate[ijk, nauxstate, e] =
+                                max(maximum(χ̅_max), FT(0))
                         end
                     end
                 end

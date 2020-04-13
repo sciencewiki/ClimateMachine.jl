@@ -24,7 +24,8 @@ update_aux!(
     Q::MPIStateArray,
     t::Real,
     elems::UnitRange,
-) = update_aux!(dg, rem.main, Q, t, elems)
+    dQdt::MPIStateArray
+) = update_aux!(dg, rem.main, Q, t, elems, dQdt)
 
 integral_load_aux!(rem::RemainderModel, integ::Vars, state::Vars, aux::Vars) =
     integral_load_aux!(rem.main, integ, state, aux)

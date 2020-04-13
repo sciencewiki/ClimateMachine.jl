@@ -19,7 +19,8 @@
 
 using DocStringExtensions
 using CLIMAParameters.Atmos.SubgridScale: inv_Pr_turb
-export ConstantViscosityWithDivergence, SmagorinskyLilly, Vreman, AnisoMinDiss, DynamicSubgridStabilization
+export ConstantViscosityWithDivergence,
+    SmagorinskyLilly, Vreman, AnisoMinDiss, DynamicSubgridStabilization
 export turbulence_tensors
 
 # ### Abstract Type
@@ -585,22 +586,40 @@ normalised by the domain averages of state variables. The maximum global
 viscosity is effectively applied to the solution.
 """
 struct DynamicSubgridStabilization <: TurbulenceClosure end
-vars_aux(::DynamicSubgridStabilization,T) = @vars(Δ::T)
-vars_gradient(::DynamicSubgridStabilization,T) = @vars(θ_v::T)
-vars_diffusive(::DynamicSubgridStabilization,T) = @vars(∇u::SMatrix{3,3,T,9})
-function atmos_init_aux!(::DynamicSubgridStabilization, ::AtmosModel, aux::Vars, geom::LocalGeometry)
-  aux.turbulence.Δ = lengthscale(geom)
+vars_aux(::DynamicSubgridStabilization, T) = @vars(Δ::T)
+vars_gradient(::DynamicSubgridStabilization, T) = @vars(θ_v::T)
+vars_diffusive(::DynamicSubgridStabilization, T) =
+    @vars(∇u::SMatrix{3, 3, T, 9})
+function atmos_init_aux!(
+    ::DynamicSubgridStabilization,
+    ::AtmosModel,
+    aux::Vars,
+    geom::LocalGeometry,
+)
+    aux.turbulence.Δ = lengthscale(geom)
 end
-function gradvariables!(m::DynamicSubgridStabilization, transform::Vars, state::Vars, aux::Vars, t::Real)
-  transform.turbulence.θ_v = aux.moisture.θ_v
+function gradvariables!(
+    m::DynamicSubgridStabilization,
+    transform::Vars,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    transform.turbulence.θ_v = aux.moisture.θ_v
 end
-function turbulence_tensors(m::DynamicSubgridStabilization, state::Vars, diffusive::Vars, aux::Vars, t::Real)
-  FT = eltype(state)
-  α = diffusive.turbulence.∇u
-  S = symmetrize(α)
-  Δ = aux.turbulence.Δ 
-  ν = min(abs(Δ^2 * aux.χ̅), FT(1//2) * Δ * aux.moisture.speed_sound)
-  @show(ν)
-  τ = (-2*ν) * S
-  return ν, τ
+function turbulence_tensors(
+    m::DynamicSubgridStabilization,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+)
+    FT = eltype(state)
+    α = diffusive.turbulence.∇u
+    S = symmetrize(α)
+    Δ = aux.turbulence.Δ
+    ν = min(abs(Δ^2 * aux.χ̅), FT(1 // 2) * Δ * aux.moisture.speed_sound)
+    @show(ν)
+    τ = (-2 * ν) * S
+    return ν, τ
 end

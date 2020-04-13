@@ -541,36 +541,48 @@ function restart_auxstate(bl, grid, aux_data)
     return auxstate
 end
 
-function dynsgs!(dg::DGModel, m::BalanceLaw, 
-                 Q::MPIStateArray,
-                 auxstate::MPIStateArray, 
-                 dQdt::MPIStateArray)
+function dynsgs!(
+    dg::DGModel,
+    m::BalanceLaw,
+    Q::MPIStateArray,
+    auxstate::MPIStateArray,
+    dQdt::MPIStateArray,
+)
+
     device = typeof(Q.data) <: Array ? CPU() : CUDA()
+
     grid = dg.grid
     topology = grid.topology
+
     dim = dimensionality(grid)
     N = polynomialorder(grid)
     Nq = N + 1
     Nqk = dim == 2 ? 1 : Nq
+
     FT = eltype(Q)
+
     # do integrals
+    elems = topology.elems
     nelem = length(elems)
     nvertelem = topology.stacksize
     horzelems = fld1(first(elems), nvertelem):fld1(last(elems), nvertelem)
+    nhorzelem = length(horzelems)
+
     event = Event(device)
     event = knl_dynsgs!(device, (Nq, Nqk))(
         Val(dim),
         Val(N),
         Val(nvertelem),
-        Val(nhorzelem),
+        Val(length(horzelems)),
         m,
-        vgeo,
-        Q.data, 
+        grid.vgeo,
+        Q.data,
         auxstate.data,
         dependencies = (event,),
     )
     wait(device, event)
 end
+
 
 # fallback
 function update_aux!(
