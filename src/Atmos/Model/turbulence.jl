@@ -19,7 +19,7 @@
 
 using DocStringExtensions
 using CLIMAParameters.Atmos.SubgridScale: inv_Pr_turb
-export ConstantViscosityWithDivergence, SmagorinskyLilly, Vreman, AnisoMinDiss
+export ConstantViscosityWithDivergence, SmagorinskyLilly, Vreman, AnisoMinDiss, DynamicSubgridStabilization
 export turbulence_tensors
 
 # ### Abstract Type
@@ -575,3 +575,60 @@ function turbulence_tensors(
     τ = -2 * ν * S
     return ν, D_t, τ
 end
+
+
+"""
+    DynamicSubgridStabilization <: TurbulenceClosure
+Dynamic method that infers viscosity by considering equation residuals (rhs)
+normalised by the domain averages of state variables. The maximum global
+viscosity is effectively applied to the solution.
+"""
+struct DynamicSubgridStabilization <: TurbulenceClosure end
+
+vars_aux(::DynamicSubgridStabilization, FT) = @vars(Δ::FT)
+vars_gradient(::DynamicSubgridStabilization, FT) = @vars(θ_v::FT)
+vars_diffusive(::DynamicSubgridStabilization, FT) =
+    @vars(∇u::SMatrix{3, 3, FT, 9})
+
+function atmos_init_aux!(
+    ::DynamicSubgridStabilization,
+    ::AtmosModel,
+    aux::Vars,
+    geom::LocalGeometry,
+)
+    aux.turbulence.Δ = lengthscale(geom)
+end
+
+function gradvariables!(
+    m::DynamicSubgridStabilization,
+    transform::Vars,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    transform.turbulence.θ_v = aux.moisture.θ_v
+end
+
+function turbulence_tensors(
+    m::DynamicSubgridStabilization,
+    orientation::Orientation,
+    param_set::AbstractParameterSet,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+)
+    FT = eltype(state)
+    _inv_Pr_turb::FT = inv_Pr_turb(param_set)
+    α = diffusive.turbulence.∇u
+    S = symmetrize(α)
+    Δ = aux.turbulence.Δ
+    ν = min(abs(Δ^2 * aux.χ̅), FT(1 // 2) * Δ * aux.moisture.cₛ)
+    ν = SDiagonal(ν,ν,ν)
+    @show(ν)
+    D_t = diag(ν) * _inv_Pr_turb
+    τ = -2 * SDiagonal(ν,ν,ν) * S
+    return ν, D_t, τ
+end
+
+

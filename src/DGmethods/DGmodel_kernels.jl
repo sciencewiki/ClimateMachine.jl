@@ -2226,3 +2226,74 @@ end
         pointwise_courant[n, e] = c
     end
 end
+
+@kernel function knl_dynsgs!(
+    bl::BalanceLaw,
+    ::Val{dim},
+    ::Val{N},
+    Q,
+    auxstate,
+    rhs,
+    elems,
+    nvertelem,
+    nhorzelem
+) where {dim, N}
+    @uniform begin
+        FT = eltype(Q)
+        nstate = num_state(bl, FT)
+        nviscstate = num_diffusive(bl, FT)
+        nauxstate = num_aux(bl, FT)
+
+        Nq = N + 1
+
+        Nqk = dim == 2 ? 1 : Nq
+
+        Np = Nq * Nq * Nqk
+
+        l_Q = MArray{Tuple{nstate}, FT}(undef)
+        l_aux = MArray{Tuple{nauxstate}, FT}(undef)
+        l_diff = MArray{Tuple{nviscstate}, FT}(undef)
+
+        l_δ̅ = MArray{Tuple{nstate, Nq, Nq, Nqk}, FT}(undef)
+        χ̅_max = MArray{Tuple{nhorzelem * nvertelem}, FT}(undef)
+        l_Q̅ = MArray{Tuple{nstate}, FT}(undef)
+        l_χ̅ = MArray{Tuple{nstate, nhorzelem * nvertelem}, FT}(undef)
+        l_ΣQ = MArray{Tuple{nstate}, FT}(undef)
+        l_ΣM = MArray{Tuple{nstate}, FT}(undef)
+    
+        fill!(l_δ̅, -zero(FT))
+        fill!(χ̅_max, -zero(FT))
+        fill!(l_Q̅, -zero(FT))
+        fill!(l_χ̅, -zero(FT))
+        fill!(l_ΣQ, -zero(FT))
+        fill!(l_ΣM, -zero(FT))
+    end
+    
+    e = @index(Group, Linear)
+    ijk = @index(Local, Linear)
+    i, j, k = @index(Local, NTuple)
+
+    e = @index(Group, Linear)
+    n = @index(Local, Linear)
+    @inbounds begin
+        M = vgeo[ijk, _M, e]
+        @unroll for s in 1:nstate
+            l_ΣM[s] += M
+            l_ΣQ[s] += M * Q[ijk, s, e]
+        end
+    end
+    @unroll for s in 1:nstate
+        l_Q̅[s] = l_ΣQ[s] / l_ΣM[s]
+        l_δ̅[s, i, j, k] = abs(Q[ijk, s, e] - l_Q̅[s])
+        l_χ̅[s, e] =
+            maximum(abs.(rhs[:, s, e])) /
+            (maximum(abs.(l_δ̅[s, :, :, :])) + eps(FT))
+    end
+    @inbounds begin
+        χ̅_max[e] = maximum(l_χ̅[:, e])
+    end
+    @inbounds begin
+        auxstate[ijk, nauxstate, e] = 
+            max(maximum(χ̄_max), FT(0))
+    end
+end

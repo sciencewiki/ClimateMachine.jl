@@ -75,7 +75,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
     communicate =
         !(isstacked(topology) && typeof(dg.direction) <: VerticalDirection)
 
-    update_aux!(dg, bl, Q, t, dg.grid.topology.realelems)
+    update_aux!(dg, bl, Q, dQdt, t, dg.grid.topology.realelems)
 
     if nhyperviscstate > 0
         hypervisc_indexmap = create_hypervisc_indexmap(bl)
@@ -700,6 +700,56 @@ function nodal_update_aux!(
             dependencies = (event,),
         )
     end
+    wait(device, event)
+end
+
+""" 
+    function dynsgs!()
+Computes the dynamic viscosity coefficient based on the DYNSGS stabilisation technique. 
+Stores the value in the last aux var entry. 
+"""
+function dynsgs!(
+    dg::DGModel,
+    m::BalanceLaw,
+    Q::MPIStateArray,
+    dQdt::MPIStateArray,
+    auxstate::MPIStateArray,
+    t::Real,
+    elems::UnitRange = dg.grid.topology.elems,
+)
+    device = typeof(Q.data) <: Array ? CPU() : CUDA()
+
+    grid = dg.grid
+    topology = grid.topology
+
+    dim = dimensionality(grid)
+    N = polynomialorder(grid)
+    Nq = N + 1
+    Nqk = dim == 2 ? 1 : Nq
+
+    FT = eltype(Q)
+
+    # do integrals
+    nelem = length(elems)
+    nvertelem = topology.stacksize
+    horzelems = fld1(first(elems), nvertelem):fld1(last(elems), nvertelem)
+    
+    nhorzelem = length(horzelems)
+
+    event = Event(device)
+    event = knl_dynsgs!(device, (Nq, Nqk))(
+        m,
+        Val(dim),
+        Val(N),
+        Q.data,
+        auxstate.data,
+        dQdt.data,
+        elems, 
+        nvertelem,
+        nhorzelem;
+        ndrange = (length(horzelems) * Nq, Nqk),
+        dependencies = (event,),
+    )
     wait(device, event)
 end
 

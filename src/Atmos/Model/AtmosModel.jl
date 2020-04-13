@@ -39,6 +39,7 @@ import CLIMA.DGmethods:
     resolutionmetric,
     DGModel,
     nodal_update_aux!,
+    dynsgs!,
     num_state,
     num_integrals,
     vars_integrals,
@@ -220,6 +221,7 @@ function vars_aux(m::AtmosModel, FT)
         hyperdiffusion::vars_aux(m.hyperdiffusion, FT)
         moisture::vars_aux(m.moisture, FT)
         radiation::vars_aux(m.radiation, FT)
+        χ̅::FT
     end
 end
 function vars_integrals(m::AtmosModel, FT)
@@ -398,6 +400,7 @@ function update_aux!(
     dg::DGModel,
     m::AtmosModel,
     Q::MPIStateArray,
+    dQdt::MPIStateArray,
     t::Real,
     elems::UnitRange,
 )
@@ -410,6 +413,7 @@ function update_aux!(
     end
 
     nodal_update_aux!(atmos_nodal_update_aux!, dg, m, Q, t, elems)
+    dynsgs!(dg, m, Q, dQdt, dg.auxstate, t, elems)
 
     return true
 end
@@ -444,6 +448,7 @@ end
 # TODO: figure out a nice way to handle this
 function init_aux!(m::AtmosModel, aux::Vars, geom::LocalGeometry)
     aux.coord = geom.coord
+    aux.χ̅= eltype(aux)(0)
     atmos_init_aux!(m.orientation, m, aux, geom)
     atmos_init_aux!(m.ref_state, m, aux, geom)
     atmos_init_aux!(m.turbulence, m, aux, geom)

@@ -89,7 +89,8 @@ function config_risingbubble(FT, N, resolution, xmax, ymax, zmax)
     model = AtmosModel{FT}(
         AtmosLESConfigType,
         param_set;
-        turbulence = SmagorinskyLilly(C_smag),
+        #turbulence = DynamicSubgridStabilization(),
+        turbulence = SmagorinskyLilly(0.23),
         hyperdiffusion = StandardHyperDiffusion(60),
         source = (Gravity(),),
         ref_state = ref_state,
@@ -126,13 +127,13 @@ function main()
     # DG polynomial order
     N = 4
     # Domain resolution and size
-    Δh = FT(50)
-    Δv = FT(50)
+    Δh = FT(70)
+    Δv = FT(70)
     resolution = (Δh, Δh, Δv)
     # Domain extents
-    xmax = FT(2500)
-    ymax = FT(2500)
-    zmax = FT(2500)
+    xmax = FT(2000)
+    ymax = FT(2000)
+    zmax = FT(2000)
     # Simulation time
     t0 = FT(0)
     timeend = FT(1000)
@@ -147,6 +148,8 @@ function main()
         driver_config,
         init_on_cpu = true,
         Courant_number = CFL,
+        # Temp fix via ode_dt,
+        ode_dt = FT(0.1),
     )
     dgn_config = config_diagnostics(driver_config)
 
