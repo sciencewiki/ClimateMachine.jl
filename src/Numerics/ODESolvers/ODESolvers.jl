@@ -160,10 +160,10 @@ end
 include("BackwardEulerSolvers.jl")
 include("MultirateInfinitesimalGARKExplicit.jl")
 include("MultirateInfinitesimalGARKDecoupledImplicit.jl")
+include("MultirateInfinitesimalStepMethod.jl")
 include("LowStorageRungeKuttaMethod.jl")
 include("StrongStabilityPreservingRungeKuttaMethod.jl")
 include("AdditiveRungeKuttaMethod.jl")
-include("MultirateInfinitesimalStepMethod.jl")
 include("StormerVerletMethod.jl")
 include("MultirateRungeKuttaMethod.jl")
 
