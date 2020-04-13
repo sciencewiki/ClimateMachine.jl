@@ -2116,7 +2116,7 @@ end
                         @unroll for k in 1:Nq
                             # Store result in auxiliary state (first index)
                             ijk = i + Nq * ((j-1) + Nqj * (k-1))
-                            auxstate[ijk, 1, e] = max(maximum(χ̅_max),FT(0))
+                            auxstate[ijk, nauxstate, e] = max(maximum(χ̅_max),FT(0))
                         end
                     end
                 end

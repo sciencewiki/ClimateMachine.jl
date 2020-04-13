@@ -75,7 +75,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
     communicate =
         !(isstacked(topology) && typeof(dg.direction) <: VerticalDirection)
 
-    update_aux!(dg, bl, Q, t, dg.grid.topology.realelems)
+    update_aux!(dg, bl, Q, t, dg.grid.topology.realelems, dQdt)
 
     if nhyperviscstate > 0
         hypervisc_indexmap = create_hypervisc_indexmap(bl)

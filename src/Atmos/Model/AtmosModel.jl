@@ -402,6 +402,7 @@ function update_aux!(
     Q::MPIStateArray,
     t::Real,
     elems::UnitRange,
+    dQdt::MPIStateArray,
 )
     FT = eltype(Q)
     auxstate = dg.auxstate

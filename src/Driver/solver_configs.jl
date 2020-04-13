@@ -165,6 +165,9 @@ function SolverConfiguration(
             CFL_direction,
         )
     end
+    @show(timeend)
+    @show(ode_dt)
+    @show(cld(timeend,ode_dt))
     numberofsteps = convert(Int, cld(timeend, ode_dt))
     timeend_dt_adjust && (ode_dt = timeend / numberofsteps)
 
