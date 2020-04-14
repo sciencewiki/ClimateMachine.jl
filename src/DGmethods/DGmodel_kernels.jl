@@ -2287,6 +2287,6 @@ end
     end
     @inbounds begin
         auxstate[ijk, nauxstate, e] = 
-            max(maximum(χ_max), FT(0))
+            maximum(χ_max)
     end
 end
