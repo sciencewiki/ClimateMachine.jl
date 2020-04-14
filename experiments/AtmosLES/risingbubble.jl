@@ -89,8 +89,8 @@ function config_risingbubble(FT, N, resolution, xmax, ymax, zmax)
     model = AtmosModel{FT}(
         AtmosLESConfigType,
         param_set;
-        #turbulence = DynamicSubgridStabilization(),
-        turbulence = SmagorinskyLilly(0.23),
+        turbulence = DynamicSubgridStabilization(),
+        #turbulence = SmagorinskyLilly(0.23),
         hyperdiffusion = StandardHyperDiffusion(60),
         source = (Gravity(),),
         ref_state = ref_state,

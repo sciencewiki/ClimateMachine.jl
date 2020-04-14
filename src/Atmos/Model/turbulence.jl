@@ -625,8 +625,7 @@ function turbulence_tensors(
     Δ = aux.turbulence.Δ
     ν = min(abs(Δ^2 * aux.χ̅), FT(1 // 2) * Δ * aux.moisture.cₛ)
     ν = SDiagonal(ν,ν,ν)
-    @show(ν)
     D_t = diag(ν) * _inv_Pr_turb
-    τ = -2 * SDiagonal(ν,ν,ν) * S
+    τ = -2 *ν * S
     return ν, D_t, τ
 end
