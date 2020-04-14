@@ -4,7 +4,8 @@ export NoReferenceState,
     HydrostaticState,
     IsothermalProfile,
     LinearTemperatureProfile,
-    DryAdiabaticProfile
+    DryAdiabaticProfile,
+    StableTemperatureProfile
 
 """
     ReferenceState
@@ -64,7 +65,7 @@ function atmos_init_aux!(
     q_pt = PhasePartition(ρq_tot)
     aux.ref_state.ρe = ρ * internal_energy(T, q_pt, atmos.param_set)
 
-    e_kin = F(0)
+    e_kin = F(0.5*10*10) #F(0)
     e_pot = gravitational_potential(atmos.orientation, aux)
     aux.ref_state.ρe = ρ * total_energy(e_kin, e_pot, T, q_pt, atmos.param_set)
 end
@@ -178,5 +179,39 @@ function (profile::LinearTemperatureProfile)(
         H_min = R_d * profile.T_min / grav
         p *= exp(-(z - z_top) / H_min)
     end
+    return (T, p)
+end
+
+"""
+    StableTemperatureProfile{F} <: TemperatureProfile
+
+A potential temperature profile which increases exponentially with height `z` where the increas is determined by Brunt–Väisälä frequency `N2/g`
+
+```math
+θ(z) = θ₀\\text{exp}(Na/g2z)
+```
+
+# Fields
+
+$(DocStringExtensions.FIELDS)
+"""
+struct StableTemperatureProfile{FT} <: TemperatureProfile
+    "surface potential temperature (K)"
+    θ_surface::FT
+    " Brunt–Väisälä frequency(1/s)"
+    N::FT
+end
+
+function (profile::StableTemperatureProfile)(
+    orientation::Orientation,
+    param_set::PS,
+    aux::Vars,
+) where {PS}
+
+    z = altitude(orientation, param_set, aux)
+    S=profile.N*profile.N/grav
+    θ=profile.θ_surface*exp(S*z)
+    p=MSLP*(1.0-grav/(cp_d*profile.θ_surface*S)*(1.0-exp(-S*z)))^(cp_d/R_d)
+    T=(p/MSLP)^(R_d/cp_d)*θ
     return (T, p)
 end
