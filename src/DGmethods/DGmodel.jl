@@ -147,7 +147,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
             # update_aux may start asynchronous work on the compute device and
             # we synchronize those here through a device event.
             wait(device, exchange_Q)
-            update_aux!(dg, bl, Q, t, dg.grid.topology.ghostelems)
+            update_aux!(dg, bl, Q, dQdt, t, dg.grid.topology.ghostelems)
             exchange_Q = Event(device)
         end
 
@@ -420,7 +420,7 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
             # update_aux may start asynchronous work on the compute device and
             # we synchronize those here through a device event.
             wait(device, exchange_Q)
-            update_aux!(dg, bl, Q, t, dg.grid.topology.ghostelems)
+            update_aux!(dg, bl, Q, dQdt, t, dg.grid.topology.ghostelems)
             exchange_Q = Event(device)
         end
     end
@@ -546,6 +546,7 @@ function update_aux!(
     dg::DGModel,
     bl::BalanceLaw,
     Q::MPIStateArray,
+    dQdt::MPIStateArray,
     t::Real,
     elems::UnitRange,
 )
@@ -746,7 +747,8 @@ function dynsgs!(
         dQdt.data,
         elems, 
         nvertelem,
-        nhorzelem;
+        nhorzelem,
+        grid.vgeo;
         ndrange = (length(horzelems) * Nq, Nqk),
         dependencies = (event,),
     )

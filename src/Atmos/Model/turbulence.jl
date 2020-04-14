@@ -630,5 +630,3 @@ function turbulence_tensors(
     τ = -2 * SDiagonal(ν,ν,ν) * S
     return ν, D_t, τ
 end
-
-
