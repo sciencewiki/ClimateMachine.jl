@@ -146,14 +146,14 @@ function run(
     # This is the base model which defines all the data (all other DGModels
     # for substepping components will piggy-back off of this models data)
     fullmodel = AtmosModel{FT}(
-        AtmosLESConfigType;
+        AtmosLESConfigType,
+        param_set;
         orientation = SphericalOrientation(),
         ref_state = HydrostaticState(IsothermalProfile(setup.T_ref), FT(0)),
         turbulence = ConstantViscosityWithDivergence(FT(0)),
         moisture = DryModel(),
         source = Gravity(),
         init_state = setup,
-        param_set = param_set,
     )
     dg = DGModel(
         fullmodel,
@@ -341,9 +341,9 @@ function (setup::AcousticWaveSetup)(bl, state, aux, coords, t)
     # callable to set initial conditions
     FT = eltype(state)
 
-    λ = longitude(bl.orientation, aux)
-    φ = latitude(bl.orientation, aux)
-    z = altitude(bl.orientation, aux)
+    λ = longitude(bl, aux)
+    φ = latitude(bl, aux)
+    z = altitude(bl, aux)
 
     β = min(FT(1), setup.α * acos(cos(φ) * cos(λ)))
     f = (1 + cos(FT(π) * β)) / 2
