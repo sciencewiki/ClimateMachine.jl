@@ -2251,10 +2251,6 @@ end
 
         Np = Nq * Nq * Nqk
 
-        l_Q = MArray{Tuple{nstate}, FT}(undef)
-        l_aux = MArray{Tuple{nauxstate}, FT}(undef)
-        l_diff = MArray{Tuple{nviscstate}, FT}(undef)
-
         l_δ̅ = MArray{Tuple{nstate, Nq*Nq*Nqk}, FT}(undef)
         χ_max = MArray{Tuple{nhorzelem * nvertelem}, FT}(undef)
         l_Q̅ = MArray{Tuple{nstate}, FT}(undef)

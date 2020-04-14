@@ -623,9 +623,12 @@ function turbulence_tensors(
     α = diffusive.turbulence.∇u
     S = symmetrize(α)
     Δ = aux.turbulence.Δ
-    ν = min(abs(Δ^2 * aux.χ̅), FT(1 // 2) * Δ * aux.moisture.cₛ)
+    ν = max(abs(Δ^2 * aux.χ̅), FT(1 // 2) * Δ * aux.moisture.cₛ)
     ν = SDiagonal(ν,ν,ν)
     D_t = diag(ν) * _inv_Pr_turb
+    if t > 0
+        @show(ν)
+    end
     τ = -2 *ν * S
     return ν, D_t, τ
 end

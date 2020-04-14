@@ -91,7 +91,7 @@ function config_risingbubble(FT, N, resolution, xmax, ymax, zmax)
         param_set;
         turbulence = DynamicSubgridStabilization(),
         #turbulence = SmagorinskyLilly(0.23),
-        hyperdiffusion = StandardHyperDiffusion(60),
+        hyperdiffusion = StandardHyperDiffusion(100000000000),
         source = (Gravity(),),
         ref_state = ref_state,
         init_state = init_risingbubble!,
