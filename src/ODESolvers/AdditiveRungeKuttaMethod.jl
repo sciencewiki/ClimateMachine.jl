@@ -92,6 +92,8 @@ mutable struct AdditiveRungeKutta{T, RT, AT, LT, V, VS, Nstages, Nstages_sq} <:
     rhs!
     "rhs linear operator"
     rhs_linear!
+    "implicit operators, pre-factorized, for MIS"
+    implicitoperators!
     "implicit operator, pre-factorized"
     implicitoperator!
     "linear solver"
@@ -129,6 +131,7 @@ mutable struct AdditiveRungeKutta{T, RT, AT, LT, V, VS, Nstages, Nstages_sq} <:
         Q::AT;
         dt = nothing,
         t0 = 0,
+        nsteps = [],
     ) where {AT <: AbstractArray}
 
         @assert dt != nothing
@@ -153,23 +156,40 @@ mutable struct AdditiveRungeKutta{T, RT, AT, LT, V, VS, Nstages, Nstages_sq} <:
             @assert RKA_implicit[is, is] ≈ RKA_implicit[2, 2]
         end
 
-        α = dt * RKA_implicit[2, 2]
-        # Here we are passing NaN for the time since prefactorization assumes
-        # the operator is time independent.  If that is not the case the NaN
-        # will surface.
-        implicitoperator! = prefactorize(
-            EulerOperator(rhs_linear!, -α),
-            linearsolver,
-            Q,
-            nothing,
-            T(NaN),
-        )
+        if isempty(nsteps)
+            α = dt * RKA_implicit[2, 2]
+            # Here we are passing NaN for the time since prefactorization assumes the
+            # operator is time independent.  If that is not the case the NaN will
+            # surface.
+            implicitoperator! = prefactorize(
+                EulerOperator(rhs_linear!, -α),
+                linearsolver,
+                Q,
+                nothing,
+                T(NaN),
+            )
+            implicitoperators! = ();
+        else
+            implicitoperators! = ntuple(
+                i -> prefactorize(EulerOperator(
+                    rhs_linear!,
+                    -dt/nsteps[i] * RKA_implicit[2, 2]),
+                    linearsolver,
+                    Q,
+                    nothing,
+                    T(NaN)
+                ),
+                length(nsteps)
+            )
+            implicitoperator! = implicitoperators![1];
+        end
 
         new{T, RT, AT, LT, V, VS, Nstages, Nstages^2}(
             RT(dt),
             RT(t0),
             rhs!,
             rhs_linear!,
+            implicitoperators!,
             implicitoperator!,
             linearsolver,
             Qstages,
@@ -184,6 +204,24 @@ mutable struct AdditiveRungeKutta{T, RT, AT, LT, V, VS, Nstages, Nstages_sq} <:
             variant_storage,
         )
     end
+end
+
+function AdditiveRungeKutta(
+    method::Symbol,
+    op::TimeScaledRHS{2,RT} where RT,
+    linearsolver::AbstractLinearSolver,
+    Q::AT;
+    dt=0,
+    t0=0,
+    nsteps=[],
+    split_nonlinear_linear=true, #!!!
+    variant=NaiveVariant()
+) where {AT<:AbstractArray}
+
+    return getfield(ODESolvers,method)(op.rhs![1], op.rhs![2], linearsolver, Q;
+        dt=dt, t0=t0, nsteps=nsteps,
+        split_nonlinear_linear=split_nonlinear_linear, variant=variant)
+
 end
 
 function AdditiveRungeKutta(
@@ -249,6 +287,16 @@ function dostep!(
     slow_scaling = nothing,
 )
     dostep!(Q, ark, ark.variant, p, time, slow_δ, slow_rv_dQ, slow_scaling)
+end
+
+#Wrapper for MIS
+function dostep!(Q, ark::AdditiveRungeKutta, p, time::Real, dt::Real, nsteps::Int,
+    slow_δ = nothing, slow_rv_dQ = nothing, slow_scaling = nothing)
+    ark.dt = dt;
+    for i in 1:nsteps
+      ark.implicitoperator! = ark.implicitoperators![i];
+      dostep!(Q, ark, ark.variant, p, time, slow_δ, slow_rv_dQ, slow_scaling)
+    end
 end
 
 function dostep!(
@@ -635,6 +683,7 @@ function ARK2GiraldoKellyConstantinescu(
     Q::AT;
     dt = nothing,
     t0 = 0,
+    nsteps = [],
     split_nonlinear_linear = false,
     variant = LowStorageVariant(),
     paperversion = false,
@@ -676,6 +725,7 @@ function ARK2GiraldoKellyConstantinescu(
         Q;
         dt = dt,
         t0 = t0,
+        nsteps = nsteps,
     )
 end
 
@@ -710,6 +760,7 @@ function ARK548L2SA2KennedyCarpenter(
     Q::AT;
     dt = nothing,
     t0 = 0,
+    nsteps = [],
     split_nonlinear_linear = false,
     variant = LowStorageVariant(),
 ) where {AT <: AbstractArray}
@@ -828,6 +879,7 @@ function ARK548L2SA2KennedyCarpenter(
         Q;
         dt = dt,
         t0 = t0,
+        nsteps = nsteps,
     )
 end
 
@@ -861,6 +913,7 @@ function ARK437L2SA1KennedyCarpenter(
     Q::AT;
     dt = nothing,
     t0 = 0,
+    nsteps = [],
     split_nonlinear_linear = false,
     variant = LowStorageVariant(),
 ) where {AT <: AbstractArray}
@@ -969,5 +1022,6 @@ function ARK437L2SA1KennedyCarpenter(
         Q;
         dt = dt,
         t0 = t0,
+        nsteps = nsteps,
     )
 end
