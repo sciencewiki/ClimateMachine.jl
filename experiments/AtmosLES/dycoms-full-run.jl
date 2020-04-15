@@ -336,15 +336,14 @@ end
 
 function config_diagnostics(FT, driver_config)
     interval      = 10000 # in time steps
-    interval_diag = 1000
     boundaries = [
                   FT(0) FT(0) FT(0)
                   FT(1000) FT(1000) FT(2500)
                   ]
-    resolution = (FT(40), FT(40), FT(20))
+    resolution = (FT(20), FT(20), FT(10))
     interpol =
         CLIMA.InterpolationConfiguration(driver_config, boundaries, resolution)
-    dgngrp1 = setup_atmos_default_diagnostics(interval_diag, driver_config.name)
+    dgngrp1 = setup_atmos_default_diagnostics(interval, driver_config.name)
     dgngrp2 = setup_dump_state_and_aux_diagnostics(interval, 
                                                   driver_config.name;interpol = interpol, project=false)
     return CLIMA.DiagnosticsConfiguration([dgngrp1, dgngrp2])
@@ -365,8 +364,8 @@ function main()
     N = 4
 
     # Domain resolution and size
-    Δh = FT(40)
-    Δv = FT(20)
+    Δh = FT(20)
+    Δv = FT(10)
     resolution = (Δh, Δh, Δv)
 
     xmax = FT(1000)
@@ -374,7 +373,7 @@ function main()
     zmax = FT(2500)
 
     t0 = FT(0)
-    timeend = FT(14400)
+    timeend = FT(100)
     
     driver_config = config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     solver_config = CLIMA.SolverConfiguration(
@@ -382,9 +381,11 @@ function main()
         timeend,
         driver_config,
         init_on_cpu = true,
+        Courant_number=FT(0.4),
     )
-    dgn_config = config_diagnostics(FT, driver_config)
 
+    dgn_config = config_diagnostics(FT, driver_config)
+    
     cbtmarfilter = GenericCallbacks.EveryXSimulationSteps(1) do (init = false)
         Filters.apply!(solver_config.Q, 6, solver_config.dg.grid, TMARFilter())
         nothing

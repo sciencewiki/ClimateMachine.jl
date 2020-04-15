@@ -437,7 +437,7 @@ function invoke!(
         callbacks = (callbacks..., cbcfl)
     end
 
-    callbacks = (callbacks..., user_callbacks...)
+    callbacks = (user_callbacks..., callbacks...)
 
     # initial condition norm
     eng0 = norm(Q)
