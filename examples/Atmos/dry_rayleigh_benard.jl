@@ -90,6 +90,11 @@ function init_problem!(bl, state, aux, (x, y, z), t)
     state.ρu = SVector(ρu, ρv, ρw)
     state.ρe = ρe_tot
     state.moisture.ρq_tot = FT(0)
+    ρχ = zero(FT)
+    if z <= 100
+        ρχ += FT(0.1) * (cospi(z / 2 / 100))^2
+    end
+    state.tracers.ρχ = SVector{1, FT}(ρχ)
 end
 
 function config_problem(FT, N, resolution, xmax, ymax, zmax)
@@ -102,6 +107,9 @@ function config_problem(FT, N, resolution, xmax, ymax, zmax)
 
     T_lapse = FT(_grav / _cp_d)
     T_top = T_bot - T_lapse * zmax
+
+    ntracers = 1
+    δ_χ = SVector{ntracers, FT}(1)
 
     # Turbulence
     C_smag = FT(0.23)
@@ -119,8 +127,9 @@ function config_problem(FT, N, resolution, xmax, ymax, zmax)
 
     # Set up the model
     model = AtmosModel{FT}(
-        AtmosLESConfigType;
-        turbulence = SmagorinskyLilly{FT}(C_smag),
+        AtmosLESConfigType,
+        param_set;
+        turbulence = Vreman(C_smag),
         source = (Gravity(),),
         boundarycondition = (
             AtmosBC(
@@ -132,9 +141,9 @@ function config_problem(FT, N, resolution, xmax, ymax, zmax)
                 energy = PrescribedTemperature((state, aux, t) -> T_top),
             ),
         ),
+        tracers = NTracers{ntracers, FT}(δ_χ),
         init_state = init_problem!,
         data_config = data_config,
-        param_set = param_set,
     )
     ode_solver =
         CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
@@ -145,6 +154,7 @@ function config_problem(FT, N, resolution, xmax, ymax, zmax)
         xmax,
         ymax,
         zmax,
+        param_set,
         init_problem!,
         solver_type = ode_solver,
         model = model,

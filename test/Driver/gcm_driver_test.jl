@@ -28,9 +28,9 @@ function (setup::AcousticWaveSetup)(bl, state, aux, coords, t)
     # callable to set initial conditions
     FT = eltype(state)
 
-    λ = longitude(bl.orientation, aux)
-    φ = latitude(bl.orientation, aux)
-    z = altitude(bl.orientation, aux)
+    λ = longitude(bl, aux)
+    φ = latitude(bl, aux)
+    z = altitude(bl, aux)
 
     β = min(FT(1), setup.α * acos(cos(φ) * cos(λ)))
     f = (1 + cos(FT(π) * β)) / 2
@@ -72,14 +72,14 @@ function main()
     ref_state = HydrostaticState(IsothermalProfile(setup.T_ref), FT(0))
     turbulence = ConstantViscosityWithDivergence(FT(0))
     model = AtmosModel{FT}(
-        AtmosGCMConfigType;
+        AtmosGCMConfigType,
+        param_set;
         orientation = orientation,
         ref_state = ref_state,
         turbulence = turbulence,
         moisture = DryModel(),
         source = Gravity(),
         init_state = setup,
-        param_set = param_set,
     )
 
     ode_solver = CLIMA.MultirateSolverType(
@@ -93,6 +93,7 @@ function main()
         N,
         resolution,
         setup.domain_height,
+        param_set,
         setup;
         solver_type = ode_solver,
         model = model,
