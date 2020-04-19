@@ -144,7 +144,7 @@ function flux_radiation!(
     t::Real,
 )
     FT = eltype(flux)
-    z = altitude(atmos.orientation, aux)
+    z = altitude(atmos, aux)
     Δz_i = max(z - m.z_i, -zero(FT))
     # Constants
     upward_flux_from_cloud = m.F_0 * exp(-aux.∫dnz.radiation.attenuation_coeff)
@@ -158,7 +158,7 @@ function flux_radiation!(
         (Δz_i / 4 + m.z_i)
     F_rad =
         upward_flux_from_sfc + upward_flux_from_cloud + free_troposphere_flux
-    ẑ = vertical_unit_vector(atmos.orientation, aux)
+    ẑ = vertical_unit_vector(atmos, aux)
     flux.ρe += F_rad * ẑ
 end
 function preodefun!(m::DYCOMSRadiation, aux::Vars, state::Vars, t::Real) end
@@ -187,10 +187,10 @@ eprint = {https://doi.org/10.1175/MWR2930.1}
 function init_dycoms!(bl, state, aux, (x, y, z), t)
     FT = eltype(state)
 
-    z = altitude(bl.orientation, aux)
+    z = altitude(bl, aux)
 
     # These constants are those used by Stevens et al. (2005)
-    qref = FT(9.0e-3)
+    qref = FT(8.2e-3)
     q_pt_sfc = PhasePartition(qref)
     Rm_sfc = gas_constant_air(q_pt_sfc, bl.param_set)
     T_sfc = FT(290.4)
@@ -215,7 +215,7 @@ function init_dycoms!(bl, state, aux, (x, y, z), t)
     u, v, w = ugeo, vgeo, FT(0)
 
     # Perturb initial state to break symmetry and trigger turbulent convection
-    r1 = FT(rand(Uniform(-0.002, 0.002)))
+    r1 = FT(rand(Uniform(-0.001, 0.001)))
     if z <= 200.0
         θ_liq += r1 * θ_liq
     end
@@ -269,11 +269,11 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     w_ref = FT(0)
     u_relaxation = SVector(u_geostrophic, v_geostrophic, w_ref)
     # Sponge
-    c_sponge = 1
+    c_sponge = 1.0
     # Rayleigh damping
-    zsponge = FT(1500.0)
+    zsponge = FT(850.0)
     rayleigh_sponge =
-        RayleighSponge{FT}(zmax, zsponge, c_sponge, u_relaxation, 4)
+        RayleighSponge{FT}(zmax, zsponge, c_sponge, u_relaxation, 2)
     # Geostrophic forcing
     geostrophic_forcing =
         GeostrophicForcing{FT}(f_coriolis, u_geostrophic, v_geostrophic)
@@ -295,10 +295,11 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     )
 
     model = AtmosModel{FT}(
-        AtmosLESConfigType;
+        AtmosLESConfigType,
+        param_set;
         ref_state = ref_state,
         turbulence = SmagorinskyLilly{FT}(C_smag),
-        moisture = EquilMoist{FT}(maxiter=1, tolerance=FT(100)),
+        moisture = EquilMoist{FT}(maxiter = 1, tolerance=FT(100)),
         radiation = radiation,
         source = source,
         boundarycondition = (
@@ -314,7 +315,6 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
             AtmosBC(),
         ),
         init_state = ics,
-        param_set = param_set,
     )
 
     ode_solver =
@@ -327,6 +327,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
         xmax,
         ymax,
         zmax,
+        param_set,
         init_dycoms!,
         solver_type = ode_solver,
         model = model,
@@ -334,26 +335,29 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     return config
 end
 
+
 function config_diagnostics(FT, driver_config)
     interval      = 10000 # in time steps
     boundaries = [
                   FT(0) FT(0) FT(0)
                   FT(1000) FT(1000) FT(2500)
                   ]
-    resolution = (FT(20), FT(20), FT(10))
-    interpol =
-        CLIMA.InterpolationConfiguration(driver_config, boundaries, resolution)
+    interpolation_resolution = (FT(40), FT(40), FT(20))
+    #interpol =
+    #    CLIMA.InterpolationConfiguration(driver_config, boundaries, interpolation_resolution)
     dgngrp1 = setup_atmos_default_diagnostics(interval, driver_config.name)
-    dgngrp2 = setup_dump_state_and_aux_diagnostics(interval, 
-                                                  driver_config.name;interpol = interpol, project=false)
-    return CLIMA.DiagnosticsConfiguration([dgngrp1, dgngrp2])
+    #=dgngrp2 = setup_dump_state_and_aux_diagnostics(interval, 
+                                                   driver_config.name;
+                                                   #interpol = interpol,
+                                                   project=false)=#
+    return CLIMA.DiagnosticsConfiguration([dgngrp1])
 end
 
-#function config_diagnostics(driver_config)
-#   interval = 10000 # in time steps
-#   dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
-#   return CLIMA.DiagnosticsConfiguration([dgngrp])
-#end
+#=function config_diagnostics(driver_config)
+    interval = 10000 # in time steps
+    dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
+    return CLIMA.DiagnosticsConfiguration([dgngrp])
+end=#
 
 function main()
     CLIMA.init()
@@ -364,8 +368,8 @@ function main()
     N = 4
 
     # Domain resolution and size
-    Δh = FT(20)
-    Δv = FT(10)
+    Δh = FT(40)
+    Δv = FT(20)
     resolution = (Δh, Δh, Δv)
 
     xmax = FT(1000)
@@ -373,19 +377,18 @@ function main()
     zmax = FT(2500)
 
     t0 = FT(0)
-    timeend = FT(100)
-    
+    timeend = FT(14400)
+
     driver_config = config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     solver_config = CLIMA.SolverConfiguration(
         t0,
         timeend,
         driver_config,
         init_on_cpu = true,
-        Courant_number=FT(0.4),
+        Courant_number=FT(1.8),
     )
-
     dgn_config = config_diagnostics(FT, driver_config)
-    
+
     cbtmarfilter = GenericCallbacks.EveryXSimulationSteps(1) do (init = false)
         Filters.apply!(solver_config.Q, 6, solver_config.dg.grid, TMARFilter())
         nothing
