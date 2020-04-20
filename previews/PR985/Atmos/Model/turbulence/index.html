@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>AtmosModel · CLIMA</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../"><img src="../../../assets/logo.svg" alt="CLIMA logo"/></a><div class="docs-package-name"><span class="docs-autofit">CLIMA</span></div><form class="docs-search" action="../../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><span class="tocitem">Common</span><ul><li><a class="tocitem" href="../../../Common/MoistThermodynamics/">MoistThermodynamics</a></li></ul></li><li><span class="tocitem">Utilites</span></li><li><span class="tocitem">Atmos</span><ul><li><a class="tocitem" href="../../SurfaceFluxes/">Surface Fluxes</a></li><li><a class="tocitem" href="../../EDMFEquations/">Eddy-Diffusivity Mass-Flux (EDMF) equations</a></li><li><a class="tocitem" href="../../Microphysics/">Microphysics</a></li><li class="is-active"><a class="tocitem" href>AtmosModel</a><ul class="internal"><li><a class="tocitem" href="#Turbulence-Closures-1"><span>Turbulence Closures</span></a></li></ul></li><li><a class="tocitem" href="../tracers/">AtmosModel</a></li></ul></li><li><a class="tocitem" href="../../../Diagnostics/">Diagnostics</a></li><li><a class="tocitem" href="../../../ODESolvers/">ODESolvers</a></li><li><a class="tocitem" href="../../../LinearSolvers/">LinearSolvers</a></li><li><a class="tocitem" href="../../../Mesh/">Mesh</a></li><li><a class="tocitem" href="../../../Arrays/">Arrays</a></li><li><a class="tocitem" href="../../../DGmethods_old/">DGmethods_old</a></li><li><a class="tocitem" href="../../../InputOutput/">InputOutput</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../../generated/example_cg/">Conjugate Gradient</a></li><li><a class="tocitem" href="../../../generated/literate_markdown/">Notes on Literate</a></li></ul></li><li><span class="tocitem">Developer docs</span><ul><li><input class="collapse-toggle" id="menuitem-13-1" type="checkbox"/><label class="tocitem" for="menuitem-13-1"><span class="docs-label">Contribution Guides</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ContributionGuides/CONTRIBUTING/">Contributing</a></li><li><a class="tocitem" href="../../../ContributionGuides/IterativeSolvers/">Contribution Guide for Abstract Iterative Solvers</a></li></ul></li><li><a class="tocitem" href="../../../CodingConventions/">Coding Conventions</a></li><li><a class="tocitem" href="../../../AcceptableUnicode/">Acceptable Unicode characters</a></li><li><a class="tocitem" href="../../../VariableList/">CliMA Variable List</a></li><li><a class="tocitem" href="../../../DiagnosticVariables/">CliMA Diagnostic Variable List</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Atmos</a></li><li class="is-active"><a href>AtmosModel</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>AtmosModel</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/climate-machine/CLIMA/blob/master/docs/src/Atmos/Model/turbulence.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="Turbulence-Closures-1"><a class="docs-heading-anchor" href="#Turbulence-Closures-1">Turbulence Closures</a><a class="docs-heading-anchor-permalink" href="#Turbulence-Closures-1" title="Permalink"></a></h2><p>In <code>turbulence.jl</code> we specify turbulence closures. Currently, pointwise models of the eddy viscosity/eddy diffusivity type are supported for turbulent shear and tracer diffusivity. Methods currently supported are:<br/><a href="#constant-viscosity-1"><code>ConstantViscosityWithDivergence</code></a><br/><a href="#smagorinsky-lilly-1"><code>SmagorinskyLilly</code></a><br/><a href="#vreman-1"><code>Vreman</code></a><br/><a href="#aniso-min-diss-1"><code>AnisoMinDiss</code></a><br/></p><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>Usage: This is a quick-ref guide to using turbulence models as a subcomponent of <code>AtmosModel</code> <br/><span>$\nu$</span> is the kinematic viscosity, <span>$C_{smag}$</span> is the Smagorinsky Model coefficient, <code>turbulence=ConstantViscosityWithDivergence(ν)</code><br/><code>turbulence=SmagorinskyLilly(C_smag)</code><br/><code>turbulence=Vreman(C_smag)</code><br/><code>turbulence=AnisoMinDiss(C_poincare)</code></p></div></div><pre><code class="language-julia">using DocStringExtensions
+using CLIMAParameters.Atmos.SubgridScale: inv_Pr_turb
+export ConstantViscosityWithDivergence, SmagorinskyLilly, Vreman, AnisoMinDiss
+export turbulence_tensors</code></pre><h3 id="Abstract-Type-1"><a class="docs-heading-anchor" href="#Abstract-Type-1">Abstract Type</a><a class="docs-heading-anchor-permalink" href="#Abstract-Type-1" title="Permalink"></a></h3><p>We define a <code>TurbulenceClosure</code> abstract type and default functions for the generic turbulence closure which will be overloaded with model specific functions.</p><pre><code class="language-">abstract type TurbulenceClosure end
+
+vars_state(::TurbulenceClosure, FT) = @vars()
+vars_aux(::TurbulenceClosure, FT) = @vars()
+
+function atmos_init_aux!(
+    ::TurbulenceClosure,
+    ::AtmosModel,
+    aux::Vars,
+    geom::LocalGeometry,
+) end
+function atmos_nodal_update_aux!(
+    ::TurbulenceClosure,
+    ::AtmosModel,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+) end
+function gradvariables!(
+    ::TurbulenceClosure,
+    transform::Vars,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+) end
+function diffusive!(
+    ::TurbulenceClosure,
+    ::Orientation,
+    diffusive,
+    ∇transform,
+    state,
+    aux,
+    t,
+) end
+
+&quot;&quot;&quot;
+    ν, D_t, τ = turbulence_tensors(::TurbulenceClosure, orientation::Orientation, param_set::AbstractParameterSet, state::Vars, diffusive::Vars, aux::Vars, t::Real)
+
+    Compute the kinematic viscosity (`ν`), the diffusivity (`D_t`) and SGS momentum flux tensor (`τ`).
+&quot;&quot;&quot;
+function turbulence_tensors end
+
+turbulence_tensors(atmos::AtmosModel, args...) =
+    turbulence_tensors(atmos.turbulence, atmos, args...)
+
+turbulence_tensors(m::TurbulenceClosure, atmos::AtmosModel, args...) =
+    turbulence_tensors(m, atmos.orientation, atmos.param_set, args...)</code></pre><p>We also provide generic math functions for use within the turbulence closures, commonly used quantities such as the <a href="#tensor-invariants-1">principal tensor invariants</a>, handling of <a href="#symmetric-tensors-1">symmetric tensors</a> and <a href="#tensor-norms-1">tensor norms</a>are addressed.</p><h3 id="tensor-invariants-1"><a class="docs-heading-anchor" href="#tensor-invariants-1">Pricipal Invariants</a><a class="docs-heading-anchor-permalink" href="#tensor-invariants-1" title="Permalink"></a></h3><pre><code class="language-julia">&quot;&quot;&quot;
+    principal_invariants(X)
+
+Calculates principal invariants of a tensor `X`. Returns 3 element tuple containing the invariants.
+&quot;&quot;&quot;
+function principal_invariants(X)
+    first = tr(X)
+    second = (first^2 - tr(X .^ 2)) / 2
+    third = det(X)
+    return (first, second, third)
+end</code></pre><pre><code class="language-none">Main.ex-turbulence.principal_invariants</code></pre><h3 id="symmetric-tensors-1"><a class="docs-heading-anchor" href="#symmetric-tensors-1">Symmetrize</a><a class="docs-heading-anchor-permalink" href="#symmetric-tensors-1" title="Permalink"></a></h3><div>\[\frac{\mathrm{X} + \mathrm{X}^{T}}{2}\]</div><pre><code class="language-">&quot;&quot;&quot;
+    symmetrize(X)
+
+Compute `(X + X&#39;)/2`, returning a `SHermitianCompact` object.
+&quot;&quot;&quot;
+function symmetrize(X::StaticArray{Tuple{3, 3}})
+    SHermitianCompact(SVector(
+        X[1, 1],
+        (X[2, 1] + X[1, 2]) / 2,
+        (X[3, 1] + X[1, 3]) / 2,
+        X[2, 2],
+        (X[3, 2] + X[2, 3]) / 2,
+        X[3, 3],
+    ))
+end</code></pre><h3 id="tensor-norms-1"><a class="docs-heading-anchor" href="#tensor-norms-1">2-Norm</a><a class="docs-heading-anchor-permalink" href="#tensor-norms-1" title="Permalink"></a></h3><div>\[\sum_{i,j} S_{ij}^2\]</div><pre><code class="language-">&quot;&quot;&quot;
+    norm2(X)
+
+Compute</code></pre><p>math \sum<em>{i,j} S</em>{ij}^2</p><pre><code class="language-none">&quot;&quot;&quot;
+function norm2(X::SMatrix{3, 3, FT}) where {FT}
+    abs2(X[1, 1]) +
+    abs2(X[2, 1]) +
+    abs2(X[3, 1]) +
+    abs2(X[1, 2]) +
+    abs2(X[2, 2]) +
+    abs2(X[3, 2]) +
+    abs2(X[1, 3]) +
+    abs2(X[2, 3]) +
+    abs2(X[3, 3])
+end
+function norm2(X::SHermitianCompact{3, FT, 6}) where {FT}
+    abs2(X[1, 1]) +
+    2 * abs2(X[2, 1]) +
+    2 * abs2(X[3, 1]) +
+    abs2(X[2, 2]) +
+    2 * abs2(X[3, 2]) +
+    abs2(X[3, 3])
+end</code></pre><h3 id="strain-rate-magnitude-1"><a class="docs-heading-anchor" href="#strain-rate-magnitude-1">Strain-rate Magnitude</a><a class="docs-heading-anchor-permalink" href="#strain-rate-magnitude-1" title="Permalink"></a></h3><p>By definition, the strain-rate magnitude, as defined in standard turbulence modelling is computed such that</p><div>\[|\mathrm{S}| = \sqrt{2 \sum_{i,j} \mathrm{S}_{ij}^2}\]</div><pre><code class="language-">&quot;&quot;&quot;
+    strain_rate_magnitude(S)
+
+Compute</code></pre><p>math |S| = \sqrt{2\sum<em>{i,j} S</em>{ij}^2}</p><pre><code class="language-none">&quot;&quot;&quot;
+function strain_rate_magnitude(S::SHermitianCompact{3, FT, 6}) where {FT}
+    return sqrt(2 * norm2(S))
+end</code></pre><h3 id="constant-viscosity-1"><a class="docs-heading-anchor" href="#constant-viscosity-1">Constant Viscosity Model</a><a class="docs-heading-anchor-permalink" href="#constant-viscosity-1" title="Permalink"></a></h3><p><code>ConstantViscosityWithDivergence</code> requires a user to specify the constant viscosity (kinematic) and appropriately computes the turbulent stress tensor based on this term. Diffusivity can be computed using the turbulent Prandtl number for the appropriate problem regime.</p><div>\[\tau = - 2 \nu \mathrm{S}\]</div><pre><code class="language-">&quot;&quot;&quot;
+    ConstantViscosityWithDivergence &lt;: TurbulenceClosure
+
+Turbulence with constant dynamic viscosity (`ρν`).
+Divergence terms are included in the momentum flux tensor.</code></pre><p>Fields</p><pre><code class="language-">$(DocStringExtensions.FIELDS)
+&quot;&quot;&quot;
+struct ConstantViscosityWithDivergence{FT} &lt;: TurbulenceClosure
+    &quot;Dynamic Viscosity [kg/m/s]&quot;
+    ρν::FT
+end
+
+vars_gradient(::ConstantViscosityWithDivergence, FT) = @vars()
+vars_diffusive(::ConstantViscosityWithDivergence, FT) =
+    @vars(S::SHermitianCompact{3, FT, 6})
+
+function diffusive!(
+    ::ConstantViscosityWithDivergence,
+    ::Orientation,
+    diffusive::Vars,
+    ∇transform::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+
+    diffusive.turbulence.S = symmetrize(∇transform.u)
+end
+
+function turbulence_tensors(
+    m::ConstantViscosityWithDivergence,
+    orientation::Orientation,
+    param_set::AbstractParameterSet,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+)
+
+    FT = eltype(state)
+    _inv_Pr_turb::FT = inv_Pr_turb(param_set)
+    S = diffusive.turbulence.S
+    ν = m.ρν / state.ρ
+    D_t = ν * _inv_Pr_turb
+    τ = (-2 * ν) * S + (2 * ν / 3) * tr(S) * I
+    return ν, D_t, τ
+end</code></pre><h3 id="smagorinsky-lilly-1"><a class="docs-heading-anchor" href="#smagorinsky-lilly-1">Smagorinsky-Lilly</a><a class="docs-heading-anchor-permalink" href="#smagorinsky-lilly-1" title="Permalink"></a></h3><p>The Smagorinsky turbulence model, with Lilly&#39;s correction to stratified atmospheric flows, is included in CLIMA. The input parameter to this model is the Smagorinsky coefficient. For atmospheric flows, the coefficient <code>C_smag</code> typically takes values between 0.15 and 0.23. Flow dependent <code>C_smag</code> are currently not supported (e.g. Germano&#39;s extension). The Smagorinsky-Lilly model does not contain explicit filtered terms.</p><div>\[\nu = (C_{s} \mathrm{f}_{b} \Delta)^2 \sqrt{|\mathrm{S}|}\]</div><p>with the stratification correction term</p><div>\[\mathrm{f}_{b}^{2} = \sqrt{1 - \frac{\mathrm{Ri}}{\mathrm{Pr}_{t}}}\]</div><p><br/><span>$\mathrm{Ri}$</span> and <span>$\mathrm{Pr}_{t}$</span> are the Richardson and turbulent Prandtl numbers respectively.  <span>$\Delta$</span> is the mixing length in the relevant coordinate direction. We use the DG metric terms to determine the local effective resolution (see <code>src/Mesh/Geometry.jl</code>), and modify the vertical lengthscale by the stratification correction factor <span>$\mathrm{f}_{b}$</span>.</p><pre><code class="language-">&quot;&quot;&quot;
+    SmagorinskyLilly &lt;: TurbulenceClosure
+
+See § 1.3.2 in CliMA documentation
+
+article{doi:10.1175/1520-0493(1963)091&lt;0099:GCEWTP&gt;2.3.CO;2,
+  author = {Smagorinksy, J.},
+  title = {General circulation experiments with the primitive equations},
+  journal = {Monthly Weather Review},
+  volume = {91},
+  number = {3},
+  pages = {99-164},
+  year = {1963},
+  doi = {10.1175/1520-0493(1963)091&lt;0099:GCEWTP&gt;2.3.CO;2},
+  URL = {https://doi.org/10.1175/1520-0493(1963)091&lt;0099:GCEWTP&gt;2.3.CO;2},
+  eprint = {https://doi.org/10.1175/1520-0493(1963)091&lt;0099:GCEWTP&gt;2.3.CO;2}
+  }
+
+article{doi:10.1111/j.2153-3490.1962.tb00128.x,
+  author = {LILLY, D. K.},
+  title = {On the numerical simulation of buoyant convection},
+  journal = {Tellus},
+  volume = {14},
+  number = {2},
+  pages = {148-172},
+  doi = {10.1111/j.2153-3490.1962.tb00128.x},
+  url = {https://onlinelibrary.wiley.com/doi/abs/10.1111/j.2153-3490.1962.tb00128.x},
+  eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1111/j.2153-3490.1962.tb00128.x},
+  year = {1962}
+  }
+
+Brunt-Vaisala frequency N² defined as in equation (1b) in
+  Durran, D.R. and J.B. Klemp, 1982:
+  On the Effects of Moisture on the Brunt-Väisälä Frequency.
+  J. Atmos. Sci., 39, 2152–2158,
+  https://doi.org/10.1175/1520-0469(1982)039&lt;2152:OTEOMO&gt;2.0.CO;2</code></pre><p>Fields</p><pre><code class="language-">$(DocStringExtensions.FIELDS)
+&quot;&quot;&quot;
+struct SmagorinskyLilly{FT} &lt;: TurbulenceClosure
+    &quot;Smagorinsky Coefficient [dimensionless]&quot;
+    C_smag::FT
+end
+
+vars_aux(::SmagorinskyLilly, FT) = @vars(Δ::FT)
+vars_gradient(::SmagorinskyLilly, FT) = @vars(θ_v::FT)
+vars_diffusive(::SmagorinskyLilly, FT) =
+    @vars(S::SHermitianCompact{3, FT, 6}, N²::FT)
+
+
+function atmos_init_aux!(
+    ::SmagorinskyLilly,
+    ::AtmosModel,
+    aux::Vars,
+    geom::LocalGeometry,
+)
+    aux.turbulence.Δ = lengthscale(geom)
+end
+
+function gradvariables!(
+    m::SmagorinskyLilly,
+    transform::Vars,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    transform.turbulence.θ_v = aux.moisture.θ_v
+end
+
+function diffusive!(
+    ::SmagorinskyLilly,
+    orientation::Orientation,
+    diffusive::Vars,
+    ∇transform::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+
+    diffusive.turbulence.S = symmetrize(∇transform.u)
+    ∇Φ = ∇gravitational_potential(orientation, aux)
+    diffusive.turbulence.N² =
+        dot(∇transform.turbulence.θ_v, ∇Φ) / aux.moisture.θ_v
+end
+
+function turbulence_tensors(
+    m::SmagorinskyLilly,
+    orientation::Orientation,
+    param_set::AbstractParameterSet,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+)
+
+    FT = eltype(state)
+    _inv_Pr_turb::FT = inv_Pr_turb(param_set)
+    S = diffusive.turbulence.S
+    normS = strain_rate_magnitude(S)
+    k̂ = vertical_unit_vector(orientation, param_set, aux)</code></pre><p>squared buoyancy correction</p><pre><code class="language-">    Richardson = diffusive.turbulence.N² / (normS^2 + eps(normS))
+    f_b² = sqrt(clamp(FT(1) - Richardson * _inv_Pr_turb, FT(0), FT(1)))
+    ν₀ = normS * (m.C_smag * aux.turbulence.Δ)^2 + FT(1e-5)
+    ν = SVector{3, FT}(ν₀, ν₀, ν₀)
+    ν_v = k̂ .* dot(ν, k̂)
+    ν_h = ν₀ .- ν_v
+    ν = SDiagonal(ν_h + ν_v .* f_b²)
+    D_t = diag(ν) * _inv_Pr_turb
+    τ = -2 * ν * S
+    return ν, D_t, τ
+end</code></pre><h3 id="vreman-1"><a class="docs-heading-anchor" href="#vreman-1">Vreman Model</a><a class="docs-heading-anchor-permalink" href="#vreman-1" title="Permalink"></a></h3><p>Vreman&#39;s turbulence model for anisotropic flows, which provides a less dissipative solution (specifically in the near-wall and transitional regions) than the Smagorinsky-Lilly method. This model relies of first derivatives of the velocity vector (i.e., the gradient tensor). By design, the Vreman model handles transitional as well as fully turbulent flows adequately. The input parameter to this model is the Smagorinsky coefficient - the coefficient is modified within the model functions to account for differences in model construction.</p><h4 id="Equations-1"><a class="docs-heading-anchor" href="#Equations-1">Equations</a><a class="docs-heading-anchor-permalink" href="#Equations-1" title="Permalink"></a></h4><div>\[\nu = 2.5 \mathrm{C}_{smag} \sqrt{\frac{\mathrm{B}_{\beta}}{\alpha_{i}\alpha_{j}}}\]</div><p>where <span>$\mathrm{B}_{\beta}$</span> and <span>$\alpha$</span> are functions of the velocity gradient tensor terms.</p><pre><code class="language-">&quot;&quot;&quot;
+    Vreman{FT} &lt;: TurbulenceClosure
+
+  §1.3.2 in CLIMA documentation
+Filter width Δ is the local grid resolution calculated from the mesh metric tensor. A Smagorinsky coefficient
+is specified and used to compute the equivalent Vreman coefficient.
+
+1) ν_e = √(Bᵦ/(αᵢⱼαᵢⱼ)) where αᵢⱼ = ∂uⱼ∂uᵢ with uᵢ the resolved scale velocity component.
+2) βij = Δ²αₘᵢαₘⱼ
+3) Bᵦ = β₁₁β₂₂ + β₂₂β₃₃ + β₁₁β₃₃ - β₁₂² - β₁₃² - β₂₃²
+βᵢⱼ is symmetric, positive-definite.
+If Δᵢ = Δ, then β = Δ²αᵀα
+
+@article{Vreman2004,
+  title={An eddy-viscosity subgrid-scale model for turbulent shear flow: Algebraic theory and applications},
+  author={Vreman, AW},
+  journal={Physics of fluids},
+  volume={16},
+  number={10},
+  pages={3670--3681},
+  year={2004},
+  publisher={AIP}
+}</code></pre><p>Fields</p><pre><code class="language-">$(DocStringExtensions.FIELDS)
+&quot;&quot;&quot;
+struct Vreman{FT} &lt;: TurbulenceClosure
+    &quot;Smagorinsky Coefficient [dimensionless]&quot;
+    C_smag::FT
+end
+vars_aux(::Vreman, FT) = @vars(Δ::FT)
+vars_gradient(::Vreman, FT) = @vars(θ_v::FT)
+vars_diffusive(::Vreman, FT) = @vars(∇u::SMatrix{3, 3, FT, 9}, N²::FT)
+
+function atmos_init_aux!(::Vreman, ::AtmosModel, aux::Vars, geom::LocalGeometry)
+    aux.turbulence.Δ = lengthscale(geom)
+end
+function gradvariables!(
+    m::Vreman,
+    transform::Vars,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    transform.turbulence.θ_v = aux.moisture.θ_v
+end
+function diffusive!(
+    ::Vreman,
+    orientation::Orientation,
+    diffusive::Vars,
+    ∇transform::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    diffusive.turbulence.∇u = ∇transform.u
+    ∇Φ = ∇gravitational_potential(orientation, aux)
+    diffusive.turbulence.N² =
+        dot(∇transform.turbulence.θ_v, ∇Φ) / aux.moisture.θ_v
+end
+
+function turbulence_tensors(
+    m::Vreman,
+    orientation::Orientation,
+    param_set::AbstractParameterSet,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+)
+    FT = eltype(state)
+    _inv_Pr_turb::FT = inv_Pr_turb(param_set)
+    α = diffusive.turbulence.∇u
+    S = symmetrize(α)
+    k̂ = vertical_unit_vector(orientation, param_set, aux)
+
+    normS = strain_rate_magnitude(S)
+    Richardson = diffusive.turbulence.N² / (normS^2 + eps(normS))
+    f_b² = sqrt(clamp(1 - Richardson * _inv_Pr_turb, 0, 1))
+
+    β = f_b² * (aux.turbulence.Δ)^2 * (α&#39; * α)
+    Bβ = principal_invariants(β)[2]
+
+    ν₀ = m.C_smag^2 * FT(2.5) * sqrt(abs(Bβ / (norm2(α) + eps(FT))))
+
+    ν = SVector{3, FT}(ν₀, ν₀, ν₀)
+    ν_v = k̂ .* dot(ν, k̂)
+    ν_h = ν₀ .- ν_v
+    ν = SDiagonal(ν_h + ν_v .* f_b²)
+    D_t = diag(ν) * _inv_Pr_turb
+    τ = -2 * ν * S
+    return ν, D_t, τ
+end</code></pre><h3 id="aniso-min-diss-1"><a class="docs-heading-anchor" href="#aniso-min-diss-1">Anisotropic Minimum Dissipation</a><a class="docs-heading-anchor-permalink" href="#aniso-min-diss-1" title="Permalink"></a></h3><p>This method is based Vreugdenhil and Taylor&#39;s minimum-dissipation eddy-viscosity model. The principles of the Rayleigh quotient minimizer are applied to the energy dissipation terms in the conservation equations, resulting in a maximum dissipation bound, and a model for eddy viscosity and eddy diffusivity.</p><div>\[\nu_e = (\mathrm{C}\delta)^2  \mathrm{max}\left[0, - \frac{\hat{\partial}_k \hat{u}_{i} \hat{\partial}_k \hat{u}_{j} \mathrm{\hat{S}}_{ij}}{\hat{\partial}_p \hat{u}_{q}} \right]\]</div><pre><code class="language-">&quot;&quot;&quot;
+    AnisoMinDiss{FT} &lt;: TurbulenceClosure
+
+  §1.3.2 in CLIMA documentation
+Filter width Δ is the local grid resolution calculated from the mesh metric tensor. A Poincare coefficient
+is specified and used to compute the equivalent AnisoMinDiss coefficient (computed as the solution to the
+eigenvalue problem for the Laplacian operator).
+
+@article{
+doi:10.1063/1.5037039,
+author = {Vreugdenhil,Catherine A.  and Taylor,John R. },
+title = {Large-eddy simulations of stratified plane Couette flow using the anisotropic minimum-dissipation model},
+journal = {Physics of Fluids},
+volume = {30},
+number = {8},
+pages = {085104},
+year = {2018},
+doi = {10.1063/1.5037039},
+URL = {
+        https://doi.org/10.1063/1.5037039
+},
+}
+
+Fields
+$(DocStringExtensions.FIELDS)
+&quot;&quot;&quot;
+struct AnisoMinDiss{FT} &lt;: TurbulenceClosure
+    C_poincare::FT
+end
+vars_aux(::AnisoMinDiss, FT) = @vars(Δ::FT)
+vars_gradient(::AnisoMinDiss, FT) = @vars(θ_v::FT)
+vars_diffusive(::AnisoMinDiss, FT) = @vars(∇u::SMatrix{3, 3, FT, 9}, N²::FT)
+function atmos_init_aux!(
+    ::AnisoMinDiss,
+    ::AtmosModel,
+    aux::Vars,
+    geom::LocalGeometry,
+)
+    aux.turbulence.Δ = lengthscale(geom)
+end
+function gradvariables!(
+    m::AnisoMinDiss,
+    transform::Vars,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    transform.turbulence.θ_v = aux.moisture.θ_v
+end
+function diffusive!(
+    ::AnisoMinDiss,
+    orientation::Orientation,
+    diffusive::Vars,
+    ∇transform::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    ∇Φ = ∇gravitational_potential(orientation, aux)
+    diffusive.turbulence.∇u = ∇transform.u
+    diffusive.turbulence.N² =
+        dot(∇transform.turbulence.θ_v, ∇Φ) / aux.moisture.θ_v
+end
+function turbulence_tensors(
+    m::AnisoMinDiss,
+    orientation::Orientation,
+    param_set::AbstractParameterSet,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+)
+    FT = eltype(state)
+    k̂ = vertical_unit_vector(orientation, param_set, aux)
+    _inv_Pr_turb::FT = inv_Pr_turb(param_set)
+
+    ∇u = diffusive.turbulence.∇u
+    S = symmetrize(∇u)
+    normS = strain_rate_magnitude(S)
+
+    δ = aux.turbulence.Δ
+    Richardson = diffusive.turbulence.N² / (normS^2 + eps(normS))
+    f_b² = sqrt(clamp(1 - Richardson * _inv_Pr_turb, 0, 1))
+
+    δ_vec = SVector(δ, δ, δ)
+    δ_m = δ_vec ./ transpose(δ_vec)
+    ∇û = ∇u .* δ_m
+    Ŝ = symmetrize(∇û)
+    ν₀ =
+        (m.C_poincare .* δ_vec) .^ 2 * max(
+            FT(1e-5),
+            -dot(transpose(∇û) * (∇û), Ŝ) / (dot(∇û, ∇û) .+ eps(normS)),
+        )
+
+    ν = SVector{3, FT}(ν₀, ν₀, ν₀)
+    ν_v = k̂ .* dot(ν, k̂)
+    ν_h = ν₀ .- ν_v
+    ν = SDiagonal(ν_h + ν_v .* f_b²)
+    D_t = diag(ν) * _inv_Pr_turb
+    τ = -2 * ν * S
+    return ν, D_t, τ
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../Microphysics/">« Microphysics</a><a class="docs-footer-nextpage" href="../tracers/">AtmosModel »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 20 April 2020 20:49">Monday 20 April 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
