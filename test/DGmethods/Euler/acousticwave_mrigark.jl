@@ -229,7 +229,7 @@ function run(
     nsteps = 2
     @show (vacoustic_dt, advection_dt, hacoustic_dt)
 
-    vacoustic_solver = MRIGARKESDIRK46aSandu(
+    vacoustic_solver = MRIGARKESDIRK23LSAKozdon(
         vacoustic_dg,
         LinearBackwardEulerSolver(ManyColumnLU(); isadjustable = false),
         advection_solver,
