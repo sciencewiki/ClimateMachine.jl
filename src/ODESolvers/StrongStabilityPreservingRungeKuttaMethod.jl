@@ -88,6 +88,25 @@ function StrongStabilityPreservingRungeKutta(
     )
 end
 
+#Wrapper for MIS
+function dostep!(
+    Q,
+    ssp::StrongStabilityPreservingRungeKutta,
+    p,
+    time::Real,
+    dt::Real,
+    nsteps::Int,
+    slow_δ = nothing,
+    slow_rv_dQ = nothing,
+    slow_scaling = nothing,
+)
+  ssp.dt = dt;
+  for i in 1:nsteps
+    dostep!(Q, ssp, p, time, slow_δ, slow_rv_dQ, slow_scaling)
+  end
+end
+
+
 """
     ODESolvers.dostep!(Q, ssp::StrongStabilityPreservingRungeKutta, p,
                        time::Real, [slow_δ, slow_rv_dQ, slow_scaling])
