@@ -37,6 +37,7 @@ pages = Any[
     ],
     "Diagnostics" => "Diagnostics.md",
     "ODESolvers" => "ODESolvers.md",
+    "Flow chart" => "FlowChart.md",
     "LinearSolvers" => "LinearSolvers.md",
     "Mesh" => "Mesh.md",
     "Arrays" => "Arrays.md",
