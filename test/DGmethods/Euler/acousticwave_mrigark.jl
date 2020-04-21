@@ -204,7 +204,7 @@ function run(
 
     # determine the time step for the horizontally acoustic model and set up the
     # inner (fast) solver
-    acoustic_speed = soundspeed_air(FT(setup.T_ref), fullmodel.param_set)
+    acoustic_speed = soundspeed_air(fullmodel.param_set, FT(setup.T_ref))
     hacoustic_dt = hmnd / acoustic_speed
     hacoustic_solver =
         LSRK144NiegemannDiehlBusch(hacoustic_dg, Q; dt = hacoustic_dt)
@@ -351,7 +351,7 @@ function (setup::AcousticWaveSetup)(bl, state, aux, coords, t)
     Δp = setup.γ * f * g
     p = aux.ref_state.p + Δp
 
-    ts = PhaseDry_given_pT(p, setup.T_ref, bl.param_set)
+    ts = PhaseDry_given_pT(bl.param_set, p, setup.T_ref)
     q_pt = PhasePartition(ts)
     e_pot = gravitational_potential(bl.orientation, aux)
     e_int = internal_energy(ts)
