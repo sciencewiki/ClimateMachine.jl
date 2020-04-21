@@ -1,6 +1,6 @@
 # FlowChart
 
-Stepping a balance law in time involves calling a "`compute_right_hand_side!`" or "`compute_tendencies!`" function. As described[^1], this function calls several other functions including
+Stepping a balance law in time involves calling a "right hand side" or "tendencies" function. This "tendencies" function calls several other functions[^1] including
 
  - `update_aux!`
  - `flux_diffusive!`
@@ -13,10 +13,23 @@ Below is a flow chart to provide a more detailed picture of the order these func
 ```@example tendencies_flow_chart
 using TikzGraphs
 using LightGraphs
-g = DiGraph(4)
-TikzGraphs.plot(g)
+using TikzPictures # this is required for saving
 
-savefig("tendencies_flow_chart.svg") # hide
+flow_chart = [
+  "update\\_aux!",
+  "flux\\_diffusive!",
+  "flux\\_nondiffusive!",
+  "source!",
+]
+n_nodes = length(flow_chart)
+g = DiGraph(n_nodes)
+for i in 1:n_nodes-1
+  add_edge!(g, i, i+1)
+end
+
+t = TikzGraphs.plot(g, flow_chart, node_style="draw, rounded corners, fill=blue!10", options="scale=2, font=\\huge\\sf")
+TikzPictures.save(SVG(joinpath(@__DIR__,"tendencies_flow_chart")), t)
+
 nothing # hide
 ```
 ![](tendencies_flow_chart.svg)

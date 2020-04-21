@@ -38,7 +38,6 @@ pages = Any[
         "Tracers" => "Atmos/Model/tracers.md",
     ],
     "Diagnostics" => "Diagnostics.md",
-    "Flow chart" => "FlowChart.md",
     "Numerics" => Any[
         "ODESolvers" => "Numerics/ODESolvers.md",
         "LinearSolvers" => "Numerics/LinearSolvers.md",
@@ -47,6 +46,7 @@ pages = Any[
         "DGmethods_old" => "Numerics/DGmethods_old.md",
     ],
     "InputOutput.md",
+    "Flow chart" => "FlowChart.md",
     "Examples" => [
         "Conjugate Gradient" => "generated/example_cg.md",
         "Notes on Literate" => "generated/literate_markdown.md",
