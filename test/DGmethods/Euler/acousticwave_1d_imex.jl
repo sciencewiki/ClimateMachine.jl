@@ -11,6 +11,7 @@ using CLIMA.GeneralizedMinimalResidualSolver
 using CLIMA.ColumnwiseLUSolver: ManyColumnLU
 using CLIMA.VTK: writevtk, writepvtu
 using CLIMA.GenericCallbacks: EveryXWallTimeSeconds, EveryXSimulationSteps
+using CLIMA.PlanetParameters: planet_radius, day
 using CLIMA.MoistThermodynamics:
     air_density,
     soundspeed_air,
@@ -36,10 +37,10 @@ using CLIMA.Atmos:
     gravitational_potential
 using CLIMA.VariableTemplates: flattenednames
 
-using CLIMAParameters
-using CLIMAParameters.Planet: planet_radius
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+param_set = ParameterSet()
 
 using MPI, Logging, StaticArrays, LinearAlgebra, Printf, Dates, Test
 
@@ -50,6 +51,16 @@ function main()
     ArrayType = CLIMA.array_type()
 
     mpicomm = MPI.COMM_WORLD
+    ll = uppercase(get(ENV, "JULIA_LOG_LEVEL", "INFO"))
+    loglevel = Dict(
+        "DEBUG" => Logging.Debug,
+        "WARN" => Logging.Warn,
+        "ERROR" => Logging.Error,
+        "INFO" => Logging.Info,
+    )[ll]
+
+    logger_stream = MPI.Comm_rank(mpicomm) == 0 ? stderr : devnull
+    global_logger(ConsoleLogger(logger_stream, loglevel))
 
     polynomialorder = 5
     numelem_horz = 10
@@ -91,10 +102,9 @@ function run(
 
     setup = AcousticWaveSetup{FT}()
 
-    _planet_radius::FT = planet_radius(param_set)
     vert_range = grid1d(
-        _planet_radius,
-        FT(_planet_radius + setup.domain_height),
+        FT(planet_radius),
+        FT(planet_radius + setup.domain_height),
         nelem = numelem_vert,
     )
     topology = StackedCubedSphereTopology(mpicomm, numelem_horz, vert_range)
@@ -108,14 +118,14 @@ function run(
     )
 
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
+        AtmosLESConfigType;
         orientation = SphericalOrientation(),
         ref_state = HydrostaticState(IsothermalProfile(setup.T_ref), FT(0)),
         turbulence = ConstantViscosityWithDivergence(FT(0)),
         moisture = DryModel(),
         source = Gravity(),
         init_state = setup,
+        param_set = param_set,
     )
     linearmodel = AtmosAcousticGravityLinearModel(model)
 
@@ -139,7 +149,7 @@ function run(
 
     # determine the time step
     element_size = (setup.domain_height / numelem_vert)
-    acoustic_speed = soundspeed_air(model.param_set, FT(setup.T_ref))
+    acoustic_speed = soundspeed_air(FT(setup.T_ref), model.param_set)
     dt_factor = 445
     dt = dt_factor * element_size / acoustic_speed / polynomialorder^2
     # Adjust the time step so we exactly hit 1 hour for VTK output
@@ -249,9 +259,9 @@ function (setup::AcousticWaveSetup)(bl, state, aux, coords, t)
     # callable to set initial conditions
     FT = eltype(state)
 
-    λ = longitude(bl, aux)
-    φ = latitude(bl, aux)
-    z = altitude(bl, aux)
+    λ = longitude(bl.orientation, aux)
+    φ = latitude(bl.orientation, aux)
+    z = altitude(bl.orientation, aux)
 
     β = min(FT(1), setup.α * acos(cos(φ) * cos(λ)))
     f = (1 + cos(FT(π) * β)) / 2
@@ -259,7 +269,7 @@ function (setup::AcousticWaveSetup)(bl, state, aux, coords, t)
     Δp = setup.γ * f * g
     p = aux.ref_state.p + Δp
 
-    ts = PhaseDry_given_pT(bl.param_set, p, setup.T_ref)
+    ts = PhaseDry_given_pT(p, setup.T_ref, bl.param_set)
     q_pt = PhasePartition(ts)
     e_pot = gravitational_potential(bl.orientation, aux)
     e_int = internal_energy(ts)

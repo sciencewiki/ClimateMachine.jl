@@ -3,28 +3,23 @@ using Test
 
 using CLIMA
 using CLIMA.Atmos
-using CLIMA.Mesh.Grids
+using CLIMA.PlanetParameters: grav, MSLP
 using CLIMA.MoistThermodynamics
+using CLIMA.PlanetParameters: grav, MSLP
 using CLIMA.VariableTemplates
-
-using CLIMAParameters
-using CLIMAParameters.Planet: grav, MSLP
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Grids
 
 function init_test!(bl, state, aux, (x, y, z), t)
     FT = eltype(state)
 
     z = FT(z)
-    _grav::FT = grav(bl.param_set)
-    _MSLP::FT = MSLP(bl.param_set)
 
     # These constants are those used by Stevens et al. (2005)
     qref = FT(9.0e-3)
     q_pt_sfc = PhasePartition(qref)
-    Rm_sfc = FT(gas_constant_air(param_set, q_pt_sfc))
+    Rm_sfc = FT(gas_constant_air(q_pt_sfc))
     T_sfc = FT(290.4)
-    P_sfc = _MSLP
+    P_sfc = FT(MSLP)
 
     # Specify moisture profiles
     q_liq = FT(0)
@@ -38,15 +33,15 @@ function init_test!(bl, state, aux, (x, y, z), t)
     u, v, w = ugeo, vgeo, FT(0)
 
     # Pressure
-    H = Rm_sfc * T_sfc / _grav
+    H = Rm_sfc * T_sfc / grav
     p = P_sfc * exp(-z / H)
 
     # Density, Temperature
-    ts = LiquidIcePotTempSHumEquil_given_pressure(bl.param_set, θ_liq, p, q_tot)
+    ts = LiquidIcePotTempSHumEquil_given_pressure(θ_liq, p, q_tot, bl.param_set)
     ρ = air_density(ts)
 
     e_kin = FT(1 / 2) * FT((u^2 + v^2 + w^2))
-    e_pot = _grav * z
+    e_pot = grav * z
     E = ρ * total_energy(e_kin, e_pot, ts)
 
     state.ρ = ρ
@@ -86,7 +81,6 @@ function main()
         xmax,
         ymax,
         zmax,
-        param_set,
         init_test!,
         solver_type = ode_solver,
     )
@@ -121,12 +115,12 @@ function main()
     ugeo_abs = FT(7)
     vgeo_abs = FT(5.5)
     Δt = solver_config.dt
-    ca_h = ugeo_abs * (Δt / Δh) + vgeo_abs * (Δt / Δh)
+    caₕ = ugeo_abs * (Δt / Δh) + vgeo_abs * (Δt / Δh)
     # vertical velocity is 0
     caᵥ = FT(0.0)
     @test isapprox(CFL_adv_v, caᵥ)
-    @test isapprox(CFL_adv_h, ca_h, atol = 0.0005)
-    @test isapprox(CFL_adv, ca_h, atol = 0.0005)
+    @test isapprox(CFL_adv_h, caₕ, atol = 0.0005)
+    @test isapprox(CFL_adv, caₕ, atol = 0.0005)
 
     cb_test = 0
     result = CLIMA.invoke!(solver_config)

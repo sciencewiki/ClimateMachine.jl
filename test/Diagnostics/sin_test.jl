@@ -1,7 +1,6 @@
 using Dates
 using FileIO
 using MPI
-using Printf
 using Random
 using StaticArrays
 using Test
@@ -14,27 +13,20 @@ using CLIMA.ODESolvers
 using CLIMA.Mesh.Filters
 using CLIMA.MoistThermodynamics
 using CLIMA.ODESolvers
+using CLIMA.PlanetParameters: grav, MSLP
 using CLIMA.VariableTemplates
-using CLIMA.Writers
-
-using CLIMAParameters
-using CLIMAParameters.Planet: grav, MSLP
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
 
 function init_sin_test!(bl, state, aux, (x, y, z), t)
     FT = eltype(state)
 
     z = FT(z)
-    _grav::FT = grav(bl.param_set)
-    _MSLP::FT = MSLP(bl.param_set)
 
     # These constants are those used by Stevens et al. (2005)
     qref = FT(9.0e-3)
     q_pt_sfc = PhasePartition(qref)
-    Rm_sfc = FT(gas_constant_air(param_set, q_pt_sfc))
+    Rm_sfc = FT(gas_constant_air(q_pt_sfc))
     T_sfc = FT(292.5)
-    P_sfc = _MSLP
+    P_sfc = FT(MSLP)
 
     # Specify moisture profiles
     q_liq = FT(0)
@@ -63,15 +55,15 @@ function init_sin_test!(bl, state, aux, (x, y, z), t)
     v = FT(5 + 2 * sin(2 * π * ((x / 1500) + (y / 1500))))
 
     # Pressure
-    H = Rm_sfc * T_sfc / _grav
+    H = Rm_sfc * T_sfc / grav
     p = P_sfc * exp(-z / H)
 
     # Density, Temperature
-    ts = LiquidIcePotTempSHumEquil_given_pressure(bl.param_set, θ_liq, p, q_tot)
+    ts = LiquidIcePotTempSHumEquil_given_pressure(θ_liq, p, q_tot, bl.param_set)
     ρ = air_density(ts)
 
     e_kin = FT(1 / 2) * FT((u^2 + v^2 + w^2))
-    e_pot = _grav * z
+    e_pot = grav * z
     E = ρ * total_energy(e_kin, e_pot, ts)
 
     state.ρ = ρ
@@ -90,8 +82,7 @@ function config_sin_test(FT, N, resolution, xmax, ymax, zmax)
         xmax,
         ymax,
         zmax,
-        param_set,
-        init_sin_test!;
+        init_sin_test!,
         solver_type = ode_solver,
     )
 
@@ -99,12 +90,8 @@ function config_sin_test(FT, N, resolution, xmax, ymax, zmax)
 end
 
 function config_diagnostics(driver_config)
-    interval = "100steps"
-    dgngrp = setup_atmos_default_diagnostics(
-        interval,
-        replace(driver_config.name, " " => "_"),
-        writer = JLD2Writer(),
-    )
+    interval = 100
+    dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end
 
@@ -112,7 +99,7 @@ function main()
     CLIMA.init()
 
     # Disable driver diagnostics as we're testing it here
-    CLIMA.Settings.diagnostics = "never"
+    CLIMA.Settings.enable_diagnostics = false
 
     FT = Float64
 
@@ -159,26 +146,28 @@ function main()
     # Check results
     mpirank = MPI.Comm_rank(mpicomm)
     if mpirank == 0
-        dgngrp = dgn_config.groups[1]
-        nm = @sprintf(
-            "%s_%s-%s-num%04d.jld2",
-            replace(dgngrp.out_prefix, " " => "_"),
-            dgngrp.name,
-            starttime,
-            1,
-        )
-        ds = load(joinpath(outdir, nm))
-        N = size(ds["vert_eddy_u_flux"], 1)
+        d = load(joinpath(
+            outdir,
+            "$(dgn_config.groups[1].out_prefix)-$(dgn_config.groups[1].name)-$(starttime).jld2",
+        ))
+        Nqk = size(d["0.0"], 1)
+        Nev = size(d["0.0"], 2)
+        S = zeros(Nqk * Nev)
+        S1 = zeros(Nqk * Nev)
         err = 0
         err1 = 0
-        for i in 1:N
-            err += (ds["vert_eddy_u_flux"][i] - 0.5)^2
-            err1 += (ds["u"][i] - 5)^2
+        for ev in 1:Nev
+            for k in 1:Nqk
+                dv = Diagnostics.diagnostic_vars(d["0.0"][k, ev])
+                S[k + (ev - 1) * Nqk] = dv.vert_eddy_u_flux
+                S1[k + (ev - 1) * Nqk] = dv.u
+                err += (S[k + (ev - 1) * Nqk] - 0.5)^2
+                err1 += (S1[k + (ev - 1) * Nqk] - 5)^2
+            end
         end
-        err = sqrt(err / N)
+        err = sqrt(err / (Nqk * Nev))
         @test err <= 2e-15
         @test err1 <= 1e-16
     end
 end
-
 main()

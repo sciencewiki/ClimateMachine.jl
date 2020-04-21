@@ -16,10 +16,12 @@ using CLIMA.Mesh.Filters
 using CLIMA.MoistThermodynamics
 using CLIMA.VariableTemplates
 
-using CLIMAParameters
-using CLIMAParameters.Planet: R_d, cp_d, cv_d, MSLP, grav
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+using CLIMA.UniversalConstants
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+using CLIMA.Parameters.Planet
+param_set = ParameterSet()
 
 # -------------------- Surface Driven Bubble ----------------- #
 # Rising thermals driven by a prescribed surface heat flux.
@@ -40,9 +42,9 @@ function init_surfacebubble!(bl, state, aux, (x, y, z), t)
     R_gas::FT = R_d(bl.param_set)
     c_p::FT = cp_d(bl.param_set)
     c_v::FT = cv_d(bl.param_set)
+    γ::FT = c_p / c_v
     p0::FT = MSLP(bl.param_set)
     _grav::FT = grav(bl.param_set)
-    γ::FT = c_p / c_v
 
     xc::FT = 1250
     yc::FT = 1250
@@ -56,7 +58,7 @@ function init_surfacebubble!(bl, state, aux, (x, y, z), t)
     ρ = p0 / (R_gas * θ) * (π_exner)^(c_v / R_gas) # density
 
     q_tot = FT(0)
-    ts = LiquidIcePotTempSHumEquil(bl.param_set, θ, ρ, q_tot)
+    ts = LiquidIcePotTempSHumEquil(θ, ρ, q_tot, bl.param_set)
     q_pt = PhasePartition(ts)
 
     ρu = SVector(FT(0), FT(0), FT(0))
@@ -91,8 +93,7 @@ function config_surfacebubble(FT, N, resolution, xmax, ymax, zmax)
         CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
 
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
+        AtmosLESConfigType;
         turbulence = SmagorinskyLilly{FT}(C_smag),
         source = (Gravity(),),
         boundarycondition = (
@@ -101,6 +102,7 @@ function config_surfacebubble(FT, N, resolution, xmax, ymax, zmax)
         ),
         moisture = EquilMoist{FT}(),
         init_state = init_surfacebubble!,
+        param_set = param_set,
     )
     config = CLIMA.AtmosLESConfiguration(
         "SurfaceDrivenBubble",
@@ -109,7 +111,6 @@ function config_surfacebubble(FT, N, resolution, xmax, ymax, zmax)
         xmax,
         ymax,
         zmax,
-        param_set,
         init_surfacebubble!,
         solver_type = ode_solver,
         model = model,
@@ -119,7 +120,7 @@ function config_surfacebubble(FT, N, resolution, xmax, ymax, zmax)
 end
 
 function config_diagnostics(driver_config)
-    interval = "10000steps"
+    interval = 10000 # in time steps
     dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end

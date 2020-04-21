@@ -12,6 +12,7 @@ using CLIMA.DGmethods: DGModel, init_ode_state, LocalGeometry, courant
 using CLIMA.DGmethods.NumericalFluxes:
     Rusanov, CentralNumericalFluxGradient, CentralNumericalFluxDiffusive
 using CLIMA.Courant
+using CLIMA.PlanetParameters: kappa_d
 using CLIMA.Atmos:
     AtmosModel,
     AtmosAcousticLinearModel,
@@ -31,10 +32,10 @@ using CLIMA.Atmos:
 using CLIMA.Atmos
 using CLIMA.ODESolvers
 
-using CLIMAParameters
-using CLIMAParameters.Planet: kappa_d
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+param_set = ParameterSet()
 
 using CLIMA.MoistThermodynamics:
     air_density, total_energy, internal_energy, soundspeed_air
@@ -57,18 +58,17 @@ function initialcondition!(bl, state, aux, coords, t)
         FT(translation_speed * coords[1]),
         FT(0),
     )
-    _kappa_d::FT = kappa_d(param_set)
 
     u = u∞
     T = FT(T∞)
     # adiabatic/isentropic relation
-    p = FT(p∞) * (T / FT(T∞))^(FT(1) / _kappa_d)
-    ρ = air_density(bl.param_set, T, p)
+    p = FT(p∞) * (T / FT(T∞))^(FT(1) / FT(kappa_d))
+    ρ = air_density(T, p, bl.param_set)
 
     state.ρ = ρ
     state.ρu = ρ * u
     e_kin = u' * u / 2
-    state.ρe = ρ * total_energy(bl.param_set, e_kin, FT(0), T)
+    state.ρe = ρ * total_energy(e_kin, FT(0), T, bl.param_set)
 
     nothing
 end
@@ -114,14 +114,14 @@ let
                 )
 
                 model = AtmosModel{FT}(
-                    AtmosLESConfigType,
-                    param_set;
+                    AtmosLESConfigType;
                     ref_state = NoReferenceState(),
                     turbulence = ConstantViscosityWithDivergence(μ),
                     moisture = DryModel(),
                     source = Gravity(),
                     boundarycondition = (),
                     init_state = initialcondition!,
+                    param_set = param_set,
                 )
 
                 dg = DGModel(
@@ -142,18 +142,17 @@ let
 
                 translation_speed = FT(norm([150.0, 150.0, 0.0]))
                 diff_speed_h =
-                    FT(μ / air_density(model.param_set, FT(T∞), FT(p∞)))
+                    FT(μ / air_density(FT(T∞), FT(p∞), model.param_set))
                 diff_speed_v =
-                    FT(μ / air_density(model.param_set, FT(T∞), FT(p∞)))
+                    FT(μ / air_density(FT(T∞), FT(p∞), model.param_set))
                 c_h =
                     Δt * (
                         translation_speed +
-                        soundspeed_air(model.param_set, FT(T∞))
+                        soundspeed_air(FT(T∞), model.param_set)
                     ) / Δx_h
-                c_v = Δt * (soundspeed_air(model.param_set, FT(T∞))) / Δx_v
+                c_v = Δt * (soundspeed_air(FT(T∞), model.param_set)) / Δx_v
                 d_h = Δt * diff_speed_h / Δx_h^2
                 d_v = Δt * diff_speed_v / Δx_v^2
-                simtime = FT(0)
 
                 # tests for non diffusive courant number
                 @test courant(
@@ -162,7 +161,6 @@ let
                     model,
                     Q,
                     Δt,
-                    simtime,
                     HorizontalDirection(),
                 ) ≈ c_h rtol = 1e-4
                 @test courant(
@@ -171,7 +169,6 @@ let
                     model,
                     Q,
                     Δt,
-                    simtime,
                     VerticalDirection(),
                 ) ≈ c_v rtol = 1e-4
 
@@ -182,7 +179,6 @@ let
                     model,
                     Q,
                     Δt,
-                    simtime,
                     HorizontalDirection(),
                 ) ≈ d_h
                 @test courant(
@@ -191,7 +187,6 @@ let
                     model,
                     Q,
                     Δt,
-                    simtime,
                     VerticalDirection(),
                 ) ≈ d_v
             end

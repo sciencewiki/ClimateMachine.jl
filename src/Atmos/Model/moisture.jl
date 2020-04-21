@@ -101,7 +101,7 @@ vars_aux(::DryModel, FT) = @vars(θ_v::FT, air_T::FT)
     t::Real,
 )
     e_int = internal_energy(atmos, state, aux)
-    ts = PhaseDry(atmos.param_set, e_int, state.ρ)
+    ts = PhaseDry(e_int, state.ρ, atmos.param_set)
     aux.moisture.θ_v = virtual_pottemp(ts)
     aux.moisture.air_T = air_temperature(ts)
     nothing
@@ -117,9 +117,9 @@ function thermo_state(
     aux::Vars,
 )
     return PhaseDry(
-        atmos.param_set,
         internal_energy(atmos, state, aux),
         state.ρ,
+        atmos.param_set,
     )
 end
 
@@ -139,7 +139,7 @@ EquilMoist{FT}(;
 
 
 vars_state(::EquilMoist, FT) = @vars(ρq_tot::FT)
-vars_gradient(::EquilMoist, FT) = @vars(q_tot::FT)
+vars_gradient(::EquilMoist, FT) = @vars(q_tot::FT, h_tot::FT)
 vars_diffusive(::EquilMoist, FT) = @vars(∇q_tot::SVector{3, FT})
 vars_aux(::EquilMoist, FT) = @vars(temperature::FT, θ_v::FT, q_liq::FT)
 
@@ -153,12 +153,12 @@ vars_aux(::EquilMoist, FT) = @vars(temperature::FT, θ_v::FT, q_liq::FT)
     ps = atmos.param_set
     e_int = internal_energy(atmos, state, aux)
     ts = PhaseEquil(
-        ps,
         e_int,
         state.ρ,
         state.moisture.ρq_tot / state.ρ,
         moist.maxiter,
         moist.tolerance,
+        ps,
     )
     aux.moisture.temperature = air_temperature(ts)
     aux.moisture.θ_v = virtual_pottemp(ts)

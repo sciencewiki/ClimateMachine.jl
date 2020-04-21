@@ -4,17 +4,18 @@ using Test
 using CLIMA
 using CLIMA.Atmos
 using CLIMA.ConfigTypes
+using CLIMA.PlanetParameters: grav
 using CLIMA.MoistThermodynamics
+using CLIMA.PlanetParameters: grav
 using CLIMA.VariableTemplates
 using CLIMA.Grids
 using CLIMA.ODESolvers
 using CLIMA.GenericCallbacks: EveryXSimulationSteps
 using CLIMA.Mesh.Filters
-
-using CLIMAParameters
-using CLIMAParameters.Planet: grav
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+param_set = ParameterSet()
 
 Base.@kwdef struct AcousticWaveSetup{FT}
     domain_height::FT = 10e3
@@ -28,9 +29,9 @@ function (setup::AcousticWaveSetup)(bl, state, aux, coords, t)
     # callable to set initial conditions
     FT = eltype(state)
 
-    λ = longitude(bl, aux)
-    φ = latitude(bl, aux)
-    z = altitude(bl, aux)
+    λ = longitude(bl.orientation, aux)
+    φ = latitude(bl.orientation, aux)
+    z = altitude(bl.orientation, aux)
 
     β = min(FT(1), setup.α * acos(cos(φ) * cos(λ)))
     f = (1 + cos(FT(π) * β)) / 2
@@ -38,7 +39,7 @@ function (setup::AcousticWaveSetup)(bl, state, aux, coords, t)
     Δp = setup.γ * f * g
     p = aux.ref_state.p + Δp
 
-    ts = PhaseDry_given_pT(bl.param_set, p, setup.T_ref)
+    ts = PhaseDry_given_pT(p, setup.T_ref)
     q_pt = PhasePartition(ts)
     e_pot = gravitational_potential(bl.orientation, aux)
     e_int = internal_energy(ts)
@@ -72,14 +73,14 @@ function main()
     ref_state = HydrostaticState(IsothermalProfile(setup.T_ref), FT(0))
     turbulence = ConstantViscosityWithDivergence(FT(0))
     model = AtmosModel{FT}(
-        AtmosGCMConfigType,
-        param_set;
+        AtmosGCMConfigType;
         orientation = orientation,
         ref_state = ref_state,
         turbulence = turbulence,
         moisture = DryModel(),
         source = Gravity(),
         init_state = setup,
+        param_set = param_set,
     )
 
     ode_solver = CLIMA.MultirateSolverType(
@@ -93,7 +94,6 @@ function main()
         N,
         resolution,
         setup.domain_height,
-        param_set,
         setup;
         solver_type = ode_solver,
         model = model,

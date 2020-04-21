@@ -13,13 +13,14 @@ using CLIMA.Diagnostics
 using CLIMA.GenericCallbacks
 using CLIMA.ODESolvers
 using CLIMA.Mesh.Filters
-using CLIMA.MoistThermodynamics: TemperatureSHumEquil, internal_energy
+using CLIMA.MoistThermodynamics
+using CLIMA.PlanetParameters: R_d, cp_d, cv_d, grav, MSLP
 using CLIMA.VariableTemplates
 
-using CLIMAParameters
-using CLIMAParameters.Planet: R_d, cp_d, cv_d, grav, MSLP
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+param_set = ParameterSet()
 
 # ------------------- Description ---------------------------------------- #
 # 1) Dry Rayleigh Benard Convection (re-entrant channel configuration)
@@ -57,28 +58,25 @@ end
 function init_problem!(bl, state, aux, (x, y, z), t)
     dc = bl.data_config
     FT = eltype(state)
-
-    _R_d::FT = R_d(bl.param_set)
-    _cp_d::FT = cp_d(bl.param_set)
-    _grav::FT = grav(bl.param_set)
-    _cv_d::FT = cv_d(bl.param_set)
-    _MSLP::FT = MSLP(bl.param_set)
-
-    γ::FT = _cp_d / _cv_d
+    R_gas::FT = R_d
+    c_p::FT = cp_d
+    c_v::FT = cv_d
+    γ::FT = c_p / c_v
+    p0::FT = MSLP
     δT =
         sinpi(6 * z / (dc.zmax - dc.zmin)) *
         cospi(6 * z / (dc.zmax - dc.zmin)) + rand(randomseed)
     δw =
         sinpi(6 * z / (dc.zmax - dc.zmin)) *
         cospi(6 * z / (dc.zmax - dc.zmin)) + rand(randomseed)
-    ΔT = _grav / _cv_d * z + δT
+    ΔT = grav / cp_d * z + δT
     T = dc.T_bot - ΔT
-    P = _MSLP * (T / dc.T_bot)^(_grav / _R_d / dc.T_lapse)
-    ρ = P / (_R_d * T)
+    P = p0 * (T / dc.T_bot)^(grav / R_gas / dc.T_lapse)
+    ρ = P / (R_gas * T)
 
     q_tot = FT(0)
     e_pot = gravitational_potential(bl.orientation, aux)
-    ts = TemperatureSHumEquil(bl.param_set, T, P, q_tot)
+    ts = TemperatureSHumEquil(T, P, q_tot, bl.param_set)
 
     ρu, ρv, ρw = FT(0), FT(0), ρ * δw
 
@@ -90,26 +88,14 @@ function init_problem!(bl, state, aux, (x, y, z), t)
     state.ρu = SVector(ρu, ρv, ρw)
     state.ρe = ρe_tot
     state.moisture.ρq_tot = FT(0)
-    ρχ = zero(FT)
-    if z <= 100
-        ρχ += FT(0.1) * (cospi(z / 2 / 100))^2
-    end
-    state.tracers.ρχ = SVector{1, FT}(ρχ)
 end
 
 function config_problem(FT, N, resolution, xmax, ymax, zmax)
 
     # Boundary conditions
     T_bot = FT(299)
-
-    _cp_d::FT = cp_d(param_set)
-    _grav::FT = grav(param_set)
-
-    T_lapse = FT(_grav / _cp_d)
+    T_lapse = FT(grav / cp_d)
     T_top = T_bot - T_lapse * zmax
-
-    ntracers = 1
-    δ_χ = SVector{ntracers, FT}(1)
 
     # Turbulence
     C_smag = FT(0.23)
@@ -127,9 +113,8 @@ function config_problem(FT, N, resolution, xmax, ymax, zmax)
 
     # Set up the model
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
-        turbulence = Vreman(C_smag),
+        AtmosLESConfigType;
+        turbulence = SmagorinskyLilly{FT}(C_smag),
         source = (Gravity(),),
         boundarycondition = (
             AtmosBC(
@@ -141,9 +126,9 @@ function config_problem(FT, N, resolution, xmax, ymax, zmax)
                 energy = PrescribedTemperature((state, aux, t) -> T_top),
             ),
         ),
-        tracers = NTracers{ntracers, FT}(δ_χ),
         init_state = init_problem!,
         data_config = data_config,
+        param_set = param_set,
     )
     ode_solver =
         CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
@@ -154,7 +139,6 @@ function config_problem(FT, N, resolution, xmax, ymax, zmax)
         xmax,
         ymax,
         zmax,
-        param_set,
         init_problem!,
         solver_type = ode_solver,
         model = model,
@@ -163,7 +147,7 @@ function config_problem(FT, N, resolution, xmax, ymax, zmax)
 end
 
 function config_diagnostics(driver_config)
-    interval = "10000steps"
+    interval = 10000 # in time steps
     dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end

@@ -1,34 +1,25 @@
 using Test
 using CLIMA
+using CLIMA.HydrostaticBoussinesq
 using CLIMA.GenericCallbacks
 using CLIMA.ODESolvers
 using CLIMA.Mesh.Filters
+using CLIMA.PlanetParameters: grav
 using CLIMA.VariableTemplates
 using CLIMA.Mesh.Grids: polynomialorder
-using CLIMA.HydrostaticBoussinesq
 
-using CLIMAParameters
-using CLIMAParameters.Planet: grav
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+function config_simple_box(FT, N, resolution, dimensions)
+    prob = OceanGyre{FT}(dimensions...)
 
-function config_simple_box(FT, N, resolution, dimensions; BC = nothing)
-    if BC == nothing
-        problem = OceanGyre{FT}(dimensions...)
-    else
-        problem = OceanGyre{FT}(dimensions...; BC = BC)
-    end
-
-    _grav::FT = grav(param_set)
-    cʰ = sqrt(_grav * problem.H) # m/s
-    model = HydrostaticBoussinesqModel{FT}(param_set, problem, cʰ = cʰ)
+    cʰ = sqrt(grav * prob.H) # m/s
+    model = HydrostaticBoussinesqModel{FT}(prob, cʰ = cʰ)
 
     config = CLIMA.OceanBoxGCMConfiguration("ocean_gyre", N, resolution, model)
 
     return config
 end
 
-function run_ocean_gyre(; imex::Bool = false, BC = nothing)
+function run_ocean_gyre(; imex::Bool = false)
     CLIMA.init()
 
     FT = Float64
@@ -60,7 +51,7 @@ function run_ocean_gyre(; imex::Bool = false, BC = nothing)
             CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
     end
 
-    driver_config = config_simple_box(FT, N, resolution, dimensions; BC = BC)
+    driver_config = config_simple_box(FT, N, resolution, dimensions)
 
     grid = driver_config.grid
     vert_filter = CutoffFilter(grid, polynomialorder(grid) - 1)
@@ -73,70 +64,21 @@ function run_ocean_gyre(; imex::Bool = false, BC = nothing)
         driver_config,
         init_on_cpu = true,
         # ode_dt = dt,
-        Courant_number = 0.4,
+        Courant_number = 0.25,
         ode_solver_type = solver_type,
         modeldata = modeldata,
     )
 
     mkpath(outpdir)
-    CLIMA.Settings.vtk = "never"
-    # vtk_interval = ceil(Int64, timeout / solver_config.dt)
-    # CLIMA.Settings.vtk = "$(vtk_interval)steps"
+    CLIMA.Settings.enable_vtk = false
+    CLIMA.Settings.vtk_interval = ceil(Int64, timeout / solver_config.dt)
 
-    CLIMA.Settings.diagnostics = "never"
-    # diagnostics_interval = ceil(Int64, timeout / solver_config.dt)
-    # CLIMA.Settings.diagnostics = "$(diagnostics_interval)steps"
+    CLIMA.Settings.enable_diagnostics = false
+    CLIMA.Settings.diagnostics_interval =
+        ceil(Int64, timeout / solver_config.dt)
 
     result = CLIMA.invoke!(solver_config)
 
-    @test true
 end
 
-@testset "$(@__FILE__)" begin
-    boundary_conditions = [
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceStressForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceStressForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceStressForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceStressForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceNoStressForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceNoStressForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceNoStressForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceNoStressForcing(),
-        ),
-    ]
-
-    for BC in boundary_conditions
-        run_ocean_gyre(imex = false, BC = BC)
-    end
-end
+run_ocean_gyre(imex = false)

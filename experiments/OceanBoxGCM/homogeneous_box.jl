@@ -1,28 +1,26 @@
 using Test
 using CLIMA
+using CLIMA.HydrostaticBoussinesq
 using CLIMA.GenericCallbacks
 using CLIMA.ODESolvers
 using CLIMA.Mesh.Filters
+
 using CLIMA.VariableTemplates
 using CLIMA.Mesh.Grids: polynomialorder
-using CLIMA.DGmethods: vars_state
-using CLIMA.HydrostaticBoussinesq
+import CLIMA.DGmethods: vars_state
 
-using CLIMAParameters
-using CLIMAParameters.Planet: grav
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+using CLIMA.UniversalConstants
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+using CLIMA.Parameters.Planet
+param_set = ParameterSet()
 
-function config_simple_box(FT, N, resolution, dimensions; BC = nothing)
-    if BC == nothing
-        problem = HomogeneousBox{FT}(dimensions...)
-    else
-        problem = HomogeneousBox{FT}(dimensions...; BC = BC)
-    end
+function config_simple_box(FT, N, resolution, dimensions)
+    prob = HomogeneousBox{FT}(dimensions...)
 
-    _grav::FT = grav(param_set)
-    cʰ = sqrt(_grav * problem.H) # m/s
-    model = HydrostaticBoussinesqModel{FT}(param_set, problem, cʰ = cʰ)
+    cʰ = sqrt(FT(grav(param_set)) * prob.H) # m/s
+    model = HydrostaticBoussinesqModel{FT}(prob, cʰ = cʰ)
 
     config =
         CLIMA.OceanBoxGCMConfiguration("homogeneous_box", N, resolution, model)
@@ -30,7 +28,7 @@ function config_simple_box(FT, N, resolution, dimensions; BC = nothing)
     return config
 end
 
-function run_homogeneous_box(; imex::Bool = false, BC = nothing)
+function main(; imex::Bool = false)
     CLIMA.init()
 
     FT = Float64
@@ -53,10 +51,7 @@ function run_homogeneous_box(; imex::Bool = false, BC = nothing)
     timeend = FT(6 * 3600) # s
 
     if imex
-        solver_type = CLIMA.IMEXSolverType(
-            linear_model = LinearHBModel,
-            linear_solver = CLIMA.ColumnwiseLUSolver.SingleColumnLU,
-        )
+        solver_type = CLIMA.IMEXSolverType(linear_model = LinearHBModel)
         Nᶻ = Int(400)
         Courant_number = 0.1
     else
@@ -65,7 +60,7 @@ function run_homogeneous_box(; imex::Bool = false, BC = nothing)
         Courant_number = 0.4
     end
 
-    driver_config = config_simple_box(FT, N, resolution, dimensions; BC = BC)
+    driver_config = config_simple_box(FT, N, resolution, dimensions)
 
     grid = driver_config.grid
     vert_filter = CutoffFilter(grid, polynomialorder(grid) - 1)
@@ -96,32 +91,5 @@ function run_homogeneous_box(; imex::Bool = false, BC = nothing)
     @test maxQ.θ ≈ minQ.θ
 end
 
-@testset "$(@__FILE__)" begin
-    boundary_conditions = [
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceStressNoForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceStressNoForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineNoSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceStressNoForcing(),
-        ),
-        (
-            CLIMA.HydrostaticBoussinesq.CoastlineFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanFloorFreeSlip(),
-            CLIMA.HydrostaticBoussinesq.OceanSurfaceStressNoForcing(),
-        ),
-    ]
-
-    for BC in boundary_conditions
-        run_homogeneous_box(imex = true, BC = BC)
-        run_homogeneous_box(imex = false, BC = BC)
-    end
-end
+main(imex = false)
+main(imex = true)

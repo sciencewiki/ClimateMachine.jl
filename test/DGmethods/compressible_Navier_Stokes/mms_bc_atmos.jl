@@ -11,15 +11,17 @@ using CLIMA.GenericCallbacks
 using CLIMA.Atmos
 using CLIMA.VariableTemplates
 using CLIMA.MoistThermodynamics
+using CLIMA.PlanetParameters
 using LinearAlgebra
 using StaticArrays
 using Logging, Printf, Dates
 using CLIMA.VTK
 using Test
 
-using CLIMAParameters
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+param_set = ParameterSet()
 
 if !@isdefined integration_testing
     const integration_testing = parse(
@@ -99,7 +101,6 @@ function mms2_source!(
     diffusive::Vars,
     aux::Vars,
     t::Real,
-    direction,
 )
     x1, x2, x3 = aux.coord
     source.ρ = Sρ_g(t, x1, x2, x3, Val(2))
@@ -128,7 +129,6 @@ function mms3_source!(
     diffusive::Vars,
     aux::Vars,
     t::Real,
-    direction,
 )
     x1, x2, x3 = aux.coord
     source.ρ = Sρ_g(t, x1, x2, x3, Val(3))
@@ -154,8 +154,7 @@ function run(mpicomm, ArrayType, dim, topl, warpfun, N, timeend, FT, dt)
 
     if dim == 2
         model = AtmosModel{FT}(
-            AtmosLESConfigType,
-            param_set;
+            AtmosLESConfigType;
             orientation = NoOrientation(),
             ref_state = NoReferenceState(),
             turbulence = ConstantViscosityWithDivergence(FT(μ_exact)),
@@ -163,11 +162,11 @@ function run(mpicomm, ArrayType, dim, topl, warpfun, N, timeend, FT, dt)
             source = mms2_source!,
             boundarycondition = InitStateBC(),
             init_state = mms2_init_state!,
+            param_set = param_set,
         )
     else
         model = AtmosModel{FT}(
-            AtmosLESConfigType,
-            param_set;
+            AtmosLESConfigType;
             orientation = NoOrientation(),
             ref_state = NoReferenceState(),
             turbulence = ConstantViscosityWithDivergence(FT(μ_exact)),
@@ -175,6 +174,7 @@ function run(mpicomm, ArrayType, dim, topl, warpfun, N, timeend, FT, dt)
             source = mms3_source!,
             boundarycondition = InitStateBC(),
             init_state = mms3_init_state!,
+            param_set = param_set,
         )
     end
 
@@ -243,6 +243,12 @@ let
     ArrayType = CLIMA.array_type()
 
     mpicomm = MPI.COMM_WORLD
+    ll = uppercase(get(ENV, "JULIA_LOG_LEVEL", "INFO"))
+    loglevel = ll == "DEBUG" ? Logging.Debug :
+        ll == "WARN" ? Logging.Warn :
+        ll == "ERROR" ? Logging.Error : Logging.Info
+    logger_stream = MPI.Comm_rank(mpicomm) == 0 ? stderr : devnull
+    global_logger(ConsoleLogger(logger_stream, loglevel))
 
     polynomialorder = 4
     base_num_elem = 4
@@ -308,7 +314,7 @@ let
                     nsteps = ceil(Int64, timeend / dt)
                     dt = timeend / nsteps
 
-                    @info (ArrayType, FT, dim, nsteps, dt)
+                    @info (ArrayType, FT, dim)
                     result[l] = run(
                         mpicomm,
                         ArrayType,

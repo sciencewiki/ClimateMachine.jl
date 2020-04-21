@@ -1,5 +1,3 @@
-using CLIMAParameters
-using CLIMAParameters.Planet: planet_radius
 using ..Diagnostics
 using ..Mesh.Interpolation
 
@@ -14,7 +12,6 @@ function InterpolationConfiguration(
     boundaries::Array,
     resolution::Tuple,
 )
-    param_set = driver_config.bl.param_set
     grid = driver_config.grid
     if isa(grid.topology, StackedBrickTopology)
 
@@ -40,11 +37,10 @@ function InterpolationConfiguration(
     elseif isa(grid.topology, StackedCubedSphereTopology)
 
         FT = eltype(grid)
-        _planet_radius::FT = planet_radius(param_set)
         info = driver_config.config_info
         vert_range = grid1d(
-            _planet_radius,
-            FT(_planet_radius + info.domain_height),
+            FT(planet_radius),
+            FT(planet_radius + info.domain_height),
             nelem = info.nelem_vert,
         )
 

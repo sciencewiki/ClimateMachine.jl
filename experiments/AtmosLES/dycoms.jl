@@ -16,10 +16,13 @@ using CLIMA.Mesh.Filters
 using CLIMA.MoistThermodynamics
 using CLIMA.VariableTemplates
 
-using CLIMAParameters
-using CLIMAParameters.Planet: cp_d, MSLP, grav, LH_v0
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+using CLIMA.UniversalConstants
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+using CLIMA.Parameters.Planet
+
+param_set = ParameterSet()
 
 import CLIMA.DGmethods:
     vars_state,
@@ -144,7 +147,7 @@ function flux_radiation!(
     t::Real,
 )
     FT = eltype(flux)
-    z = altitude(atmos, aux)
+    z = altitude(atmos.orientation, aux)
     Δz_i = max(z - m.z_i, -zero(FT))
     # Constants
     upward_flux_from_cloud = m.F_0 * exp(-aux.∫dnz.radiation.attenuation_coeff)
@@ -158,7 +161,7 @@ function flux_radiation!(
         (Δz_i / 4 + m.z_i)
     F_rad =
         upward_flux_from_sfc + upward_flux_from_cloud + free_troposphere_flux
-    ẑ = vertical_unit_vector(atmos, aux)
+    ẑ = vertical_unit_vector(atmos.orientation, aux)
     flux.ρe += F_rad * ẑ
 end
 function preodefun!(m::DYCOMSRadiation, aux::Vars, state::Vars, t::Real) end
@@ -187,15 +190,14 @@ eprint = {https://doi.org/10.1175/MWR2930.1}
 function init_dycoms!(bl, state, aux, (x, y, z), t)
     FT = eltype(state)
 
-    z = altitude(bl, aux)
+    z = altitude(bl.orientation, aux)
 
     # These constants are those used by Stevens et al. (2005)
     qref = FT(9.0e-3)
     q_pt_sfc = PhasePartition(qref)
-    Rm_sfc = gas_constant_air(bl.param_set, q_pt_sfc)
+    Rm_sfc = gas_constant_air(q_pt_sfc, bl.param_set)
     T_sfc = FT(290.4)
-    _MSLP = FT(MSLP(bl.param_set))
-    _grav = FT(grav(bl.param_set))
+    P_sfc = FT(MSLP(bl.param_set))
 
     # Specify moisture profiles
     q_liq = FT(0)
@@ -216,18 +218,18 @@ function init_dycoms!(bl, state, aux, (x, y, z), t)
     u, v, w = ugeo, vgeo, FT(0)
 
     # Perturb initial state to break symmetry and trigger turbulent convection
-    r1 = FT(rand(Uniform(-0.001, 0.001)))
+    r1 = FT(rand(Uniform(-0.002, 0.002)))
     if z <= 200.0
         θ_liq += r1 * θ_liq
     end
 
     # Pressure
-    H = Rm_sfc * T_sfc / _grav
-    p = _MSLP * exp(-z / H)
+    H = Rm_sfc * T_sfc / FT(grav(bl.param_set))
+    p = P_sfc * exp(-z / H)
 
     # Density, Temperature
 
-    ts = LiquidIcePotTempSHumEquil_given_pressure(bl.param_set, θ_liq, p, q_tot)
+    ts = LiquidIcePotTempSHumEquil_given_pressure(θ_liq, p, q_tot, bl.param_set)
     ρ = air_density(ts)
 
     e_kin = FT(1 / 2) * FT((u^2 + v^2 + w^2))
@@ -246,9 +248,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     # Reference state
     T_min = FT(289)
     T_s = FT(290.4)
-    _grav = FT(grav(param_set))
-    _cp_d = FT(cp_d(param_set))
-    Γ_lapse = _grav / _cp_d
+    Γ_lapse = FT(grav(param_set)) / FT(cp_d(param_set))
     T = LinearTemperatureProfile(T_min, T_s, Γ_lapse)
     rel_hum = FT(0)
     ref_state = HydrostaticState(T, rel_hum)
@@ -298,11 +298,10 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     )
 
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
+        AtmosLESConfigType;
         ref_state = ref_state,
         turbulence = SmagorinskyLilly{FT}(C_smag),
-        moisture = EquilMoist{FT}(maxiter = 1, tolerance = FT(100)),
+        moisture = EquilMoist{FT}(; maxiter = 5),
         radiation = radiation,
         source = source,
         boundarycondition = (
@@ -318,6 +317,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
             AtmosBC(),
         ),
         init_state = ics,
+        param_set = param_set,
     )
 
     ode_solver =
@@ -330,7 +330,6 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
         xmax,
         ymax,
         zmax,
-        param_set,
         init_dycoms!,
         solver_type = ode_solver,
         model = model,
@@ -339,7 +338,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
 end
 
 function config_diagnostics(driver_config)
-    interval = "10000steps"
+    interval = 10000 # in time steps
     dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end

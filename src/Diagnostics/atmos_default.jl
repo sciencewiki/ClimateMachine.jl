@@ -2,23 +2,21 @@ using ..Atmos
 using ..Atmos: thermo_state, turbulence_tensors
 using ..Mesh.Topologies
 using ..Mesh.Grids
+using ..SubgridScaleParameters: inv_Pr_turb
+using ..PlanetParameters
 using ..MoistThermodynamics
-using CLIMAParameters.Atmos.SubgridScale: inv_Pr_turb
 using LinearAlgebra
 
 Base.@kwdef mutable struct AtmosCollectedDiagnostics
-    zvals::Union{Nothing, Array} = nothing
-    repdvsr::Union{Nothing, Array} = nothing
+    zvals::Union{Nothing, Matrix} = nothing
 end
 const CollectedDiagnostics = AtmosCollectedDiagnostics()
 
 include("diagnostic_vars.jl")
 
-function atmos_default_init(dgngrp::DiagnosticsGroup, currtime)
-    mpicomm = Settings.mpicomm
+function atmos_default_init(diagrp::DiagnosticsGroup, currtime)
     dg = Settings.dg
     Q = Settings.Q
-    FT = eltype(Q)
     grid = dg.grid
     topology = grid.topology
     N = polynomialorder(grid)
@@ -28,26 +26,18 @@ function atmos_default_init(dgngrp::DiagnosticsGroup, currtime)
     nvertelem = topology.stacksize
     nhorzelem = div(nrealelem, nvertelem)
 
+    CollectedDiagnostics.zvals = zeros(Nqk, nvertelem)
+
     if Array ∈ typeof(Q).parameters
         localvgeo = grid.vgeo
     else
         localvgeo = Array(grid.vgeo)
     end
 
-    CollectedDiagnostics.zvals = zeros(FT, Nqk * nvertelem)
-    CollectedDiagnostics.repdvsr = zeros(FT, Nqk * nvertelem)
-
     @visitQ nhorzelem nvertelem Nqk Nq begin
         z = localvgeo[ijk, grid.x3id, e]
-        MH = localvgeo[ijk, grid.MHid, e]
-        CollectedDiagnostics.zvals[Nqk * (ev - 1) + k] += MH * z
-        CollectedDiagnostics.repdvsr[Nqk * (ev - 1) + k] += MH
+        CollectedDiagnostics.zvals[k, ev] = z
     end
-
-    # compute the full number of points on a slab
-    MPI.Allreduce!(CollectedDiagnostics.repdvsr, +, mpicomm)
-
-    CollectedDiagnostics.zvals ./= CollectedDiagnostics.repdvsr
 end
 
 # thermodynamic variables of interest
@@ -68,7 +58,7 @@ end
 num_thermo(FT) = varsize(vars_thermo(FT))
 thermo_vars(array) = Vars{vars_thermo(eltype(array))}(array)
 
-function compute_thermo!(bl, state, aux, ijk, e, thermoQ)
+function compute_thermo!(bl, state, aux, k, ijk, ev, e, thermoQ)
     e_tot = state.ρe / state.ρ
     ts = thermo_state(bl, state, aux)
     e_int = internal_energy(ts)
@@ -131,11 +121,12 @@ function compute_horzsums!(
     localaux,
     thermoQ,
     horzsums,
+    repdvsr,
     LWP,
     currtime,
 )
     th = thermo_vars(thermoQ[ijk, e])
-    hs = horzavg_vars(horzsums[Nqk * (ev - 1) + k])
+    hs = horzavg_vars(horzsums[k, ev])
     hs.ρ += MH * state.ρ
     hs.ρu += MH * state.ρu[1]
     hs.ρv += MH * state.ρu[2]
@@ -155,7 +146,14 @@ function compute_horzsums!(
         hs.ρq_tot += MH * state.moisture.ρq_tot
     end
 
-    ν, D_t, _ = turbulence_tensors(atmos, state, diffusive_flux, aux, currtime)
+    ν, _ = turbulence_tensors(
+        atmos.turbulence,
+        state,
+        diffusive_flux,
+        aux,
+        currtime,
+    )
+    D_t = (ν isa Real ? ν : diag(ν)) * inv_Pr_turb
 
     # TODO: temporary fix
     if isa(atmos.moisture, EquilMoist)
@@ -165,6 +163,8 @@ function compute_horzsums!(
 
     d_h_tot = -D_t .* diffusive_flux.∇h_tot
     hs.ht_sgs += MH * state.ρ * d_h_tot[end]
+
+    repdvsr[Nqk * (ev - 1) + k] += MH
 
     # liquid water path
     # this condition is also going to be used to get the number of points that
@@ -187,8 +187,6 @@ function compute_diagnosticsums!(
     ijk,
     ev,
     e,
-    Nqk,
-    nvertelem,
     MH,
     thermoQ,
     horzavgs,
@@ -196,8 +194,8 @@ function compute_diagnosticsums!(
 )
     zvals = CollectedDiagnostics.zvals
     th = thermo_vars(thermoQ[ijk, e])
-    ha = horzavg_vars(horzavgs[Nqk * (ev - 1) + k])
-    ds = diagnostic_vars(dsums[Nqk * (ev - 1) + k])
+    ha = horzavg_vars(horzavgs[k, ev])
+    ds = diagnostic_vars(dsums[k, ev])
 
     u = state.ρu[1] / state.ρ
     v = state.ρu[2] / state.ρ
@@ -211,6 +209,9 @@ function compute_diagnosticsums!(
     if isa(atmos.moisture, EquilMoist)
         q_tot = state.moisture.ρq_tot / state.ρ
     end
+
+    # vertical coordinate
+    ds.z += MH * zvals[k, ev]
 
     # state and functions of state
     ds.u += MH * ũ
@@ -261,8 +262,10 @@ end
     atmos_default_collect(bl, currtime)
 
 Perform a global grid traversal to compute various diagnostics.
+and write them to a JLD2 file, indexed by `currtime`, in the output directory specified to
+`init()`.
 """
-function atmos_default_collect(dgngrp::DiagnosticsGroup, currtime)
+function atmos_default_collect(diagrp::DiagnosticsGroup, currtime)
     mpicomm = Settings.mpicomm
     dg = Settings.dg
     Q = Settings.Q
@@ -270,23 +273,20 @@ function atmos_default_collect(dgngrp::DiagnosticsGroup, currtime)
     current_time = string(currtime)
 
     # make sure this time step is not already recorded
-    dprefix = @sprintf(
-        "%s_%s-%s-num%04d",
-        dgngrp.out_prefix,
-        dgngrp.name,
-        Settings.starttime,
-        dgngrp.num
-    )
-    dfilename = joinpath(Settings.output_dir, dprefix)
     docollect = [false]
     if mpirank == 0
-        dfullname = full_name(dgngrp.writer, dfilename)
-        if isfile(dfullname)
-            @warn """
-Diagnostics $(dgngrp.name) collection
-    output file $dfullname exists
-    skipping collection at $current_time"""
-        else
+        try
+            jldopen(
+                joinpath(
+                    Settings.output_dir,
+                    "diagnostics-$(diagrp.name)-$(Settings.starttime).jld2",
+                ),
+                "r",
+            ) do file
+                diagnostics = file[current_time]
+                @warn "diagnostics for time step $(current_time) already collected"
+            end
+        catch e
             docollect[1] = true
         end
     end
@@ -325,19 +325,22 @@ Diagnostics $(dgngrp.name) collection
     nauxstate = num_aux(bl, FT)
     ndiff = num_diffusive(bl, FT)
 
-    # thermo variables
+    # vertical coordinates and thermo variables
     thermoQ = [zeros(FT, num_thermo(FT)) for _ in 1:npoints, _ in 1:nrealelem]
+
+    # divisor for horizontal averages
+    l_repdvsr = zeros(FT, Nqk * nvertelem)
 
     # horizontal sums and the liquid water path
     l_LWP = zeros(FT, 1)
-    horzsums = [zeros(FT, num_horzavg(FT)) for _ in 1:(Nqk * nvertelem)]
+    horzsums = [zeros(FT, num_horzavg(FT)) for _ in 1:Nqk, _ in 1:nvertelem]
 
     # compute thermo variables and horizontal sums in a single pass
     @visitQ nhorzelem nvertelem Nqk Nq begin
         state = extract_state(dg, localQ, ijk, e)
         aux = extract_aux(dg, localaux, ijk, e)
 
-        compute_thermo!(bl, state, aux, ijk, e, thermoQ)
+        compute_thermo!(bl, state, aux, k, ijk, ev, e, thermoQ)
 
         diffusive_flux = extract_diffusion(dg, localdiff, ijk, e)
         MH = localvgeo[ijk, grid.MHid, e]
@@ -356,18 +359,21 @@ Diagnostics $(dgngrp.name) collection
             localaux,
             thermoQ,
             horzsums,
+            l_repdvsr,
             l_LWP,
             currtime,
         )
     end
 
+    # compute the full number of points on a slab
+    repdvsr = MPI.Allreduce(l_repdvsr, +, mpicomm)
+
     # compute the horizontal and LWP averages
-    repdvsr = CollectedDiagnostics.repdvsr
-    horzavgs = [zeros(FT, num_horzavg(FT)) for _ in 1:(Nqk * nvertelem)]
+    horzavgs = [zeros(FT, num_horzavg(FT)) for _ in 1:Nqk, _ in 1:nvertelem]
     for ev in 1:nvertelem
         for k in 1:Nqk
-            hsum = MPI.Allreduce(horzsums[Nqk * (ev - 1) + k], +, mpicomm)
-            horzavgs[Nqk * (ev - 1) + k] .= hsum ./ repdvsr[Nqk * (ev - 1) + k]
+            hsum = MPI.Allreduce(horzsums[k, ev], +, mpicomm)
+            horzavgs[k, ev][1:end] = hsum ./ repdvsr[Nqk * (ev - 1) + k]
         end
     end
     LWP = zero(FT)
@@ -377,7 +383,7 @@ Diagnostics $(dgngrp.name) collection
     end
 
     # compute the diagnostics using the previous computed values
-    dsums = [zeros(FT, num_diagnostic(FT)) for _ in 1:(Nqk * nvertelem)]
+    dsums = [zeros(FT, num_diagnostic(FT)) for _ in 1:Nqk, _ in 1:nvertelem]
     @visitQ nhorzelem nvertelem Nqk Nq begin
         state = extract_state(dg, localQ, ijk, e)
         MH = localvgeo[ijk, grid.MHid, e]
@@ -388,38 +394,33 @@ Diagnostics $(dgngrp.name) collection
             ijk,
             ev,
             e,
-            Nqk,
-            nvertelem,
             MH,
             thermoQ,
             horzavgs,
             dsums,
         )
     end
-    varvals = OrderedDict()
-    varnames = flattenednames(vars_diagnostic(FT))
-    for vari in 1:length(varnames)
-        davg = zeros(FT, Nqk * nvertelem)
-        for evk in 1:(Nqk * nvertelem)
-            dsum = MPI.Reduce(dsums[evk][vari], +, 0, mpicomm)
+    davgs = [zeros(FT, num_diagnostic(FT)) for _ in 1:Nqk, _ in 1:nvertelem]
+    for ev in 1:nvertelem
+        for k in 1:Nqk
+            dsum = MPI.Reduce(dsums[k, ev], +, 0, mpicomm)
             if mpirank == 0
-                davg[evk] = dsum / repdvsr[evk]
+                davgs[k, ev][1:end] = dsum ./ repdvsr[Nqk * (ev - 1) + k]
             end
-        end
-        if mpirank == 0
-            varvals[varnames[vari]] = davg
         end
     end
 
     # write diagnostics
     if mpirank == 0
-        write_data(
-            dgngrp.writer,
-            dfilename,
-            OrderedDict("z" => CollectedDiagnostics.zvals),
-            varvals,
-            currtime,
-        )
+        jldopen(
+            joinpath(
+                Settings.output_dir,
+                "$(diagrp.out_prefix)-$(diagrp.name)-$(Settings.starttime).jld2",
+            ),
+            "a+",
+        ) do file
+            file[current_time] = davgs
+        end
     end
 
     # write LWP
@@ -438,4 +439,4 @@ Diagnostics $(dgngrp.name) collection
     return nothing
 end # function collect
 
-function atmos_default_fini(dgngrp::DiagnosticsGroup, currtime) end
+function atmos_default_fini(diagrp::DiagnosticsGroup, currtime) end

@@ -11,14 +11,16 @@ using CLIMA.GenericCallbacks
 using CLIMA.Atmos
 using CLIMA.VariableTemplates
 using CLIMA.MoistThermodynamics
+using CLIMA.PlanetParameters: T_min
 using LinearAlgebra
 using StaticArrays
 using Logging, Printf, Dates
 using CLIMA.VTK
 
-using CLIMAParameters
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+param_set = ParameterSet()
 
 if !@isdefined integration_testing
     const integration_testing = parse(
@@ -48,10 +50,10 @@ function run1(mpicomm, ArrayType, dim, topl, N, timeend, FT, dt)
     T_s = 320.0
     RH = 0.01
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
+        AtmosLESConfigType;
         ref_state = HydrostaticState(IsothermalProfile(T_s), RH),
         init_state = init_state!,
+        param_set = param_set,
     )
 
     dg = DGModel(
@@ -82,13 +84,13 @@ function run2(mpicomm, ArrayType, dim, topl, N, timeend, FT, dt)
     T_min, T_s, Γ = FT(290), FT(320), FT(6.5 * 10^-3)
     RH = 0.01
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
+        AtmosLESConfigType;
         ref_state = HydrostaticState(
             LinearTemperatureProfile(T_min, T_s, Γ),
             RH,
         ),
         init_state = init_state!,
+        param_set = param_set,
     )
 
     dg = DGModel(
@@ -113,6 +115,12 @@ let
     ArrayType = CLIMA.array_type()
 
     mpicomm = MPI.COMM_WORLD
+    ll = uppercase(get(ENV, "JULIA_LOG_LEVEL", "INFO"))
+    loglevel = ll == "DEBUG" ? Logging.Debug :
+        ll == "WARN" ? Logging.Warn :
+        ll == "ERROR" ? Logging.Error : Logging.Info
+    logger_stream = MPI.Comm_rank(mpicomm) == 0 ? stderr : devnull
+    global_logger(ConsoleLogger(logger_stream, loglevel))
 
     polynomialorder = 4
     base_num_elem = 4

@@ -21,7 +21,7 @@ Subtypes `L` should define the following methods:
 - `gradvariables!(::L, transformstate::State, state::State, auxstate::State, t::Real)`: transformation of state variables to variables of which gradients are computed
 - `diffusive!(::L, diffstate::State, ∇transformstate::Grad, auxstate::State, t::Real)`: transformation of gradients to the diffusive variables
 - `hyperdiffusive!(::L, hyperdiffstate::State, ∇Δtransformstate::Grad, auxstate::State, t::Real)`: transformation of laplacian gradients to the hyperdiffusive variables
-- `source!(::L, source::State, state::State, diffusive::Vars, auxstate::State, t::Real, direction::Direction)
+- `source!(::L, source::State, state::State, diffusive::Vars, auxstate::State, t::Real)`
 - `wavespeed(::L, n⁻, state::State, aux::State, t::Real)`
 - `boundary_state!(::NumericalFluxGradient, ::L, state⁺::State, aux⁺::State, normal⁻, state⁻::State, aux⁻::State, bctype, t)`
 - `boundary_state!(::NumericalFluxNonDiffusive, ::L, state⁺::State, aux⁺::State, normal⁻, state⁻::State, aux⁻::State, bctype, t)`
@@ -71,19 +71,19 @@ function init_state! end
 
 using ..Courant
 """
-    calculate_dt(dg, model, Q, Courant_number, direction, t)
+    calculate_dt(dg, model, Q, Courant_number, direction)
 
 For a given model, compute a time step satisying the nondiffusive Courant number
 `Courant_number`
 """
-function calculate_dt(dg, model, Q, Courant_number, t, direction)
+function calculate_dt(dg, model, Q, Courant_number, direction)
     Δt = one(eltype(Q))
-    CFL = courant(nondiffusive_courant, dg, model, Q, Δt, t, direction)
+    CFL = courant(nondiffusive_courant, dg, model, Q, Δt, direction)
     return Courant_number / CFL
 end
 
 
-function create_state(bl::BalanceLaw, grid)
+function create_state(bl::BalanceLaw, grid, commtag)
     topology = grid.topology
     # FIXME: Remove after updating CUDA
     h_vgeo = Array(grid.vgeo)
@@ -94,8 +94,7 @@ function create_state(bl::BalanceLaw, grid)
     weights = view(h_vgeo, :, grid.Mid, :)
     weights = reshape(weights, size(weights, 1), 1, size(weights, 2))
 
-    V = vars_state(bl, FT)
-    state = MPIStateArray{FT, V}(
+    state = MPIStateArray{FT}(
         topology.mpicomm,
         DA,
         Np,
@@ -109,11 +108,12 @@ function create_state(bl::BalanceLaw, grid)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
+        commtag = commtag,
     )
     return state
 end
 
-function create_auxstate(bl, grid)
+function create_auxstate(bl, grid, commtag = 222)
     topology = grid.topology
     Np = dofs_per_element(grid)
 
@@ -124,8 +124,7 @@ function create_auxstate(bl, grid)
     weights = view(h_vgeo, :, grid.Mid, :)
     weights = reshape(weights, size(weights, 1), 1, size(weights, 2))
 
-    V = vars_aux(bl, FT)
-    auxstate = MPIStateArray{FT, V}(
+    auxstate = MPIStateArray{FT}(
         topology.mpicomm,
         DA,
         Np,
@@ -139,6 +138,7 @@ function create_auxstate(bl, grid)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
+        commtag = commtag,
     )
 
     dim = dimensionality(grid)
@@ -156,14 +156,14 @@ function create_auxstate(bl, grid)
         topology.realelems,
         dependencies = (event,),
     )
-    event = MPIStateArrays.begin_ghost_exchange!(auxstate; dependencies = event)
-    event = MPIStateArrays.end_ghost_exchange!(auxstate; dependencies = event)
     wait(device, event)
+    MPIStateArrays.start_ghost_exchange!(auxstate)
+    MPIStateArrays.finish_ghost_exchange!(auxstate)
 
     return auxstate
 end
 
-function create_diffstate(bl, grid)
+function create_diffstate(bl, grid, commtag = 111)
     topology = grid.topology
     Np = dofs_per_element(grid)
 
@@ -175,8 +175,7 @@ function create_diffstate(bl, grid)
     weights = reshape(weights, size(weights, 1), 1, size(weights, 2))
 
     # TODO: Clean up this MPIStateArray interface...
-    V = vars_diffusive(bl, FT)
-    diffstate = MPIStateArray{FT, V}(
+    diffstate = MPIStateArray{FT}(
         topology.mpicomm,
         DA,
         Np,
@@ -190,12 +189,13 @@ function create_diffstate(bl, grid)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
+        commtag = commtag,
     )
 
     return diffstate
 end
 
-function create_hyperdiffstate(bl, grid)
+function create_hyperdiffstate(bl, grid, commtag = 333)
     topology = grid.topology
     Np = dofs_per_element(grid)
 
@@ -208,8 +208,7 @@ function create_hyperdiffstate(bl, grid)
 
     ngradlapstate = num_gradient_laplacian(bl, FT)
     # TODO: Clean up this MPIStateArray interface...
-    V = vars_gradient_laplacian(bl, FT)
-    Qhypervisc_grad = MPIStateArray{FT, V}(
+    Qhypervisc_grad = MPIStateArray{FT}(
         topology.mpicomm,
         DA,
         Np,
@@ -223,10 +222,10 @@ function create_hyperdiffstate(bl, grid)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
+        commtag = commtag,
     )
 
-    V = vars_hyperdiffusive(bl, FT)
-    Qhypervisc_div = MPIStateArray{FT, V}(
+    Qhypervisc_div = MPIStateArray{FT}(
         topology.mpicomm,
         DA,
         Np,
@@ -240,6 +239,7 @@ function create_hyperdiffstate(bl, grid)
         nabrtovmaprecv = grid.nabrtovmaprecv,
         nabrtovmapsend = grid.nabrtovmapsend,
         weights = weights,
+        commtag = commtag + 111,
     )
     return Qhypervisc_grad, Qhypervisc_div
 end

@@ -1,12 +1,11 @@
 # Contribution Guide for Abstract Iterative Solvers
 
-An abstract iterative solver is a **module** that needs **one struct**, **one constructor**, and **two functions** in order to interface with the rest of [CLIMA](https://github.com/climate-machine). In what follows we will describe in detail the function signatures, return values, and struct properties necessary to build with [CLIMA](https://github.com/climate-machine).
-
+An abstract iterative solver is a **module** that needs **one struct**, **one constructor**, and **two functions** in order to interface with the rest of [CliMa](https://github.com/climate-machine). In what follows we will describe in detail the function signatures, return values, and struct properties necessary to build with [CliMa](https://github.com/climate-machine).
 
 We have the following concrete implementations:
-1. [GMRES](@ref GeneralizedMinimalResidual)
-2. [Conjugate Residual](@ref GeneralizedConjugateResidual)
-3. [Conjugate Gradient](@ref ConjugateGradientSolver)
+1. [GMRES](https://github.com/climate-machine/CLIMA/blob/master/src/LinearSolvers/GeneralizedMinimalResidualSolver.jl)
+1. [Conjugate Residual](https://github.com/climate-machine/CLIMA/blob/master/src/LinearSolvers/GeneralizedConjugateResidualSolver.jl)
+1. [Conjugate Gradient](https://github.com/climate-machine/CLIMA/blob/ans/pcg/src/LinearSolvers/ConjugateGradientSolver.jl)
 
 ## Basic Template for an Iterative Solver
 
@@ -22,28 +21,28 @@ const LS = LinearSolvers
 
 # struct
 struct MyIterativeMethod{FT} <: LS.AbstractIterativeLinearSolver
-    # minimum
-    rtol::FT
-    atol::FT
-    # Add more structure if necessary
+  # minimum
+  rtol::FT
+  atol::FT
+  # Add more structure if necessary
 end
 
 # constructor
 function MyIterativeMethod(args...)
-    # body of constructor
-    return MyIterativeMethod(contructor_args...)
+  # body of constructor
+  return MyIterativeMethod(contructor_args...)
 end
 
 # initialize function (1)
 function LS.initialize!(linearoperator!, Q, Qrhs, solver::MyIterativeMethod, args...)
-    # body of initialize function in abstract iterative solver
-    return Bool, Int
+  # body of initialize function in abstract iterative solver
+  return Bool, Int
 end
 
 # iteration function (2)
 function LS.doiteration!(linearoperator!, Q, Qrhs, solver::MyIterativeMethod, threshold, args...)
-    # body of iteration
-    return Bool, Int, Float
+  # body of iteration
+  return Bool, Int, Float
 end
 
 end # end of module
@@ -55,8 +54,8 @@ MyIterativeMethod and function bodies would need to be replaced appropriately fo
 A subset of AbstractIterativeLinearSolver needs at least two members: atol and rtol. The former represents an absolute tolerance and the latter is a relative tolerance. Both can be used to terminate the iteration to determine the convergence criteria. An example struct could be
 ```julia
 struct MyIterativeMethod{FT} <: LS.AbstractIterativeLinearSolver
-    atol::FT
-    rtol::FT
+  atol::FT
+  rtol::FT
 end
 ```
 but often has more depending on the kind of iterative solver being used.  For example, in a Krylov subspace method one would need to store a number of vectors which constitute the [Krylov subspace](https://en.wikipedia.org/wiki/Krylov_subspace).
@@ -69,8 +68,8 @@ In [Basic Template for an Iterative Solver](@ref) we used an outer constructor, 
 ```julia
 # constructor
 function MyIterativeMethod(args...)
-    # body of constructor
-    return MyIterativeMethod(contructor_args...)
+  # body of constructor
+  return MyIterativeMethod(contructor_args...)
 end
 ```
 but we could have also used an inner constructor if desired.
@@ -80,8 +79,8 @@ but we could have also used an inner constructor if desired.
 The initialize function needs the following signature
 ```julia
 function LS.initialize!(linearoperator!, Q, Qrhs, solver::MyIterativeMethod, args...)
-    # body of initialize function in abstract iterative solver
-    return Bool, Int
+  # body of initialize function in abstract iterative solver
+  return Bool, Int
 end
 ```
 
@@ -100,7 +99,7 @@ linearoperator!(y, x, args...)
     return nothing
 end
 ```
-It represents action of a linear operator ``L`` on a vector ``x``, that stores the value in the vector ``y``, i.e. ``Lx = y``. The last argument (the args...) is necessary due to how linear operators are defined within CLIMA.
+It represents action of a linear operator ``L`` on a vector ``x``, that stores the value in the vector ``y``, i.e. ``Lx = y``. The last argument (the args...) is necessary due to how linear operators are defined within CliMa.
 
 The ``` Q ``` and ```Qrhs``` function arguments are supposed to represent the solution of the linear system `LQ = Qrhs` where `L` is the linear operator implicitly defined by ```linearoperator!```.
 
@@ -116,8 +115,8 @@ The iteration function needs the following signature
 
 ```julia
 function LS.doiteration!(linearoperator!, Q, Qrhs, solver::MyIterativeMethod, threshold, args...)
-    # body of iteration
-    return Bool, Int, Float
+  # body of iteration
+  return Bool, Int, Float
 end
 ```
 
@@ -136,7 +135,7 @@ linearoperator!(y, x, args...)
     return nothing
 end
 ```
-It represents action of a linear operator ``L`` on a vector ``x``, that stores the value in the vector ``y``, i.e. ``Lx = y``. The last argument (the args...) is necessary due to how linear operators are defined within CLIMA.
+It represents action of a linear operator ``L`` on a vector ``x``, that stores the value in the vector ``y``, i.e. ``Lx = y``. The last argument (the args...) is necessary due to how linear operators are defined within CliMa.
 
 The ``` Q ``` and ```Qrhs``` function arguments are supposed to represent the solution of the linear system `LQ = Qrhs` where `L` is the linear operator implicitly defined by ```linearoperator!```.
 
@@ -147,7 +146,7 @@ The iteration function must have **3 return values**:
 
 The return values keep track of whether or not the iterative algorithm has converged as well as how many times the linear operator was applied. The residual norm is useful since it is often used to determine a stopping criteria.
 
-## CLIMA Specific Considerations
+## CliMa Specific Considerations
 An MPIStateArray ```Q``` in 3D, has the following structure by default:
 ```julia
 size(Q) = (n_ijk, n_s, n_e)

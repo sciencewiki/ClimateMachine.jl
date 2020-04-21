@@ -4,19 +4,19 @@
 CurrentModule = CLIMA
 ```
 
-## [`GeneralizedConjugateResidual`](@id GeneralizedConjugateResidual)
+## `GeneralizedConjugateResidual`
 
 ```@docs
 GeneralizedConjugateResidualSolver.GeneralizedConjugateResidual
 ```
 
-## [`GeneralizedMinimalResidual`](@id GeneralizedMinimalResidual)
+## `GeneralizedMinimalResidual`
 
 ```@docs
 GeneralizedMinimalResidualSolver.GeneralizedMinimalResidual
 ```
 
-## [`ConjugateGradientSolver`](@id ConjugateGradientSolver)
+## `ConjugateGradientSolver`
 ```@docs
 ConjugateGradientSolver.ConjugateGradient
 LinearSolvers.initialize!

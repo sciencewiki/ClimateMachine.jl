@@ -1,14 +1,4 @@
 using Logging, Printf
-using LinearAlgebra: norm
-
-using ..Mesh.Grids:
-    VerticalDirection, HorizontalDirection, EveryDirection, min_node_distance
-using ..DGmethods: courant
-
-import ..Courant:
-    advective_courant, nondiffusive_courant, diffusive_courant, viscous_courant
-
-import ..DGmethods: calculate_dt
 
 """
     advective_courant(::HBModel)
@@ -23,7 +13,6 @@ calculates the CFL condition due to advection
     D::Vars,
     Δx,
     Δt,
-    t,
     direction = VerticalDirection(),
 )
     if direction isa VerticalDirection
@@ -51,7 +40,6 @@ calculates the CFL condition due to gravity waves
     D::Vars,
     Δx,
     Δt,
-    t,
     direction = HorizontalDirection(),
 )
     return Δt * m.cʰ / Δx
@@ -69,7 +57,6 @@ calculates the CFL condition due to viscosity
     D::Vars,
     Δx,
     Δt,
-    t,
     direction = VerticalDirection(),
 )
     ν̄ = norm_viscosity(m, direction)
@@ -96,7 +83,6 @@ factor of 1000 is for convective adjustment
     D::Vars,
     Δx,
     Δt,
-    t,
     direction = VerticalDirection(),
 )
     κ̄ = norm_diffusivity(m, direction)
@@ -110,7 +96,7 @@ end
     sqrt(2 * m.κʰ^2 + (1000 * m.κᶻ)^2)
 
 """
-    calculate_dt(dg, model::HBModel, Q, Courant_number, direction::EveryDirection, t)
+    calculate_dt(dg, model::HBModel, Q, Courant_number, direction::EveryDirection)
 
 calculates the time step based on grid spacing and model parameters
 takes minimum of advective, gravity wave, diffusive, and viscous CFL
@@ -121,26 +107,18 @@ takes minimum of advective, gravity wave, diffusive, and viscous CFL
     model::HBModel,
     Q,
     Courant_number,
-    t,
     ::EveryDirection,
 )
     Δt = one(eltype(Q))
 
     CFL_advective =
-        courant(advective_courant, dg, model, Q, Δt, t, VerticalDirection())
-    CFL_gravity = courant(
-        nondiffusive_courant,
-        dg,
-        model,
-        Q,
-        Δt,
-        t,
-        HorizontalDirection(),
-    )
+        courant(advective_courant, dg, model, Q, Δt, VerticalDirection())
+    CFL_gravity =
+        courant(nondiffusive_courant, dg, model, Q, Δt, HorizontalDirection())
     CFL_viscous =
-        courant(viscous_courant, dg, model, Q, Δt, t, VerticalDirection())
+        courant(viscous_courant, dg, model, Q, Δt, VerticalDirection())
     CFL_diffusive =
-        courant(diffusive_courant, dg, model, Q, Δt, t, VerticalDirection())
+        courant(diffusive_courant, dg, model, Q, Δt, VerticalDirection())
 
     CFLs = [CFL_advective, CFL_gravity, CFL_viscous, CFL_diffusive]
     dts = [Courant_number / CFL for CFL in CFLs]
@@ -174,27 +152,19 @@ takes minimum of gravity wave, diffusive, and viscous CFL
     model::LinearHBModel,
     Q,
     Courant_number,
-    t,
     ::EveryDirection,
 )
     Δt = one(eltype(Q))
     ocean = model.ocean
 
     CFL_advective =
-        courant(advective_courant, dg, ocean, Q, Δt, t, VerticalDirection())
-    CFL_gravity = courant(
-        nondiffusive_courant,
-        dg,
-        ocean,
-        Q,
-        Δt,
-        t,
-        HorizontalDirection(),
-    )
+        courant(advective_courant, dg, ocean, Q, Δt, VerticalDirection())
+    CFL_gravity =
+        courant(nondiffusive_courant, dg, ocean, Q, Δt, HorizontalDirection())
     CFL_viscous =
-        courant(viscous_courant, dg, ocean, Q, Δt, t, HorizontalDirection())
+        courant(viscous_courant, dg, ocean, Q, Δt, HorizontalDirection())
     CFL_diffusive =
-        courant(diffusive_courant, dg, ocean, Q, Δt, t, HorizontalDirection())
+        courant(diffusive_courant, dg, ocean, Q, Δt, HorizontalDirection())
 
     CFLs = [CFL_advective, CFL_gravity, CFL_viscous, CFL_diffusive]
     dts = [Courant_number / CFL for CFL in CFLs]

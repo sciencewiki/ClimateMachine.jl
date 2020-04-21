@@ -12,10 +12,12 @@ using CLIMA.Mesh.Filters
 using CLIMA.MoistThermodynamics
 using CLIMA.VariableTemplates
 
-using CLIMAParameters
-using CLIMAParameters.Planet: R_d, cp_d, cv_d, MSLP, grav
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+using CLIMA.UniversalConstants
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+using CLIMA.Parameters.Planet
+param_set = ParameterSet()
 
 # ------------------------ Description ------------------------- #
 # 1) Dry Rising Bubble (circular potential temperature perturbation)
@@ -36,9 +38,9 @@ function init_risingbubble!(bl, state, aux, (x, y, z), t)
     R_gas::FT = R_d(bl.param_set)
     c_p::FT = cp_d(bl.param_set)
     c_v::FT = cv_d(bl.param_set)
+    γ::FT = c_p / c_v
     p0::FT = MSLP(bl.param_set)
     _grav::FT = grav(bl.param_set)
-    γ::FT = c_p / c_v
 
     xc::FT = 1250
     yc::FT = 1250
@@ -57,9 +59,11 @@ function init_risingbubble!(bl, state, aux, (x, y, z), t)
     π_exner = FT(1) - _grav / (c_p * θ) * z # exner pressure
     ρ = p0 / (R_gas * θ) * (π_exner)^(c_v / R_gas) # density
     q_tot = FT(0)
-    ts = LiquidIcePotTempSHumEquil(bl.param_set, θ, ρ, q_tot)
+    ts = LiquidIcePotTempSHumEquil(θ, ρ, q_tot, bl.param_set)
     q_pt = PhasePartition(ts)
+
     ρu = SVector(FT(0), FT(0), FT(0))
+
     #State (prognostic) variable assignment
     e_kin = FT(0)
     e_pot = gravitational_potential(bl.orientation, aux)
@@ -68,13 +72,6 @@ function init_risingbubble!(bl, state, aux, (x, y, z), t)
     state.ρu = ρu
     state.ρe = ρe_tot
     state.moisture.ρq_tot = ρ * q_pt.tot
-    ρχ = FT(0)
-    if 500 < z <= 550
-        ρχ += FT(0.05)
-    end
-    ntracers = 4
-    ρχ = SVector{ntracers, FT}(ρχ, ρχ / 2, ρχ / 3, ρχ / 4)
-    state.tracers.ρχ = ρχ
 end
 
 function config_risingbubble(FT, N, resolution, xmax, ymax, zmax)
@@ -87,23 +84,17 @@ function config_risingbubble(FT, N, resolution, xmax, ymax, zmax)
         timestep_ratio = 10,
     )
 
-    # Set up three tracers with integer diffusivity scaling
-    ntracers = 4
-    δ_χ = SVector{ntracers, FT}(1, 2, 3, 4)
-
     # Set up the model
     C_smag = FT(0.23)
     ref_state =
         HydrostaticState(DryAdiabaticProfile(typemin(FT), FT(300)), FT(0))
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
-        turbulence = SmagorinskyLilly(C_smag),
-        hyperdiffusion = StandardHyperDiffusion(60),
+        AtmosLESConfigType;
+        turbulence = SmagorinskyLilly{FT}(C_smag),
         source = (Gravity(),),
-        tracers = NTracers{ntracers, FT}(δ_χ),
         ref_state = ref_state,
         init_state = init_risingbubble!,
+        param_set = param_set,
     )
 
     # Problem configuration
@@ -114,7 +105,6 @@ function config_risingbubble(FT, N, resolution, xmax, ymax, zmax)
         xmax,
         ymax,
         zmax,
-        param_set,
         init_risingbubble!,
         solver_type = ode_solver,
         model = model,
@@ -123,7 +113,7 @@ function config_risingbubble(FT, N, resolution, xmax, ymax, zmax)
 end
 
 function config_diagnostics(driver_config)
-    interval = "10000steps"
+    interval = 10000 # in time steps
     dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end

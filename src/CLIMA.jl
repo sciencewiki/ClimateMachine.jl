@@ -2,10 +2,21 @@ module CLIMA
 
 include(joinpath("Utilities", "TicToc", "TicToc.jl"))
 include(joinpath("Utilities", "ArtifactWrappers", "ArtifactWrappers.jl"))
+include(joinpath("Utilities", "ParametersType", "ParametersType.jl"))
 include(joinpath("InputOutput", "Writers", "Writers.jl"))
 include(joinpath("Common", "ConfigTypes", "ConfigTypes.jl"))
+include(joinpath("Common", "PlanetParameters", "UniversalConstants.jl"))
+include(joinpath("Common", "Parameters", "Parameters.jl"))
+include(joinpath("Common", "PlanetParameters", "PlanetaryConstants.jl"))
+include(joinpath("Common", "PlanetParameters", "PlanetParameters.jl"))
 include(joinpath("Utilities", "VariableTemplates", "VariableTemplates.jl"))
 include(joinpath("Common", "MoistThermodynamics", "MoistThermodynamics.jl"))
+include(joinpath(
+    "Atmos",
+    "Parameterizations",
+    "CloudPhysics",
+    "MicrophysicsParameters.jl",
+))
 include(joinpath(
     "Atmos",
     "Parameterizations",
@@ -17,6 +28,18 @@ include(joinpath(
     "Parameterizations",
     "SurfaceFluxes",
     "SurfaceFluxes.jl",
+))
+include(joinpath(
+    "Atmos",
+    "Parameterizations",
+    "TurbulenceConvection",
+    "TurbulenceConvection.jl",
+))
+include(joinpath(
+    "Atmos",
+    "Parameterizations",
+    "SubgridScaleTurbulence",
+    "SubgridScaleParameters.jl",
 ))
 include(joinpath("Arrays", "MPIStateArrays.jl"))
 include(joinpath("Mesh", "Mesh.jl"))
@@ -40,8 +63,6 @@ include(joinpath("ODESolvers", "GenericCallbacks.jl"))
 include(joinpath("Atmos", "Model", "AtmosModel.jl"))
 include(joinpath("InputOutput", "VTK", "VTK.jl"))
 include(joinpath("Diagnostics", "Diagnostics.jl"))
-include(joinpath("Utilities", "Checkpoint", "Checkpoint.jl"))
-include(joinpath("Utilities", "Callbacks", "Callbacks.jl"))
 include(joinpath("Driver", "Driver.jl"))
 
 end

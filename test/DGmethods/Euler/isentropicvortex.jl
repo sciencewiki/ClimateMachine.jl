@@ -12,6 +12,7 @@ using CLIMA.ODESolvers
 using CLIMA.VTK: writevtk, writepvtu
 using CLIMA.GenericCallbacks: EveryXWallTimeSeconds, EveryXSimulationSteps
 using CLIMA.MPIStateArrays: euclidean_distance
+using CLIMA.PlanetParameters: kappa_d
 using CLIMA.MoistThermodynamics:
     air_density, total_energy, soundspeed_air, PhaseDry_given_pT
 using CLIMA.Atmos:
@@ -25,10 +26,10 @@ using CLIMA.Atmos:
     vars_state
 using CLIMA.VariableTemplates: flattenednames
 
-using CLIMAParameters
-using CLIMAParameters.Planet: kappa_d
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+param_set = ParameterSet()
 
 using MPI, Logging, StaticArrays, LinearAlgebra, Printf, Dates, Test
 
@@ -46,7 +47,16 @@ function main()
     ArrayType = CLIMA.array_type()
 
     mpicomm = MPI.COMM_WORLD
+    ll = uppercase(get(ENV, "JULIA_LOG_LEVEL", "INFO"))
+    loglevel = Dict(
+        "DEBUG" => Logging.Debug,
+        "WARN" => Logging.Warn,
+        "ERROR" => Logging.Error,
+        "INFO" => Logging.Info,
+    )[ll]
 
+    logger_stream = MPI.Comm_rank(mpicomm) == 0 ? stderr : devnull
+    global_logger(ConsoleLogger(logger_stream, loglevel))
     polynomialorder = 4
     numlevels = integration_testing ? 4 : 1
 
@@ -75,25 +85,25 @@ function main()
     expected_error[Float64, 3, Central, 3] = 1.1680141169828175e-01
     expected_error[Float64, 3, Central, 4] = 2.6414127301659534e-03
 
-    expected_error[Float32, 2, Rusanov, 1] = 1.1990781784057617e+01
-    expected_error[Float32, 2, Rusanov, 2] = 2.0813269615173340e+00
-    expected_error[Float32, 2, Rusanov, 3] = 6.7035309970378876e-02
-    expected_error[Float32, 2, Rusanov, 4] = 5.3008597344160080e-02
+    expected_error[Float32, 2, Rusanov, 1] = 1.1990854263305664e+01
+    expected_error[Float32, 2, Rusanov, 2] = 2.0812149047851563e+00
+    expected_error[Float32, 2, Rusanov, 3] = 6.6969044506549835e-02
+    expected_error[Float32, 2, Rusanov, 4] = 5.2888177335262299e-02
 
-    expected_error[Float32, 2, Central, 1] = 2.0840391159057617e+01
-    expected_error[Float32, 2, Central, 2] = 2.9256355762481689e+00
-    expected_error[Float32, 2, Central, 3] = 3.7092915177345276e-01
-    expected_error[Float32, 2, Central, 4] = 1.1543693393468857e-01
+    expected_error[Float32, 2, Central, 1] = 2.0840496063232422e+01
+    expected_error[Float32, 2, Central, 2] = 2.9250388145446777e+00
+    expected_error[Float32, 2, Central, 3] = 3.7026408314704895e-01
+    expected_error[Float32, 2, Central, 4] = 1.1543836444616318e-01
 
-    expected_error[Float32, 3, Rusanov, 1] = 3.7918186187744141e+00
-    expected_error[Float32, 3, Rusanov, 2] = 6.5816193819046021e-01
-    expected_error[Float32, 3, Rusanov, 3] = 2.0893247798085213e-02
-    expected_error[Float32, 3, Rusanov, 4] = 1.1554701253771782e-02
+    expected_error[Float32, 3, Rusanov, 1] = 3.7918324470520020e+00
+    expected_error[Float32, 3, Rusanov, 2] = 6.5811443328857422e-01
+    expected_error[Float32, 3, Rusanov, 3] = 2.0889002829790115e-02
+    expected_error[Float32, 3, Rusanov, 4] = 1.1552370153367519e-02
 
-    expected_error[Float32, 3, Central, 1] = 6.5903329849243164e+00
-    expected_error[Float32, 3, Central, 2] = 9.2512512207031250e-01
-    expected_error[Float32, 3, Central, 3] = 1.1707859486341476e-01
-    expected_error[Float32, 3, Central, 4] = 2.1001411601901054e-02
+    expected_error[Float32, 3, Central, 1] = 6.5902600288391113e+00
+    expected_error[Float32, 3, Central, 2] = 9.2505264282226563e-01
+    expected_error[Float32, 3, Central, 3] = 1.1701638251543045e-01
+    expected_error[Float32, 3, Central, 4] = 2.1023442968726158e-02
 
     @testset "$(@__FILE__)" begin
         for FT in (Float64, Float32), dims in (2, 3)
@@ -184,15 +194,15 @@ function run(
     )
 
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
+        AtmosLESConfigType;
         orientation = NoOrientation(),
         ref_state = NoReferenceState(),
-        turbulence = ConstantViscosityWithDivergence(FT(0)),
+        turbulence = ConstantViscosityWithDivergence(0.0),
         moisture = DryModel(),
         source = nothing,
         boundarycondition = (),
         init_state = isentropicvortex_initialcondition!,
+        param_set = param_set,
     )
 
     dg = DGModel(
@@ -208,7 +218,7 @@ function run(
     # determine the time step
     elementsize = minimum(step.(brickrange))
     dt =
-        elementsize / soundspeed_air(model.param_set, setup.T∞) /
+        elementsize / soundspeed_air(setup.T∞, model.param_set) /
         polynomialorder^2
     nsteps = ceil(Int, timeend / dt)
     dt = timeend / nsteps
@@ -285,7 +295,7 @@ end
 Base.@kwdef struct IsentropicVortexSetup{FT}
     p∞::FT = 10^5
     T∞::FT = 300
-    ρ∞::FT = air_density(param_set, FT(T∞), FT(p∞))
+    ρ∞::FT = air_density(FT(T∞), FT(p∞), param_set)
     translation_speed::FT = 150
     translation_angle::FT = pi / 4
     vortex_speed::FT = 50
@@ -320,11 +330,10 @@ function isentropicvortex_initialcondition!(bl, state, aux, coords, t, args...)
     end
     u = u∞ .+ SVector(δu_x, δu_y, 0)
 
-    _kappa_d::FT = kappa_d(param_set)
-    T = T∞ * (1 - _kappa_d * vortex_speed^2 / 2 * ρ∞ / p∞ * exp(-(r / R)^2))
+    T = T∞ * (1 - kappa_d * vortex_speed^2 / 2 * ρ∞ / p∞ * exp(-(r / R)^2))
     # adiabatic/isentropic relation
-    p = p∞ * (T / T∞)^(FT(1) / _kappa_d)
-    ts = PhaseDry_given_pT(bl.param_set, p, T)
+    p = p∞ * (T / T∞)^(FT(1) / kappa_d)
+    ts = PhaseDry_given_pT(p, T, bl.param_set)
     ρ = air_density(ts)
 
     e_pot = FT(0)

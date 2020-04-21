@@ -3,6 +3,8 @@ using CLIMA.VariableTemplates
 
 function vars_diagnostic(FT)
     @vars begin
+        # vertical coordinate
+        z::FT
         # state and functions of state
         u::FT
         v::FT

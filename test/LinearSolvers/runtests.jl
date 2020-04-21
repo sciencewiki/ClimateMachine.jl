@@ -3,12 +3,9 @@ include("../testhelpers.jl")
 
 include("iterativesolvers.jl")
 
+include("cg.jl")
+
 @testset "Linear Solvers Poisson" begin
-    tests = [
-        (1, "columnwiselu.jl"),
-        (1, "poisson.jl"),
-        (1, "bandedsystem.jl"),
-        (1, "cg.jl"),
-    ]
+    tests = [(1, "columnwiselu.jl"), (1, "poisson.jl"), (1, "bandedsystem.jl")]
     runmpi(tests, @__FILE__)
 end

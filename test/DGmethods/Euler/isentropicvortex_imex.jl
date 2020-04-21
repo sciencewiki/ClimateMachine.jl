@@ -10,6 +10,7 @@ using CLIMA.GeneralizedMinimalResidualSolver: GeneralizedMinimalResidual
 using CLIMA.VTK: writevtk, writepvtu
 using CLIMA.GenericCallbacks: EveryXWallTimeSeconds, EveryXSimulationSteps
 using CLIMA.MPIStateArrays: euclidean_distance
+using CLIMA.PlanetParameters: kappa_d
 using CLIMA.MoistThermodynamics:
     air_density, total_energy, internal_energy, soundspeed_air
 using CLIMA.Atmos:
@@ -27,10 +28,10 @@ using CLIMA.Atmos:
 using CLIMA.VariableTemplates: @vars, Vars, flattenednames
 import CLIMA.Atmos: atmos_init_aux!, vars_aux
 
-using CLIMAParameters
-using CLIMAParameters.Planet: kappa_d
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+param_set = ParameterSet()
 
 using MPI, Logging, StaticArrays, LinearAlgebra, Printf, Dates, Test
 
@@ -49,6 +50,16 @@ function main()
 
     mpicomm = MPI.COMM_WORLD
 
+    ll = uppercase(get(ENV, "JULIA_LOG_LEVEL", "INFO"))
+    loglevel = Dict(
+        "DEBUG" => Logging.Debug,
+        "WARN" => Logging.Warn,
+        "ERROR" => Logging.Error,
+        "INFO" => Logging.Info,
+    )[ll]
+
+    logger_stream = MPI.Comm_rank(mpicomm) == 0 ? stderr : devnull
+    global_logger(ConsoleLogger(logger_stream, loglevel))
     polynomialorder = 4
     numlevels = integration_testing ? 4 : 1
 
@@ -149,8 +160,7 @@ function run(
     )
 
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
+        AtmosLESConfigType;
         orientation = NoOrientation(),
         ref_state = IsentropicVortexReferenceState{FT}(setup),
         turbulence = ConstantViscosityWithDivergence(FT(0)),
@@ -158,6 +168,7 @@ function run(
         source = nothing,
         boundarycondition = (),
         init_state = isentropicvortex_initialcondition!,
+        param_set = param_set,
     )
 
     linear_model = AtmosAcousticLinearModel(model)
@@ -196,7 +207,7 @@ function run(
     # determine the time step
     elementsize = minimum(step.(brickrange))
     dt =
-        elementsize / soundspeed_air(model.param_set, setup.T∞) /
+        elementsize / soundspeed_air(setup.T∞, model.param_set) /
         polynomialorder^2
     nsteps = ceil(Int, timeend / dt)
     dt = timeend / nsteps
@@ -285,7 +296,7 @@ end
 Base.@kwdef struct IsentropicVortexSetup{FT}
     p∞::FT = 10^5
     T∞::FT = 300
-    ρ∞::FT = air_density(param_set, FT(T∞), FT(p∞))
+    ρ∞::FT = air_density(FT(T∞), FT(p∞), param_set)
     translation_speed::FT = 150
     translation_angle::FT = pi / 4
     vortex_speed::FT = 50
@@ -312,7 +323,7 @@ function atmos_init_aux!(
     aux.ref_state.ρ = ρ∞
     aux.ref_state.p = p∞
     aux.ref_state.T = T∞
-    aux.ref_state.ρe = ρ∞ * internal_energy(atmos.param_set, T∞)
+    aux.ref_state.ρe = ρ∞ * internal_energy(T∞, atmos.param_set)
 end
 
 function isentropicvortex_initialcondition!(bl, state, aux, coords, t, args...)
@@ -342,16 +353,15 @@ function isentropicvortex_initialcondition!(bl, state, aux, coords, t, args...)
     end
     u = u∞ .+ SVector(δu_x, δu_y, 0)
 
-    _kappa_d::FT = kappa_d(param_set)
-    T = T∞ * (1 - _kappa_d * vortex_speed^2 / 2 * ρ∞ / p∞ * exp(-(r / R)^2))
+    T = T∞ * (1 - kappa_d * vortex_speed^2 / 2 * ρ∞ / p∞ * exp(-(r / R)^2))
     # adiabatic/isentropic relation
-    p = p∞ * (T / T∞)^(FT(1) / _kappa_d)
-    ρ = air_density(bl.param_set, T, p)
+    p = p∞ * (T / T∞)^(FT(1) / kappa_d)
+    ρ = air_density(T, p, bl.param_set)
 
     state.ρ = ρ
     state.ρu = ρ * u
     e_kin = u' * u / 2
-    state.ρe = ρ * total_energy(bl.param_set, e_kin, FT(0), T)
+    state.ρe = ρ * total_energy(e_kin, FT(0), T, bl.param_set)
 end
 
 function do_output(

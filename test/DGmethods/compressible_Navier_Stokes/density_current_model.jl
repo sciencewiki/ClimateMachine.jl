@@ -14,6 +14,8 @@ using CLIMA.GenericCallbacks
 using CLIMA.Atmos
 using CLIMA.VariableTemplates
 using CLIMA.MoistThermodynamics
+using CLIMA.PlanetParameters: R_d, cp_d, cv_d, grav, MSLP
+using CLIMA.SubgridScaleParameters
 using LinearAlgebra
 using StaticArrays
 using Logging, Printf, Dates
@@ -21,10 +23,10 @@ using CLIMA.VTK
 using Random
 using CLIMA.Atmos: vars_state, vars_aux
 
-using CLIMAParameters
-using CLIMAParameters.Planet: R_d, cp_d, cv_d, grav, MSLP
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+using CLIMA.Parameters
+const clima_dir = dirname(pathof(CLIMA))
+include(joinpath(clima_dir, "..", "Parameters", "Parameters.jl"))
+param_set = ParameterSet()
 
 if !@isdefined integration_testing
     const integration_testing = parse(
@@ -66,11 +68,10 @@ function Initialise_Density_Current!(
     t,
 )
     FT = eltype(state)
-    _R_d::FT = R_d(param_set)
-    _grav::FT = grav(param_set)
-    _cp_d::FT = cp_d(param_set)
-    _cv_d::FT = cv_d(param_set)
-    _MSLP::FT = MSLP(param_set)
+    R_gas::FT = R_d
+    c_p::FT = cp_d
+    c_v::FT = cv_d
+    p0::FT = MSLP
     # initialise with dry domain
     q_tot::FT = 0
     q_liq::FT = 0
@@ -89,10 +90,10 @@ function Initialise_Density_Current!(
     end
     qvar = PhasePartition(q_tot)
     θ = θ_ref + Δθ # potential temperature
-    π_exner = FT(1) - _grav / (_cp_d * θ) * x3 # exner pressure
-    ρ = _MSLP / (_R_d * θ) * (π_exner)^(_cv_d / _R_d) # density
+    π_exner = FT(1) - grav / (c_p * θ) * x3 # exner pressure
+    ρ = p0 / (R_gas * θ) * (π_exner)^(c_v / R_gas) # density
 
-    ts = LiquidIcePotTempSHumEquil(bl.param_set, θ, ρ, q_tot)
+    ts = LiquidIcePotTempSHumEquil(θ, ρ, q_tot, bl.param_set)
     q_pt = PhasePartition(ts)
 
     U, V, W = FT(0), FT(0), FT(0)  # momentum components
@@ -128,8 +129,7 @@ function run(
     # -------------- Define model ---------------------------------- #
     source = Gravity()
     model = AtmosModel{FT}(
-        AtmosLESConfigType,
-        param_set;
+        AtmosLESConfigType;
         ref_state = HydrostaticState(
             DryAdiabaticProfile(typemin(FT), FT(300)),
             FT(0),
@@ -137,6 +137,7 @@ function run(
         turbulence = AnisoMinDiss{FT}(1),
         source = source,
         init_state = Initialise_Density_Current!,
+        param_set = param_set,
     )
     # -------------- Define dgbalancelaw --------------------------- #
     dg = DGModel(
@@ -223,6 +224,12 @@ let
     CLIMA.init()
     ArrayType = CLIMA.array_type()
     mpicomm = MPI.COMM_WORLD
+    ll = uppercase(get(ENV, "JULIA_LOG_LEVEL", "INFO"))
+    loglevel = ll == "DEBUG" ? Logging.Debug :
+        ll == "WARN" ? Logging.Warn :
+        ll == "ERROR" ? Logging.Error : Logging.Info
+    logger_stream = MPI.Comm_rank(mpicomm) == 0 ? stderr : devnull
+    global_logger(ConsoleLogger(logger_stream, loglevel))
 
     for FT in (Float32, Float64)
         brickrange = (

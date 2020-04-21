@@ -29,13 +29,10 @@ pages = Any[
     "Utilites" => Any[],
     "Atmos" => Any[
         "Atmos/SurfaceFluxes.md",
+        "Atmos/TurbulenceConvection.md",
         "Atmos/EDMFEquations.md",
         "Microphysics" => "Atmos/Microphysics.md",
-        "AtmosModel" => "Atmos/Model/AtmosModel.md",
-        "Turbulence" => "Atmos/Model/turbulence.md",
-        "Tracers" => "Atmos/Model/tracers.md",
     ],
-    "Diagnostics" => "Diagnostics.md",
     "ODESolvers" => "ODESolvers.md",
     "LinearSolvers" => "LinearSolvers.md",
     "Mesh" => "Mesh.md",
@@ -44,17 +41,16 @@ pages = Any[
     "InputOutput.md",
     "Examples" => [
         "Conjugate Gradient" => "generated/example_cg.md",
-        "Notes on Literate" => "generated/literate_markdown.md",
+        "Literate" => "generated/literate_markdown.md",
+    ],
+    "Contribution Guides" => Any[
+        "ContributionGuides/CONTRIBUTING.md",
+        "ContributionGuides/IterativeSolvers.md",
     ],
     "Developer docs" => Any[
-        "Contribution Guides" => Any[
-            "ContributionGuides/CONTRIBUTING.md",
-            "ContributionGuides/IterativeSolvers.md",
-        ],
         "CodingConventions.md",
         "AcceptableUnicode.md",
         "VariableList.md",
-        "DiagnosticVariables.md",
     ],
 ]
 
@@ -98,8 +94,4 @@ if ispath(p)
     end
 end
 
-deploydocs(
-    repo = "github.com/climate-machine/CLIMA.git",
-    target = "build",
-    push_preview = true,
-)
+deploydocs(repo = "github.com/climate-machine/CLIMA.git", target = "build")

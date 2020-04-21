@@ -37,7 +37,6 @@ end
 
 # Define the outer constructor for the ConjugateGradient struct
 """
-# ConjugateGradient
 function ConjugateGradient(Q::AT; rtol = eps(eltype(Q)), atol = eps(eltype(Q)), dims = :) where AT
 
 # Description
@@ -67,6 +66,8 @@ function ConjugateGradient(
     reshape_tuple = size(Q),
 ) where {AT}
 
+    # create empty container for pushing struct objects
+    container = []
     # allocate arrays (5)
     r0 = reshape(similar(Q), reshape_tuple)
     z0 = reshape(similar(Q), reshape_tuple)
@@ -79,23 +80,26 @@ function ConjugateGradient(
     # allocate create aliased arrays (2)
     p0 = reshape(alias_p0, reshape_tuple)
     Lp = reshape(alias_Lp, reshape_tuple)
-
-    container = [
-        rtol,
-        atol,
-        r0,
-        z0,
-        p0,
-        r1,
-        z1,
-        p1,
-        Lp,
-        alias_p0,
-        alias_Lp,
-        dims,
-        reshape_tuple,
-        max_iter,
-    ]
+    # push to container (2)
+    push!(container, rtol)
+    push!(container, atol)
+    # push to container (7)
+    push!(container, r0)
+    push!(container, z0)
+    push!(container, p0)
+    push!(container, r1)
+    push!(container, z1)
+    push!(container, p1)
+    push!(container, Lp)
+    # push to container (2)
+    push!(container, alias_p0)
+    push!(container, alias_Lp)
+    # push to container (1)
+    push!(container, dims)
+    # push to container (1)
+    push!(container, reshape_tuple)
+    # push to container (1)
+    push!(container, max_iter)
     # create struct instance by splatting the container into the default constructor
     return ConjugateGradient{
         typeof(z0),
@@ -139,6 +143,7 @@ function ConjugateGradient(
 )
 
     # create empty container for pushing struct objects
+    container = []
     # allocate arrays (5)
     r0 = reshape(similar(Q.data), reshape_tuple)
     z0 = reshape(similar(Q.data), reshape_tuple)
@@ -151,22 +156,26 @@ function ConjugateGradient(
     # allocate create aliased arrays (2)
     p0 = reshape(alias_p0.data, reshape_tuple)
     Lp = reshape(alias_Lp.data, reshape_tuple)
-    container = [
-        rtol,
-        atol,
-        r0,
-        z0,
-        p0,
-        r1,
-        z1,
-        p1,
-        Lp,
-        alias_p0,
-        alias_Lp,
-        dims,
-        reshape_tuple,
-        max_iter,
-    ]
+    # push to container (2)
+    push!(container, rtol)
+    push!(container, atol)
+    # push to container (7)
+    push!(container, r0)
+    push!(container, z0)
+    push!(container, p0)
+    push!(container, r1)
+    push!(container, z1)
+    push!(container, p1)
+    push!(container, Lp)
+    # push to container (2)
+    push!(container, alias_p0)
+    push!(container, alias_Lp)
+    # push to container (1)
+    push!(container, dims)
+    # push to container (1)
+    push!(container, reshape_tuple)
+    # push to container (1)
+    push!(container, max_iter)
     # create struct instance by splatting the container into the default constructor
     return ConjugateGradient{
         typeof(z0),
