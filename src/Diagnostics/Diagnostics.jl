@@ -8,6 +8,7 @@ module Diagnostics
 
 export DiagnosticsGroup,
     setup_atmos_default_diagnostics,
+    setup_atmos_default_GCM_diagnostics,
     setup_dump_state_and_aux_diagnostics,
     VecGrad,
     compute_vec_grad,
@@ -155,6 +156,43 @@ function setup_atmos_default_diagnostics(
 end
 
 """
+    setup_atmos_default_GCM_diagnostics(
+            interval::Int,
+            out_prefix::String;
+            writer::AbstractWriter,
+            interpol = nothing,
+            project  = true)
+
+Create and return a `DiagnosticsGroup` containing the "AtmosDefault_GCM"
+diagnostics, currently a set of diagnostics developed for DYCOMS. All
+the diagnostics in the group will run at the specified `interval`, be
+interpolated to the specified boundaries and resolution, and
+will be written to files prefixed by `out_prefix` using `writer`.
+
+TODO: this will be refactored soon.
+"""
+function setup_atmos_default_GCM_diagnostics(
+    interval::Int,
+    out_prefix::String;
+    writer = NetCDFWriter(),
+    interpol = nothing,
+    project = true,
+    #model,
+)
+    return DiagnosticsGroup(
+        "AtmosDefault_GCM",
+        Diagnostics.atmos_default_GCM_init,
+        Diagnostics.atmos_default_GCM_fini,
+        Diagnostics.atmos_default_GCM_collect,
+        interval,
+        out_prefix,
+        writer,
+        interpol,
+        project,
+    )
+end
+
+"""
     setup_dump_state_and_aux_diagnostics(
         interval::String,
         out_prefix::String;
@@ -245,7 +283,8 @@ function extract_diffusion(dg, localdiff, ijk, e)
     return Vars{vars_diffusive(bl, FT)}(l_diff)
 end
 
-include("atmos_default.jl")
-include("dump_state_and_aux.jl")
-include("diagnostic_fields.jl")
+#include("atmos_default.jl")
+include("atmos_default_GCM.jl")
+#include("dump_state_and_aux.jl")
+#include("diagnostic_fields.jl")
 end # module Diagnostics

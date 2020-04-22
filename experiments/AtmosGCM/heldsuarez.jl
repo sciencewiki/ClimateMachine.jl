@@ -151,7 +151,6 @@ end
 
 function config_diagnostics(FT, driver_config)
     interval = "1000steps"
-
     _planet_radius = FT(planet_radius(param_set))
 
     info = driver_config.config_info
@@ -163,7 +162,9 @@ function config_diagnostics(FT, driver_config)
     interpol =
         CLIMA.InterpolationConfiguration(driver_config, boundaries, resolution)
 
-    dgngrp = setup_dump_state_and_aux_diagnostics(
+
+    #dgngrp = setup_dump_state_and_aux_diagnostics(
+    dgngrp = setup_atmos_default_GCM_diagnostics(
         interval,
         driver_config.name,
         interpol = interpol,
@@ -180,7 +181,7 @@ function main()
     poly_order = 5                           # discontinuous Galerkin polynomial order
     n_horz = 5                               # horizontal element number
     n_vert = 5                               # vertical element number
-    n_days = 120                             # experiment day number
+    n_days = 10                              # experiment day number
     timestart = FT(0)                        # start time (s)
     timeend = FT(n_days * day(param_set))    # end time (s)
 
