@@ -33,17 +33,16 @@
 
 \usegdlibrary{layered}
 \begin{document}
-\begin{tikzpicture}[]
+\begin{tikzpicture}[scale=2, font=\huge\sf]
 \graph [layered layout, ] {
-1/"`update-aux!`" [draw, rounded corners, fill=blue!10],
-2/"`flux-diffusive!`" [draw, rounded corners, fill=blue!10],
-3/"`flux-nondiffusive!`" [draw, rounded corners, fill=blue!10],
-4/"`source!`" [draw, rounded corners, fill=blue!10],
+1/"update\_aux!" [draw, rounded corners, fill=blue!10],
+2/"flux\_diffusive!" [draw, rounded corners, fill=blue!10],
+3/"flux\_nondiffusive!" [draw, rounded corners, fill=blue!10],
+4/"source!" [draw, rounded corners, fill=blue!10],
 ;
 1 -> [,] 2;
 2 -> [,] 3;
 3 -> [,] 4;
-4 -> [,] 1;
 };
 
 \end{tikzpicture}

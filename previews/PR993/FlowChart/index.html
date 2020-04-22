@@ -4,19 +4,18 @@ using LightGraphs
 using TikzPictures # this is required for saving
 
 flow_chart = [
-  &quot;`update-aux!`&quot;,
-  &quot;`flux-diffusive!`&quot;,
-  &quot;`flux-nondiffusive!`&quot;,
-  &quot;`source!`&quot;,
+  &quot;update\\_aux!&quot;,
+  &quot;flux\\_diffusive!&quot;,
+  &quot;flux\\_nondiffusive!&quot;,
+  &quot;source!&quot;,
 ]
 n_nodes = length(flow_chart)
 g = DiGraph(n_nodes)
 for i in 1:n_nodes-1
   add_edge!(g, i, i+1)
 end
-add_edge!(g, n_nodes, 1)
 
-t = TikzGraphs.plot(g, flow_chart, node_style=&quot;draw, rounded corners, fill=blue!10&quot;)
-TikzPictures.save(SVG(&quot;tendencies_flow_chart&quot;), t)
+t = TikzGraphs.plot(g, flow_chart, node_style=&quot;draw, rounded corners, fill=blue!10&quot;, options=&quot;scale=2, font=\\huge\\sf&quot;)
+TikzPictures.save(SVG(joinpath(@__DIR__,&quot;tendencies_flow_chart&quot;)), t)
 
-nothing # hide</code></pre><p><img src="tendencies_flow_chart.svg" alt/></p><p><sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup> <a href=".">How to build a balance law</a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../InputOutput/">« InputOutput</a><a class="docs-footer-nextpage" href="../generated/example_cg/">Conjugate Gradient »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 21 April 2020 23:35">Tuesday 21 April 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+nothing # hide</code></pre><p><img src="tendencies_flow_chart.svg" alt/></p><p><sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup> <a href=".">How to build a balance law</a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../InputOutput/">« InputOutput</a><a class="docs-footer-nextpage" href="../generated/example_cg/">Conjugate Gradient »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 22 April 2020 15:03">Wednesday 22 April 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
