@@ -271,7 +271,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     # Sponge
     c_sponge = 1
     # Rayleigh damping
-    zsponge = FT(1500.0)
+    zsponge = FT(850.0)
     rayleigh_sponge =
         RayleighSponge{FT}(zmax, zsponge, c_sponge, u_relaxation, 2)
     # Geostrophic forcing
@@ -356,11 +356,12 @@ function main()
 
     xmax = FT(1000)
     ymax = FT(1000)
-    zmax = FT(2500)
+    zmax = FT(1500)
 
     t0 = FT(0)
     timeend = FT(100)
-
+    Courant = FT(1.8)
+    
     driver_config = config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     solver_config = CLIMA.SolverConfiguration(
         t0,
