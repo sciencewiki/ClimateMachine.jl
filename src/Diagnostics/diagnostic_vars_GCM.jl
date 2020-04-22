@@ -33,12 +33,12 @@ function vars_diagnostic(FT)
         #vert_eddy_thl_flux::FT  # <w′θ_liq′>
 
         # zonal means
-        u_zm::FT                 # zonal mean zonal wind
-        T_zm::FT                 # zonal mean air temperature
+        #u_zm::FT                 # zonal mean zonal wind
+        #T_zm::FT                 # zonal mean air temperature
 
         # covariances
-        uvcovariance::FT          # u*v*
-        vtcovariance::FT          # v*T*
+        #uvcovariance::FT          # u*v*
+        #vtcovariance::FT          # v*T*
 
         # eddy kinetic energy
         #EKE::FT                   # 1/2 (u**2 +v**2)
