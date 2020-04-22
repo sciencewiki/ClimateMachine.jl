@@ -357,14 +357,14 @@ struct InterpolationBrick{
 end # struct InterpolationBrick
 #--------------------------------------------------------
 """
-    interpolate_local!(intrp_brck::InterpolationBrick{FT}, 
-                               sv::AbstractArray{FT}, 
+    interpolate_local!(intrp_brck::InterpolationBrick{FT},
+                               sv::AbstractArray{FT},
                                 v::AbstractArray{FT}) where {FT <: AbstractFloat}
 
 This interpolation function works for a brick, where stretching/compression happens only along the x1, x2 & x3 axis.
 Here x1 = X1(ξ1), x2 = X2(ξ2) and x3 = X3(ξ3)
 
-# Arguments 
+# Arguments
  - `intrp_brck`: Initialized InterpolationBrick structure
  - `sv`: State Array consisting of various variables on the discontinuous Galerkin grid
  - `v`:  Interpolated variables
@@ -1034,12 +1034,12 @@ struct InterpolationCubedSphere{
 end # structure InterpolationCubedSphere
 #--------------------------------------------------------
 """
-    invert_trilear_mapping_hex!(X1::AbstractArray{FT,1}, 
-                                X2::AbstractArray{FT,1}, 
+    invert_trilear_mapping_hex!(X1::AbstractArray{FT,1},
+                                X2::AbstractArray{FT,1},
                                 X3::AbstractArray{FT,1},
-                                 x::AbstractArray{FT,1}, 
-                                 d::AbstractArray{FT,1}, 
-                               tol::FT, 
+                                 x::AbstractArray{FT,1},
+                                 d::AbstractArray{FT,1},
+                               tol::FT,
                                  ξ::AbstractArray{FT,1}) where FT <: AbstractFloat
 
 This function computes ξ = (ξ1,ξ2,ξ3) given x = (x1,x2,x3) and the (8) vertex coordinates of a Hexahedron. Newton-Raphson method is used.
@@ -1239,8 +1239,8 @@ function trilinear_map_IJac_x_vec!(
 end
 #--------------------------------------------------------
 """
-    interpolate_local!(intrp_cs::InterpolationCubedSphere{FT}, 
-                             sv::AbstractArray{FT}, 
+    interpolate_local!(intrp_cs::InterpolationCubedSphere{FT},
+                             sv::AbstractArray{FT},
                               v::AbstractArray{FT}) where {FT <: AbstractFloat}
 
 This interpolation function works for cubed spherical shell geometry.
@@ -1489,8 +1489,8 @@ function interpolate_cubed_sphere_CUDA!(
 end
 #--------------------------------------------------------
 """
-    project_cubed_sphere!(intrp_cs::InterpolationCubedSphere{FT}, 
-                                 v::AbstractArray{FT}, 
+    project_cubed_sphere!(intrp_cs::InterpolationCubedSphere{FT},
+                                 v::AbstractArray{FT},
                               uvwi::Tuple{Int,Int,Int}) where {FT <: AbstractFloat}
 
 This function projects the velocity field along unit vectors in radial, lat and long directions for cubed spherical shell geometry.
@@ -1608,8 +1608,8 @@ function project_cubed_sphere_CUDA!(
 end
 #--------------------------------------------------------
 """
-    accumulate_interpolated_data!(intrp::InterpolationTopology, 
-                                     iv::AbstractArray{FT,2}, 
+    accumulate_interpolated_data!(intrp::InterpolationTopology,
+                                     iv::AbstractArray{FT,2},
                                     fiv::AbstractArray{FT,4}) where {FT <: AbstractFloat}
 
 This interpolation function gathers interpolated data onto process # 0.

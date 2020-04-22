@@ -407,7 +407,7 @@ Diagnostics $(dgngrp.name) collection
             end
         end
         if mpirank == 0
-            varvals[varnames[vari]] = davg
+            varvals[varnames[vari]] = davg # Dict of variable name to array of values (if not calculated then zeros)
         end
     end
 

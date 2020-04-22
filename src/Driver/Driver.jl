@@ -27,6 +27,8 @@ using ..MoistThermodynamics
 using ..MPIStateArrays
 using ..ODESolvers
 using ..TicToc
+
+
 using ..VariableTemplates
 using ..VTK
 
@@ -35,14 +37,14 @@ using ..VTK
 Base.@kwdef mutable struct CLIMA_Settings
     disable_gpu::Bool = false
     show_updates::Bool = true
-    update_interval::Int = 60
-    enable_diagnostics::Bool = false
-    diagnostics_interval::Int = 10000
+    update_interval::Int = 2 #60
+    enable_diagnostics::Bool = true #false
+    diagnostics_interval::Int = 2 #10000
     enable_vtk::Bool = false
-    vtk_interval::Int = 10000
+    vtk_interval::Int = 2
     enable_wall_clock::Bool = false
-    wall_clock_interval::Int = 10000
-    monitor_courant_numbers::Bool = false
+    wall_clock_interval::Int = 2#10000
+    monitor_courant_numbers::Bool = true #false
     monitor_courant_interval::Int = 10
     checkpoint_walltime::Int = -1
     checkpoint_keep_one::Bool = true
@@ -114,28 +116,28 @@ function parse_commandline()
         "--update-interval"
         help = "interval in seconds for showing simulation updates"
         arg_type = Int
-        default = 60
+        default = 2#60
         "--enable-diagnostics"
         help = "enable the collection of diagnostics to <output-dir>"
-        action = :store_true
+        default = true
         "--diagnostics-interval"
         help = "override the interval for gathering diagnostics (in simulation steps)"
         arg_type = Int
-        default = 10000
+        default = 2#10000
         "--enable-vtk"
         help = "output VTK to <output-dir> every <vtk-interval> simulation steps"
         action = :store_true
         "--vtk-interval"
         help = "interval in simulation steps for VTK output"
         arg_type = Int
-        default = 10000
+        default = 2#10000
         "--enable-wall-clock"
         help = "output wall-clock time per time-step every <wall-clock-interval> simulation steps"
         action = :store_true
         "--wall-clock-interval"
         help = "interval in simulation steps for wall-clock time per time-step output"
         arg_type = Int
-        default = 10000
+        default = 2#10000
         "--monitor-courant-numbers"
         help = "output acoustic, advective, and diffusive Courant numbers"
         action = :store_true
@@ -337,6 +339,14 @@ function invoke!(
         end
         callbacks = (callbacks..., cbinfo)
     end
+
+    @info @sprintf(
+        """
+        diags are set to
+         to %s and %s""",
+        Settings.enable_diagnostics, diagnostics_config !== nothing
+    )
+
 
     dgn_starttime = ""
     if Settings.enable_diagnostics && diagnostics_config !== nothing

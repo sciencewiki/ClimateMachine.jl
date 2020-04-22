@@ -150,7 +150,7 @@ function held_suarez_forcing!(
 end
 
 function config_diagnostics(FT, driver_config)
-    interval = 1000 # in time steps
+    interval = 2#1000 # in time steps
 
     _planet_radius = FT(planet_radius(param_set))
 
@@ -163,11 +163,15 @@ function config_diagnostics(FT, driver_config)
     interpol =
         CLIMA.InterpolationConfiguration(driver_config, boundaries, resolution)
 
-    dgngrp = setup_dump_state_and_aux_diagnostics(
+
+    #dgngrp = setup_atmos_default_GCM_diagnostics(
+    #dgngrp = setup_dump_state_and_aux_diagnostics(
+    dgngrp = setup_atmos_default_GCM_diagnostics(
         interval,
         driver_config.name,
         interpol = interpol,
         project = true,
+        #model = driver_config.bl
     )
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end
@@ -180,7 +184,7 @@ function main()
     poly_order = 5                           # discontinuous Galerkin polynomial order
     n_horz = 5                               # horizontal element number
     n_vert = 5                               # vertical element number
-    n_days = 120                             # experiment day number
+    n_days = 10                              # experiment day number
     timestart = FT(0)                        # start time (s)
     timeend = FT(n_days * day(param_set))    # end time (s)
 
