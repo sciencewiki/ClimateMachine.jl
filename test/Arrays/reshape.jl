@@ -8,7 +8,7 @@ const mpicomm = MPI.COMM_WORLD
 FT = Float32
 Q = MPIStateArray{FT}(mpicomm, ArrayType, 4, 4, 4)
 println(size(Array(Q)))
-Qb = reshape(Q, (16, 4, 1), FT)
+Qb = reshape(Q, (16, 4, 1))
 
 # this works
 Q .= Q

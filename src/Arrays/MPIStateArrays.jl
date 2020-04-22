@@ -318,7 +318,7 @@ end
     dest
 end
 
-function Base.reshape(a::MPIStateArray, dims::NTuple{N,Int}, ::Type{FT}) where {N, FT}
+function Base.reshape(a::MPIStateArray{FT}, dims::NTuple{N,Int}) where {N, FT}
     throw_dmrsa(dims, len) = 
         throw(DimensionMismatch("new dimensions $(dims) must be consistent with array size $len"))
 
