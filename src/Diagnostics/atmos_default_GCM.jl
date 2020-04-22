@@ -1,3 +1,4 @@
+using Statistics
 using ..Atmos
 using ..Atmos: thermo_state, turbulence_tensors
 using ..Mesh.Topologies
@@ -70,6 +71,17 @@ function compute_dyn!(bl, state, aux, dynQ,dgngrp,FT)
     return nothing
 end
 
+# set up struct for interpolated state vars
+function vars_statei(FT)
+    @vars begin
+        ρ::FT
+        ρu::SVector{3, FT}
+        ρe::FT
+    end
+end
+num_statei(FT) = varsize(vars_statei(FT))
+statei_vars(array) = Vars{vars_statei(eltype(array))}(array)
+
 # aggregate all diags, including calculations done after interpolation to sphere
 function compute_diagnosticsums_GCM!(
     all_state_data,
@@ -86,23 +98,25 @@ function compute_diagnosticsums_GCM!(
     ds = diagnostic_vars(dsumsi)
 
     # calculate ds. vars that will be saved (these need to be selected from the diagnostic_vars(_GCM) file)
-    ds.u = state_i.ρu[1] / state.ρ
-    ds.v = state_i.ρu[2] / state.ρ
-    ds.w = state_i.ρu[3] / state.ρ
+    ds.u = state_i.ρu[1] / state_i.ρ
+    ds.v = state_i.ρu[2] / state_i.ρ
+    ds.w = state_i.ρu[3] / state_i.ρ
 
-    ds.T     = thi.T
-    ds.θ_dry = thi.θ_dry
-    ds.vort_rel = all_nonlocal_data[3]
+    ds.T     = th_i.T
+    ds.thd = th_i.θ_dry
+    #ds.vort_rel = dyn_i.vort_rel[3]
+    ds.vort_rel = all_dyn_data[3]
 
     # zonal means
-    ds.u_zm = mean(u, dims=3)
-    v_zm = mean(v, dims=3)
-    w_zm = mean(w, dims=3)
-    ds.T_zm = mean(T, dims=3)
+    #@info @sprintf("""size u is %s""", size(ds.u[:,:,:]))
+    #ds.T_zm = mean(.*1., ds.T; dims = 3)
+    #ds.u_zm = mean((ds.u); dims = 3 )
+    #v_zm = mean(ds.v; dims = 3)
+    #w_zm = mean(ds.w; dims = 3)
 
     # (co)variances
-    ds.uvcovariance = (ds.u .- ds.u_zm) * (ds.v .- v_zm)
-    ds.vTcovariance = (ds.v .- v_zm) * (ds.T .- ds.T_zm)
+    #ds.uvcovariance = (ds.u .- ds.u_zm) * (ds.v .- v_zm)
+    #ds.vTcovariance = (ds.v .- v_zm) * (ds.T .- ds.T_zm)
 
     return nothing
 end
@@ -220,11 +234,15 @@ function atmos_default_GCM_collect(dgngrp::DiagnosticsGroup, currtime)
     compute_thermo!(bl, Q, dg.auxstate, thermoQ, dgngrp, FT)
 
     # Compute and aggregate local dynamic variables
-    #dynQ = DA{FT}(undef, Npl, num_dyn(FT), Nel)
+    #dynQ = DA{FT}(undef, Npl, 3 , Nel)
     #compute_dyn!(bl, Q, dg.auxstate, dynQ, dgngrp, FT)
+
+    # this is a temporary fix - better to use a struct using compute_dyn!
     vgrad = compute_vec_grad(Settings.dg.balancelaw, Settings.Q, Settings.dg)
     vort_all = compute_vorticity(Settings.dg, vgrad)
     dynQ =  Array(vort_all.data)
+
+    @info @sprintf("""Ignre this""")
 
     # interpolate and project local variables onto a sphere
     all_state_data = nothing
@@ -237,7 +255,7 @@ function atmos_default_GCM_collect(dgngrp::DiagnosticsGroup, currtime)
         ithermo = DA(Array{FT}(undef, dgngrp.interpol.Npl, num_thermo(FT))) # empty on interpolated grid
         interpolate_local!(dgngrp.interpol, thermoQ, ithermo)
 
-        idyn = DA(Array{FT}(undef, dgngrp.interpol.Npl, num_dyn(FT) )) # empty on interpolated grid
+        idyn = DA(Array{FT}(undef, dgngrp.interpol.Npl, 3 )) # empty on interpolated grid
         interpolate_local!(dgngrp.interpol, dynQ , idyn)
 
         if dgngrp.project
