@@ -318,6 +318,24 @@ end
     dest
 end
 
+function Base.reshape(a::MPIStateArray, dims::NTuple{N,Int}, ::Type{FT}) where {N, FT}
+    throw_dmrsa(dims, len) = 
+        throw(DimensionMismatch("new dimensions $(dims) must be consistent with array size $len"))
+
+    if prod(dims) != length(a)
+        throw_dmrsa(dims, length(a))
+    end
+
+#=
+    if N == M && dims == size(a)
+        return a
+    end 
+=#
+
+    # TODO: modify for MPIStateArrays, specifically
+    ccall(:jl_reshape_array, Array{FT,N}, (Any, Any, Any), Array{FT,N}, Array(a), dims)
+end
+
 """
     post_Irecvs!(Q::MPIStateArray)
 
