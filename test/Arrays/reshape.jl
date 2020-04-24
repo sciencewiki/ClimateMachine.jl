@@ -2,6 +2,7 @@ using MPI
 using CLIMA
 using CLIMA.MPIStateArrays
 
+#CLIMA.init(disable_gpu = true)
 CLIMA.init()
 const ArrayType = CLIMA.array_type()
 const mpicomm = MPI.COMM_WORLD
