@@ -49,7 +49,7 @@ const param_set = EarthParameterSet()
 
 using MPI, Logging, StaticArrays, LinearAlgebra, Printf, Dates, Test
 
-const output_vtk = false
+const output_vtk = true
 
 """
     main()
@@ -69,7 +69,7 @@ function main()
     # Real test should be run for 33 hour, which is approximate time for the
     # pulse to go around the whole sphere
     # but for CI we only run 1 hour
-    timeend = 60 * 60
+    timeend = 60 * 60 * 33
 
     # Do the output every hour
     outputtime = 60 * 60
@@ -80,7 +80,7 @@ function main()
     expected_result[Float64] = 9.5073559883839516e+13
 
     @testset "acoustic wave" begin
-        for FT in (Float64, Float32)
+        for FT in (Float64, )# Float32)
             result = run(
                 mpicomm,
                 polynomialorder,
@@ -91,7 +91,7 @@ function main()
                 ArrayType,
                 FT,
             )
-            @test result ≈ expected_result[FT]
+            # @test result ≈ expected_result[FT]
         end
     end
 end
@@ -216,23 +216,36 @@ function run(
     advection_solver =
         MRIGARKERK45aSandu(advection_dg, hacoustic_solver, Q; dt = advection_dt)
     # @assert advection_dt > hacoustic_dt
+    function hacoustic_advection_dg(dQ, Q, p, time; increment)
+      advection_dg(dQ, Q, p, time; increment=increment)
+      hacoustic_dg(dQ, Q, p, time; increment=true)
+    end
+    hacoustic_advection_solver =
+        LSRK54CarpenterKennedy(hacoustic_advection_dg, Q; dt = advection_dt)
 
     # The time step for the vertical acoustic model is set to the twice the
     # advection model, and then fixed up to hit exactly the output time 
-    vacoustic_dt = advection_dt
-    vacoustic_dt = 10vmnd / acoustic_speed
+    # vacoustic_dt = advection_dt / 2
+    vacoustic_dt = advection_dt / 2
+    @show vacoustic_dt = vmnd / acoustic_speed
+    vacoustic_dt = 150
+    # fac = 6 # for MRIGARKIRK21aSandu
+    # vacoustic_dt = 100 / fac
+    # vacoustic_dt = 10vmnd / acoustic_speed
 
     nsteps_output = ceil(outputtime / vacoustic_dt)
     vacoustic_dt = outputtime / nsteps_output
-    nsteps = ceil(Int, timeend / vacoustic_dt)
+    @show nsteps = ceil(Int, timeend / vacoustic_dt)
     @assert nsteps * vacoustic_dt ≈ timeend
-    nsteps = 2
+    # nsteps = 200
     @show (vacoustic_dt, advection_dt, hacoustic_dt)
 
+    # vacoustic_solver = MRIGARKIRK21aSandu(
+    # vacoustic_solver = MRIGARKESDIRK23LSAKozdon(
     vacoustic_solver = MRIGARKESDIRK24LSA(
         vacoustic_dg,
         LinearBackwardEulerSolver(ManyColumnLU(); isadjustable = false),
-        advection_solver,
+        hacoustic_advection_solver,
         Q;
         dt = vacoustic_dt,
         t0 = 0,
@@ -270,7 +283,8 @@ function run(
 
     # Set up the information callback
     starttime = Ref(now())
-    cbinfo = EveryXWallTimeSeconds(60, mpicomm) do (s = false)
+    # cbinfo = EveryXWallTimeSeconds(60, mpicomm) do (s = false)
+    cbinfo = EveryXSimulationSteps(nsteps_output) do (s = false)
         if s
             starttime[] = now()
         else
@@ -294,7 +308,7 @@ function run(
         vtkdir =
             "vtk_acousticwave" *
             "_poly$(polynomialorder)_horz$(numelem_horz)_vert$(numelem_vert)" *
-            "_dt$(dt_factor)x_$(ArrayType)_$(FT)"
+            "_$(ArrayType)_$(FT)"
         mkpath(vtkdir)
 
         vtkstep = 0
