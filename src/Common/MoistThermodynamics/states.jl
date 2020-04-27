@@ -86,11 +86,20 @@ function PhaseEquil(
     maxiter::Int = 3,
     tol::FT = FT(1e-1),
     sat_adjust::Function = saturation_adjustment,
+    assert_convergence::Bool = false,
 ) where {FT <: Real}
     # TODO: Remove these safety nets, or at least add warnings
     # waiting on fix: github.com/vchuravy/GPUifyLoops.jl/issues/104
     q_tot_safe = clamp(q_tot, FT(0), FT(1))
-    T = sat_adjust(param_set, e_int, ρ, q_tot_safe, maxiter, tol)
+    sol = sat_adjust(param_set, e_int, ρ, q_tot_safe, maxiter, tol)
+    if !sol.converged
+        @print("maxiter reached in ",sat_adjust,". Please open an issue with gist of these values:\n")
+        @print("    e_int=",e_int, ", ρ=",ρ, ", q_tot=",q_tot, ", maxiter=",maxiter, ", tol=",tol,"\n")
+        if assert_convergence
+            error("Convergence is being strictly enforced with assert_convergence flag")
+        end
+    end
+    T = sol.root
     return PhaseEquil{FT, typeof(param_set)}(param_set, e_int, ρ, q_tot_safe, T)
 end
 
@@ -153,8 +162,9 @@ function LiquidIcePotTempSHumEquil(
     q_tot::FT,
     maxiter::Int = 30,
     tol::FT = FT(1e-1),
+    assert_convergence::Bool=false
 ) where {FT <: Real}
-    T = saturation_adjustment_q_tot_θ_liq_ice(
+    sol = saturation_adjustment_q_tot_θ_liq_ice(
         param_set,
         θ_liq_ice,
         ρ,
@@ -162,6 +172,14 @@ function LiquidIcePotTempSHumEquil(
         maxiter,
         tol,
     )
+    T = sol.root
+    if !sol.converged
+        @print("maxiter reached in saturation_adjustment_q_tot_θ_liq_ice. Please open an issue with gist of these values:\n")
+        @print("    θ_liq_ice=",θ_liq_ice, ", ρ=",ρ, ", q_tot=",q_tot, ", maxiter=",maxiter, ", tol=",tol,"\n")
+        if assert_convergence
+            error("Convergence is being strictly enforced with assert_convergence flag")
+        end
+    end
     q_pt = PhasePartition_equil(param_set, T, ρ, q_tot)
     e_int = internal_energy(param_set, T, q_pt)
     return PhaseEquil{FT, typeof(param_set)}(param_set, e_int, ρ, q_tot, T)
@@ -186,8 +204,9 @@ function LiquidIcePotTempSHumEquil_given_pressure(
     q_tot::FT,
     maxiter::Int = 30,
     tol::FT = FT(1e-1),
+    assert_convergence::Bool=false
 ) where {FT <: Real}
-    T = saturation_adjustment_q_tot_θ_liq_ice_given_pressure(
+    sol = saturation_adjustment_q_tot_θ_liq_ice_given_pressure(
         param_set,
         θ_liq_ice,
         p,
@@ -195,6 +214,14 @@ function LiquidIcePotTempSHumEquil_given_pressure(
         maxiter,
         tol,
     )
+    T = sol.root
+    if !sol.converged
+        @print("maxiter reached in saturation_adjustment_q_tot_θ_liq_ice_given_pressure. Please open an issue with gist of these values:\n")
+        @print("    θ_liq_ice=",θ_liq_ice, ", p=",p, ", q_tot=",q_tot, ", maxiter=",maxiter, ", tol=",tol,"\n")
+        if assert_convergence
+            error("Convergence is being strictly enforced with assert_convergence flag")
+        end
+    end
     ρ = air_density(param_set, T, p, PhasePartition(q_tot))
     q = PhasePartition_equil(param_set, T, ρ, q_tot)
     e_int = internal_energy(param_set, T, q)
@@ -277,8 +304,9 @@ function LiquidIcePotTempSHumNonEquil(
     q_pt::PhasePartition{FT},
     maxiter::Int = 5,
     tol::FT = FT(1e-1),
+    assert_convergence::Bool=false
 ) where {FT <: Real}
-    T = air_temperature_from_liquid_ice_pottemp_non_linear(
+    sol = air_temperature_from_liquid_ice_pottemp_non_linear(
         param_set,
         θ_liq_ice,
         ρ,
@@ -286,6 +314,14 @@ function LiquidIcePotTempSHumNonEquil(
         tol,
         q_pt,
     )
+    T = sol.root
+    if !sol.converged
+        @print("maxiter reached in air_temperature_from_liquid_ice_pottemp_non_linear. Please open an issue with gist of these values:\n")
+        @print("    θ_liq_ice=",θ_liq_ice, ", ρ=",ρ, ", q_pt=",q_pt, ", maxiter=",maxiter, ", tol=",tol,"\n")
+        if assert_convergence
+            error("Convergence is being strictly enforced with assert_convergence flag")
+        end
+    end
     e_int = internal_energy(param_set, T, q_pt)
     return PhaseNonEquil{FT, typeof(param_set)}(param_set, e_int, ρ, q_pt)
 end
@@ -348,7 +384,12 @@ function fixed_lapse_rate_ref_state(
 end
 
 """
-    tested_convergence_range(param_set, n::Int, ::Type{FT})
+    tested_convergence_range(
+        param_set::APS,
+        nz::IT,
+        n_unsaturated::IT,
+        n_saturated::IT,
+        ::Type{FT}) where {FT,IT<:Int}
 
 A range of input arguments to thermodynamic state constructors
  - `param_set` an `AbstractParameterSet`, see the [`MoistThermodynamics`](@ref) for more details
@@ -358,18 +399,25 @@ A range of input arguments to thermodynamic state constructors
  - `q_pt` phase partition
  - `T` air temperature
  - `θ_liq_ice` liquid-ice potential temperature
+
+ - `nz` number of points along `z` to use
+ - `n_unsaturated` number of points to use in unsaturated zone
+ - `n_saturated` number of points to use in saturated zone
 that are tested for convergence in saturation adjustment.
 
-Note that the output vectors are of size ``n*n_RH``, and they
+Note that the output vectors are of size ``nz*n_RH``, and they
 should span the input arguments to all of the constructors.
 """
-function tested_convergence_range(param_set::APS, n::Int, ::Type{FT}) where {FT}
-    n_RS1 = 10
-    n_RS2 = 20
-    n_RS = n_RS1 + n_RS2
-    z_range = range(FT(0), stop = FT(2.5e4), length = n)
-    relative_sat1 = range(FT(0), stop = FT(1), length = n_RS1)
-    relative_sat2 = range(FT(1), stop = FT(1.02), length = n_RS2)
+function tested_convergence_range(
+    param_set::APS,
+    nz::IT,
+    n_unsaturated::IT,
+    n_saturated::IT,
+    ::Type{FT}) where {FT,IT<:Int}
+    n_RS = n_unsaturated + n_saturated
+    z_range = range(FT(0), stop = FT(2.5e4), length = nz)
+    relative_sat1 = range(FT(0), stop = FT(1), length = n_unsaturated)
+    relative_sat2 = range(FT(1), stop = FT(1.02), length = n_saturated)
     relative_sat = [relative_sat1..., relative_sat2...]
     T_min = FT(150)
     T_surface = FT(350)
@@ -386,7 +434,7 @@ function tested_convergence_range(param_set::APS, n::Int, ::Type{FT}) where {FT}
     p = collect(Iterators.flatten([p for RS in 1:n_RS]))
     ρ = collect(Iterators.flatten([ρ for RS in 1:n_RS]))
     T = collect(Iterators.flatten([T for RS in 1:n_RS]))
-    relative_sat = collect(Iterators.flatten([relative_sat for RS in 1:n]))
+    relative_sat = collect(Iterators.flatten([relative_sat for RS in 1:nz]))
 
     # Additional variables
     q_sat = q_vap_saturation.(Ref(param_set), T, ρ)

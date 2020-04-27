@@ -27,7 +27,14 @@ module MoistThermodynamics
 
 using DocStringExtensions
 
-using RootSolvers
+using KernelAbstractions: @print
+
+using RootSolvers: SolutionType,
+                   CompactSolution,
+                   find_zero,
+                   SolutionResults,
+                   NewtonsMethod,
+                   SecantMethod
 
 # Atmospheric equation of state
 export air_pressure,
@@ -959,7 +966,7 @@ end
 """
     saturation_adjustment(param_set, e_int, ρ, q_tot)
 
-Compute the temperature that is consistent with
+Compute the temperature `T`, stored in `sol.root`, that is consistent with
 
  - `param_set` an `AbstractParameterSet`, see the [`MoistThermodynamics`](@ref) for more details
  - `e_int` internal energy
@@ -967,6 +974,9 @@ Compute the temperature that is consistent with
  - `q_tot` total specific humidity
  - `tol` tolerance for non-linear equation solve
  - `maxiter` maximum iterations for non-linear equation solve
+ - `solution_type` `RootSolvers` solution type to return:
+    `CompactSolution` GPU-friendly
+    `VerboseSolution` GPU-incompatible
 
 by finding the root of
 
@@ -983,6 +993,7 @@ function saturation_adjustment(
     q_tot::FT,
     maxiter::Int,
     tol::FT,
+    solution_type::SolutionType=CompactSolution(),
 ) where {FT <: Real}
     _T_min::FT = T_min(param_set)
 
@@ -990,21 +1001,25 @@ function saturation_adjustment(
     q_v_sat = q_vap_saturation(param_set, T_1, ρ)
     unsaturated = q_tot <= q_v_sat
     if unsaturated && T_1 > _T_min
-        return T_1
+        return SolutionResults(solution_type, T_1, true, FT(0), 0, FT[], FT[])
     else
-        sol = find_zero(
-            T -> internal_energy_sat(param_set, T, ρ, q_tot) - e_int,
-            T_ -> ∂e_int_∂T(param_set, T_, e_int, ρ, q_tot),
-            T_1,
-            NewtonsMethod(),
-            CompactSolution(),
-            tol,
-            maxiter,
-        )
-        if !sol.converged
-            error("saturation_adjustment did not converge")
+        _T_freeze::FT = T_freeze(param_set)
+        e_int_upper = internal_energy_sat(param_set, _T_freeze+sqrt(eps(FT)), ρ, q_tot)
+        e_int_lower = internal_energy_sat(param_set, _T_freeze-sqrt(eps(FT)), ρ, q_tot)
+        if e_int_lower < e_int < e_int_upper
+            return SolutionResults(solution_type, _T_freeze, true, FT(0), 0, FT[], FT[])
+        else
+            sol = find_zero(
+                T -> internal_energy_sat(param_set, T, ρ, q_tot) - e_int,
+                T_ -> ∂e_int_∂T(param_set, T_, e_int, ρ, q_tot),
+                T_1,
+                NewtonsMethod(),
+                solution_type,
+                tol,
+                maxiter,
+            )
+            return sol
         end
-        return sol.root
     end
 end
 
@@ -1036,7 +1051,7 @@ end
 """
     saturation_adjustment_SecantMethod(param_set, e_int, ρ, q_tot)
 
-Compute the temperature `T` that is consistent with
+Compute the temperature `T`, stored in `sol.root`, that is consistent with
 
  - `param_set` an `AbstractParameterSet`, see the [`MoistThermodynamics`](@ref) for more details
  - `e_int` internal energy
@@ -1044,6 +1059,9 @@ Compute the temperature `T` that is consistent with
  - `q_tot` total specific humidity
  - `tol` tolerance for non-linear equation solve
  - `maxiter` maximum iterations for non-linear equation solve
+ - `solution_type` `RootSolvers` solution type to return:
+    `CompactSolution` GPU-friendly
+    `VerboseSolution` GPU-incompatible
 
 by finding the root of
 
@@ -1058,41 +1076,46 @@ function saturation_adjustment_SecantMethod(
     q_tot::FT,
     maxiter::Int,
     tol::FT,
+    solution_type::SolutionType=CompactSolution(),
 ) where {FT <: Real}
     _T_min::FT = T_min(param_set)
     T_1 = max(_T_min, air_temperature(param_set, e_int, PhasePartition(q_tot))) # Assume all vapor
     q_v_sat = q_vap_saturation(param_set, T_1, ρ)
     unsaturated = q_tot <= q_v_sat
     if unsaturated && T_1 > _T_min
-        return T_1
+        return SolutionResults(solution_type, T_1, true, FT(0), 0, FT[], FT[])
     else
         # FIXME here: need to revisit bounds for saturation adjustment to guarantee bracketing of zero.
-        T_2 = air_temperature(
-            param_set,
-            e_int,
-            PhasePartition(q_tot, FT(0), q_tot),
-        ) # Assume all ice
-        T_2 = bound_upper_temperature(T_1, T_2)
-        sol = find_zero(
-            T -> internal_energy_sat(param_set, T, ρ, q_tot) - e_int,
-            T_1,
-            T_2,
-            SecantMethod(),
-            CompactSolution(),
-            tol,
-            maxiter,
-        )
-        if !sol.converged
-            error("saturation_adjustment_SecantMethod did not converge")
+        _T_freeze::FT = T_freeze(param_set)
+        e_int_upper = internal_energy_sat(param_set, _T_freeze+sqrt(eps(FT)), ρ, q_tot)
+        e_int_lower = internal_energy_sat(param_set, _T_freeze-sqrt(eps(FT)), ρ, q_tot)
+        if e_int_lower < e_int < e_int_upper
+            return SolutionResults(solution_type, _T_freeze, true, FT(0), 0, FT[], FT[])
+        else
+            T_2 = air_temperature(
+                param_set,
+                e_int,
+                PhasePartition(q_tot, FT(0), q_tot),
+            ) # Assume all ice
+            T_2 = bound_upper_temperature(T_1, T_2)
+            sol = find_zero(
+                T -> internal_energy_sat(param_set, T, ρ, q_tot) - e_int,
+                T_1,
+                T_2,
+                SecantMethod(),
+                solution_type,
+                tol,
+                maxiter,
+            )
+            return sol
         end
-        return sol.root
     end
 end
 
 """
     saturation_adjustment_q_tot_θ_liq_ice(param_set, θ_liq_ice, ρ, q_tot)
 
-Compute the temperature `T` that is consistent with
+Compute the temperature `T`, stored in `sol.root`, that is consistent with
 
  - `param_set` an `AbstractParameterSet`, see the [`MoistThermodynamics`](@ref) for more details
  - `θ_liq_ice` liquid-ice potential temperature
@@ -1100,6 +1123,9 @@ Compute the temperature `T` that is consistent with
  - `ρ` (moist-)air density
  - `tol` tolerance for non-linear equation solve
  - `maxiter` maximum iterations for non-linear equation solve
+ - `solution_type` `RootSolvers` solution type to return:
+    `CompactSolution` GPU-friendly
+    `VerboseSolution` GPU-incompatible
 
 by finding the root of
 
@@ -1116,6 +1142,7 @@ function saturation_adjustment_q_tot_θ_liq_ice(
     q_tot::FT,
     maxiter::Int,
     tol::FT,
+    solution_type::SolutionType=CompactSolution(),
 ) where {FT <: Real}
     _T_min::FT = T_min(param_set)
     T_1 = max(
@@ -1130,7 +1157,7 @@ function saturation_adjustment_q_tot_θ_liq_ice(
     q_v_sat = q_vap_saturation(param_set, T_1, ρ)
     unsaturated = q_tot <= q_v_sat
     if unsaturated && T_1 > _T_min
-        return T_1
+        return SolutionResults(solution_type, T_1, true, FT(0), 0, FT[], FT[])
     else
         T_2 = air_temperature_from_liquid_ice_pottemp(
             param_set,
@@ -1144,21 +1171,18 @@ function saturation_adjustment_q_tot_θ_liq_ice(
             T_1,
             T_2,
             SecantMethod(),
-            CompactSolution(),
+            solution_type,
             tol,
             maxiter,
         )
-        if !sol.converged
-            error("saturation_adjustment_q_tot_θ_liq_ice did not converge")
-        end
-        return sol.root
+        return sol
     end
 end
 
 """
     saturation_adjustment_q_tot_θ_liq_ice_given_pressure(param_set, θ_liq_ice, p, q_tot)
 
-Compute the temperature `T` that is consistent with
+Compute the temperature `T`, stored in `sol.root`, that is consistent with
 
  - `param_set` an `AbstractParameterSet`, see the [`MoistThermodynamics`](@ref) for more details
  - `θ_liq_ice` liquid-ice potential temperature
@@ -1166,6 +1190,9 @@ Compute the temperature `T` that is consistent with
  - `p` pressure
  - `tol` tolerance for non-linear equation solve
  - `maxiter` maximum iterations for non-linear equation solve
+ - `solution_type` `RootSolvers` solution type to return:
+    `CompactSolution` GPU-friendly
+    `VerboseSolution` GPU-incompatible
 
 by finding the root of
 
@@ -1182,6 +1209,7 @@ function saturation_adjustment_q_tot_θ_liq_ice_given_pressure(
     q_tot::FT,
     maxiter::Int,
     tol::FT,
+    solution_type::SolutionType=CompactSolution(),
 ) where {FT <: Real}
     _T_min::FT = T_min(param_set)
     T_1 = air_temperature_from_liquid_ice_pottemp_given_pressure(
@@ -1194,7 +1222,7 @@ function saturation_adjustment_q_tot_θ_liq_ice_given_pressure(
     q_v_sat = q_vap_saturation(param_set, T_1, ρ)
     unsaturated = q_tot <= q_v_sat
     if unsaturated && T_1 > _T_min
-        return T_1
+        return SolutionResults(solution_type, T_1, true, FT(0), 0, FT[], FT[])
     else
         T_2 = air_temperature_from_liquid_ice_pottemp(
             param_set,
@@ -1214,14 +1242,11 @@ function saturation_adjustment_q_tot_θ_liq_ice_given_pressure(
             T_1,
             T_2,
             SecantMethod(),
-            CompactSolution(),
+            solution_type,
             tol,
             maxiter,
         )
-        if !sol.converged
-            error("saturation_adjustment_q_tot_θ_liq_ice_given_pressure did not converge")
-        end
-        return sol.root
+        return sol
     end
 end
 
@@ -1386,7 +1411,7 @@ end
 """
     air_temperature_from_liquid_ice_pottemp_non_linear(param_set, θ_liq_ice, ρ, q::PhasePartition)
 
-Computes temperature `T` given
+Computes temperature `T`, stored in `sol.root`, given
 
  - `param_set` an `AbstractParameterSet`, see the [`MoistThermodynamics`](@ref) for more details
  - `θ_liq_ice` liquid-ice potential temperature
@@ -1395,6 +1420,9 @@ Computes temperature `T` given
  - `maxiter` maximum iterations for non-linear equation solve
 and, optionally,
  - `q` [`PhasePartition`](@ref). Without this argument, the results are for dry air,
+ - `solution_type` `RootSolvers` solution type to return:
+    `CompactSolution` GPU-friendly
+    `VerboseSolution` GPU-incompatible
 
 by finding the root of
 ``
@@ -1408,6 +1436,7 @@ function air_temperature_from_liquid_ice_pottemp_non_linear(
     maxiter::Int,
     tol::FT,
     q::PhasePartition{FT} = q_pt_0(FT),
+    solution_type::SolutionType=CompactSolution(),
 ) where {FT <: Real}
     _T_min::FT = T_min(param_set)
     _T_max::FT = T_max(param_set)
@@ -1422,14 +1451,11 @@ function air_temperature_from_liquid_ice_pottemp_non_linear(
         _T_min,
         _T_max,
         SecantMethod(),
-        CompactSolution(),
+        solution_type,
         tol,
         maxiter,
     )
-    if !sol.converged
-        error("air_temperature_from_liquid_ice_pottemp_non_linear did not converge")
-    end
-    return sol.root
+    return sol
 end
 
 """
