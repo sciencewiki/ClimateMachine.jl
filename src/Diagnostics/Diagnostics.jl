@@ -209,7 +209,7 @@ will be written to files prefixed by `out_prefix` using `writer`.
 TODO: this will be refactored soon.
 """
 function setup_atmos_default_GCM_diagnostics(
-    interval::Int,
+    interval::String,
     out_prefix::String;
     writer = NetCDFWriter(),
     interpol = nothing,
