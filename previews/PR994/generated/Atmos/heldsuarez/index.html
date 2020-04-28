@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Dry Idealized GCM · CLIMA</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../"><img src="../../../assets/logo.svg" alt="CLIMA logo"/></a><div class="docs-package-name"><span class="docs-autofit">CLIMA</span></div><form class="docs-search" action="../../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><a class="tocitem" href="../../../Installation/">Installation</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox" checked/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Atmos</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Dry Idealized GCM</a><ul class="internal"><li><a class="tocitem" href="#Set-initial-condition.-1"><span>Set initial condition.</span></a></li><li><a class="tocitem" href="#Initialize-CLIMA-1"><span>Initialize CLIMA</span></a></li><li><a class="tocitem" href="#Setting-the-floating-type-precision-1"><span>Setting the floating-type precision</span></a></li><li><a class="tocitem" href="#Setup-model-configuration-1"><span>Setup model configuration</span></a></li><li><a class="tocitem" href="#Set-up-a-reference-state-1"><span>Set up a reference state</span></a></li><li><a class="tocitem" href="#Set-up-a-Rayleigh-sponge-layer-1"><span>Set up a Rayleigh sponge layer</span></a></li><li><a class="tocitem" href="#Set-up-subgrid-scale-turbulence-models-1"><span>Set up subgrid-scale turbulence models</span></a></li><li><a class="tocitem" href="#Instantiate-the-model-using-the-Held-Suarez-setup-1"><span>Instantiate the model using the Held Suarez setup</span></a></li><li><a class="tocitem" href="#Set-up-the-driver-and-solver-configurations-1"><span>Set up the driver &amp; solver configurations</span></a></li><li><a class="tocitem" href="#Set-up-spectral-exponential-filter-1"><span>Set up spectral exponential filter</span></a></li><li><a class="tocitem" href="#Setup-diagnostic-output-1"><span>Setup diagnostic output</span></a></li><li><a class="tocitem" href="#Run-the-model-1"><span>Run the model</span></a></li><li><a class="tocitem" href="#References-1"><span>References</span></a></li></ul></li></ul></li><li><span class="tocitem">Ocean</span></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Numerics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-3-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-3-1"><span class="docs-label">LinearSolvers</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Numerics/LinearSolvers/cg/">Conjugate Gradient</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-3-2"><span class="docs-label">Contributing</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../literate_markdown/">Notes on Literate</a></li></ul></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Extending CLIMA</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Contributing/CONTRIBUTING/">Home</a></li><li><span class="tocitem">Arrays</span></li><li><input class="collapse-toggle" id="menuitem-4-3" type="checkbox"/><label class="tocitem" for="menuitem-4-3"><span class="docs-label">Common</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Common/SurfaceFluxes/">SurfaceFluxes</a></li><li><a class="tocitem" href="../../../ExtendingCLIMA/Common/MoistThermodynamics/">MoistThermodynamics</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-4" type="checkbox"/><label class="tocitem" for="menuitem-4-4"><span class="docs-label">Atmos</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Atmos/AtmosModel/">AtmosModel</a></li><li><a class="tocitem" href="../../../ExtendingCLIMA/Atmos/Microphysics/">Microphysics</a></li><li><a class="tocitem" href="../../../ExtendingCLIMA/Atmos/Model/turbulence/">Turbulence</a></li><li><a class="tocitem" href="../../../ExtendingCLIMA/Atmos/Model/tracers/">Tracers</a></li></ul></li><li><span class="tocitem">Ocean</span></li><li><span class="tocitem">Land</span></li><li><input class="collapse-toggle" id="menuitem-4-7" type="checkbox"/><label class="tocitem" for="menuitem-4-7"><span class="docs-label">Diagnostics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Diagnostics/DiagnosticVariables/">Variables</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-8" type="checkbox"/><label class="tocitem" for="menuitem-4-8"><span class="docs-label">Numerics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><span class="tocitem">Meshes</span></li><li><input class="collapse-toggle" id="menuitem-4-8-2" type="checkbox"/><label class="tocitem" for="menuitem-4-8-2"><span class="docs-label">DG methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Numerics/DGmethods/how_to_make_a_balance_law/">How to make a balance law</a></li></ul></li><li><span class="tocitem">ODE Solvers</span></li><li><input class="collapse-toggle" id="menuitem-4-8-4" type="checkbox"/><label class="tocitem" for="menuitem-4-8-4"><span class="docs-label">Linear Solvers</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Numerics/LinearSolvers/IterativeSolvers/">Iterative Solvers</a></li></ul></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">APIs</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/">Home</a></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Atmos</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/Atmos/AtmosModel/">AtmosModel</a></li><li><a class="tocitem" href="../../../APIs/Atmos/Microphysics/">Microphysics</a></li></ul></li><li><span class="tocitem">Ocean</span></li><li><span class="tocitem">Land</span></li><li><input class="collapse-toggle" id="menuitem-5-5" type="checkbox"/><label class="tocitem" for="menuitem-5-5"><span class="docs-label">Common</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/Common/SurfaceFluxes/">Surface Fluxes</a></li></ul></li><li><a class="tocitem" href="../../../APIs/Arrays/Arrays/">Arrays</a></li><li><input class="collapse-toggle" id="menuitem-5-7" type="checkbox"/><label class="tocitem" for="menuitem-5-7"><span class="docs-label">Diagnostics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/Diagnostics/Diagnostics/">List of variables</a></li><li><a class="tocitem" href="../../../APIs/Diagnostics/InputOutput/">Input/Output</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-8" type="checkbox"/><label class="tocitem" for="menuitem-5-8"><span class="docs-label">Numerics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/Numerics/Meshes/Mesh/">Meshes</a></li><li><a class="tocitem" href="../../../APIs/Numerics/LinearSolvers/LinearSolvers/">LinearSolvers</a></li><li><a class="tocitem" href="../../../APIs/Numerics/ODESolvers/ODESolvers/">ODESolvers</a></li><li><a class="tocitem" href="../../../APIs/Numerics/DGmethods/DGmethods_old/">DG methods (old)</a></li><li><a class="tocitem" href="../../../APIs/Numerics/DGmethods/BalanceLawOverview/">Balance Law</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Theory &amp; design philosophy</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../Discussions/">Home</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Atmos</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../Discussions/Atmos/EDMFEquations/">Eddy-Diffusivity Mass-Flux (EDMF) equations</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Developer docs</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../CodingConventions/">Coding Conventions</a></li><li><a class="tocitem" href="../../../AcceptableUnicode/">Acceptable Unicode characters</a></li><li><a class="tocitem" href="../../../VariableList/">CliMA Variable List</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li><a class="is-disabled">Atmos</a></li><li class="is-active"><a href>Dry Idealized GCM</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Dry Idealized GCM</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/climate-machine/CLIMA/blob/master/tutorials/Atmos/heldsuarez.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Dry-atmosphere-GCM-with-Held-Suarez-forcing-1"><a class="docs-heading-anchor" href="#Dry-atmosphere-GCM-with-Held-Suarez-forcing-1">Dry atmosphere GCM with Held-Suarez forcing</a><a class="docs-heading-anchor-permalink" href="#Dry-atmosphere-GCM-with-Held-Suarez-forcing-1" title="Permalink"></a></h1><p>The Held-Suarez setup (Held and Suarez, 1994) is a textbook example for a simplified atmospheric global circulation model configuration which has been used as a benchmark experiment for development of the dynamical cores (i.e., GCMs without continents, moisture or parametrization schemes of the physics) for atmospheric models. It is forced by a thermal relaxation to a reference state and damped by linear (Rayleigh) friction. This example demonstrates how</p><ul><li>to set up a CLIMA-Atmos GCM configuration;</li><li>to select and save GCM diagnostics output.</li></ul><p>To begin, we load CLIMA and a few miscellaneous useful Julia packages.</p><pre><code class="language-julia">using Distributions
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Dry Idealized GCM · CLIMA</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../../"><img src="../../../assets/logo.svg" alt="CLIMA logo"/></a><div class="docs-package-name"><span class="docs-autofit">CLIMA</span></div><form class="docs-search" action="../../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><a class="tocitem" href="../../../Installation/">Installation</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox" checked/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Atmos</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Dry Idealized GCM</a><ul class="internal"><li><a class="tocitem" href="#Set-initial-condition.-1"><span>Set initial condition.</span></a></li><li><a class="tocitem" href="#Initialize-CLIMA-1"><span>Initialize CLIMA</span></a></li><li><a class="tocitem" href="#Setting-the-floating-type-precision-1"><span>Setting the floating-type precision</span></a></li><li><a class="tocitem" href="#Setup-model-configuration-1"><span>Setup model configuration</span></a></li><li><a class="tocitem" href="#Set-up-a-reference-state-1"><span>Set up a reference state</span></a></li><li><a class="tocitem" href="#Set-up-a-Rayleigh-sponge-layer-1"><span>Set up a Rayleigh sponge layer</span></a></li><li><a class="tocitem" href="#Set-up-subgrid-scale-turbulence-models-1"><span>Set up subgrid-scale turbulence models</span></a></li><li><a class="tocitem" href="#Instantiate-the-model-using-the-Held-Suarez-setup-1"><span>Instantiate the model using the Held Suarez setup</span></a></li><li><a class="tocitem" href="#Set-up-the-driver-and-solver-configurations-1"><span>Set up the driver &amp; solver configurations</span></a></li><li><a class="tocitem" href="#Set-up-spectral-exponential-filter-1"><span>Set up spectral exponential filter</span></a></li><li><a class="tocitem" href="#Setup-diagnostic-output-1"><span>Setup diagnostic output</span></a></li><li><a class="tocitem" href="#Run-the-model-1"><span>Run the model</span></a></li><li><a class="tocitem" href="#References-1"><span>References</span></a></li></ul></li></ul></li><li><span class="tocitem">Ocean</span></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Numerics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-3-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-3-1"><span class="docs-label">LinearSolvers</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Numerics/LinearSolvers/cg/">Conjugate Gradient</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-3-2"><span class="docs-label">Contributing</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../literate_markdown/">Notes on Literate</a></li></ul></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Extending CLIMA</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Contributing/CONTRIBUTING/">Home</a></li><li><span class="tocitem">Arrays</span></li><li><input class="collapse-toggle" id="menuitem-4-3" type="checkbox"/><label class="tocitem" for="menuitem-4-3"><span class="docs-label">Common</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Common/SurfaceFluxes/">SurfaceFluxes</a></li><li><a class="tocitem" href="../../../ExtendingCLIMA/Common/MoistThermodynamics/">MoistThermodynamics</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-4" type="checkbox"/><label class="tocitem" for="menuitem-4-4"><span class="docs-label">Atmos</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Atmos/AtmosModel/">AtmosModel</a></li><li><a class="tocitem" href="../../../ExtendingCLIMA/Atmos/Microphysics/">Microphysics</a></li><li><a class="tocitem" href="../../../ExtendingCLIMA/Atmos/Model/turbulence/">Turbulence</a></li><li><a class="tocitem" href="../../../ExtendingCLIMA/Atmos/Model/tracers/">Tracers</a></li></ul></li><li><span class="tocitem">Ocean</span></li><li><span class="tocitem">Land</span></li><li><input class="collapse-toggle" id="menuitem-4-7" type="checkbox"/><label class="tocitem" for="menuitem-4-7"><span class="docs-label">Diagnostics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Diagnostics/DiagnosticVariables/">Variables</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-8" type="checkbox"/><label class="tocitem" for="menuitem-4-8"><span class="docs-label">Numerics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><span class="tocitem">Meshes</span></li><li><input class="collapse-toggle" id="menuitem-4-8-2" type="checkbox"/><label class="tocitem" for="menuitem-4-8-2"><span class="docs-label">DG methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Numerics/DGmethods/how_to_make_a_balance_law/">How to make a balance law</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-8-3" type="checkbox"/><label class="tocitem" for="menuitem-4-8-3"><span class="docs-label">ODE Solvers</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Numerics/ODESolvers/Timestepping/">Time-integration</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-8-4" type="checkbox"/><label class="tocitem" for="menuitem-4-8-4"><span class="docs-label">Linear Solvers</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../ExtendingCLIMA/Numerics/LinearSolvers/IterativeSolvers/">Iterative Solvers</a></li></ul></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">APIs</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/">Home</a></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Atmos</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/Atmos/AtmosModel/">AtmosModel</a></li><li><a class="tocitem" href="../../../APIs/Atmos/Microphysics/">Microphysics</a></li></ul></li><li><span class="tocitem">Ocean</span></li><li><span class="tocitem">Land</span></li><li><input class="collapse-toggle" id="menuitem-5-5" type="checkbox"/><label class="tocitem" for="menuitem-5-5"><span class="docs-label">Common</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/Common/SurfaceFluxes/">Surface Fluxes</a></li></ul></li><li><a class="tocitem" href="../../../APIs/Arrays/Arrays/">Arrays</a></li><li><input class="collapse-toggle" id="menuitem-5-7" type="checkbox"/><label class="tocitem" for="menuitem-5-7"><span class="docs-label">Diagnostics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/Diagnostics/Diagnostics/">List of variables</a></li><li><a class="tocitem" href="../../../APIs/Diagnostics/InputOutput/">Input/Output</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-8" type="checkbox"/><label class="tocitem" for="menuitem-5-8"><span class="docs-label">Numerics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../APIs/Numerics/Meshes/Mesh/">Meshes</a></li><li><a class="tocitem" href="../../../APIs/Numerics/LinearSolvers/LinearSolvers/">LinearSolvers</a></li><li><a class="tocitem" href="../../../APIs/Numerics/ODESolvers/ODESolvers/">ODESolvers</a></li><li><a class="tocitem" href="../../../APIs/Numerics/DGmethods/DGmethods_old/">DG methods (old)</a></li><li><a class="tocitem" href="../../../APIs/Numerics/DGmethods/BalanceLawOverview/">Balance Law</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Theory &amp; design philosophy</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../Discussions/">Home</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Atmos</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../Discussions/Atmos/EDMFEquations/">Eddy-Diffusivity Mass-Flux (EDMF) equations</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Developer docs</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../CodingConventions/">Coding Conventions</a></li><li><a class="tocitem" href="../../../AcceptableUnicode/">Acceptable Unicode characters</a></li><li><a class="tocitem" href="../../../VariableList/">CliMA Variable List</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li><a class="is-disabled">Atmos</a></li><li class="is-active"><a href>Dry Idealized GCM</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Dry Idealized GCM</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/climate-machine/CLIMA/blob/master/tutorials/Atmos/heldsuarez.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Dry-atmosphere-GCM-with-Held-Suarez-forcing-1"><a class="docs-heading-anchor" href="#Dry-atmosphere-GCM-with-Held-Suarez-forcing-1">Dry atmosphere GCM with Held-Suarez forcing</a><a class="docs-heading-anchor-permalink" href="#Dry-atmosphere-GCM-with-Held-Suarez-forcing-1" title="Permalink"></a></h1><p>The Held-Suarez setup (Held and Suarez, 1994) is a textbook example for a simplified atmospheric global circulation model configuration which has been used as a benchmark experiment for development of the dynamical cores (i.e., GCMs without continents, moisture or parametrization schemes of the physics) for atmospheric models. It is forced by a thermal relaxation to a reference state and damped by linear (Rayleigh) friction. This example demonstrates how</p><ul><li>to set up a CLIMA-Atmos GCM configuration;</li><li>to select and save GCM diagnostics output.</li></ul><p>To begin, we load CLIMA and a few miscellaneous useful Julia packages.</p><pre><code class="language-julia">using Distributions
 using Random
 using StaticArrays</code></pre><p>CLIMA specific modules needed to make this example work (e.g., we will need spectral filters, etc.).</p><pre><code class="language-julia">using CLIMA
 using CLIMA.Atmos
@@ -9,9 +9,9 @@ using CLIMA.GenericCallbacks
 using CLIMA.Mesh.Grids
 using CLIMA.Mesh.Filters
 using CLIMA.MoistThermodynamics
-using CLIMA.VariableTemplates</code></pre><p><a href="https://climate-machine.github.io/CLIMAParameters.jl/latest/">CLIMA parameters</a> are needed to have access to Earth&#39;s physical parameters</p><pre><code class="language-julia">using CLIMAParameters
+using CLIMA.VariableTemplates</code></pre><p><a href="https://github.com/climate-machine/CLIMAParameters.jl">CLIMA parameters</a> are needed to have access to Earth&#39;s physical parameters</p><pre><code class="language-julia">using CLIMAParameters
 using CLIMAParameters.Planet: R_d, day, grav, cp_d, cv_d, planet_radius</code></pre><p>We need to load the physical parameters for Earth to have an Earth-like simulation :).</p><pre><code class="language-julia">struct EarthParameterSet &lt;: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()</code></pre><pre><code class="language-none">Main.ex-heldsuarez.EarthParameterSet()</code></pre><p>Construct the Held-Suarez forcing function We can view this as part the right-hand-side of our governing equations. It forces the total energy field in a way that the resulting steady-state velocity and temperature fields of the simluation resemble those of an idealized dry planet.</p><pre><code class="language-julia">function held_suarez_forcing!(
+const param_set = EarthParameterSet()</code></pre><p>Construct the Held-Suarez forcing function We can view this as part the right-hand-side of our governing equations. It forces the total energy field in a way that the resulting steady-state velocity and temperature fields of the simluation resemble those of an idealized dry planet.</p><pre><code class="language-julia">function held_suarez_forcing!(
     balance_law,
     source,
     state,
@@ -23,7 +23,7 @@ const param_set = EarthParameterSet()</code></pre><pre><code class="language-non
     FT = eltype(state)
 
     # Parameters
-    T_ref::FT = 255        # reference temperature for Held-Suarez forcing (K)
+    T_ref::FT = 255 # reference temperature for Held-Suarez forcing (K)
 
     # Extract the state
     ρ = state.ρ
@@ -74,26 +74,29 @@ const param_set = EarthParameterSet()</code></pre><pre><code class="language-non
     source.ρu -= k_v * projection_tangential(balance_law, aux, ρu)
     source.ρe -= k_T * ρ * _cv_d * (T - T_equil)
     return nothing
-end</code></pre><pre><code class="language-none">held_suarez_forcing! (generic function with 1 method)</code></pre><h2 id="Set-initial-condition.-1"><a class="docs-heading-anchor" href="#Set-initial-condition.-1">Set initial condition.</a><a class="docs-heading-anchor-permalink" href="#Set-initial-condition.-1" title="Permalink"></a></h2><p>When using CLIMA, we need to define a function that sets the intial state of our model run. In our case, we use the reference state of the simulation (defined below) and add a little bit of noise. Note that the initial states includes a zero initial velocity field.</p><pre><code class="language-">function init_heldsuarez!(balance_law, state, aux, coordinates, time)
-    FT = eltype(state)</code></pre><p>Set initial state to reference state with random perturbation</p><pre><code class="language-">    rnd = FT(1.0 + rand(Uniform(-1e-3, 1e-3)))
+end</code></pre><h2 id="Set-initial-condition.-1"><a class="docs-heading-anchor" href="#Set-initial-condition.-1">Set initial condition.</a><a class="docs-heading-anchor-permalink" href="#Set-initial-condition.-1" title="Permalink"></a></h2><p>When using CLIMA, we need to define a function that sets the intial state of our model run. In our case, we use the reference state of the simulation (defined below) and add a little bit of noise. Note that the initial states includes a zero initial velocity field.</p><pre><code class="language-julia">function init_heldsuarez!(balance_law, state, aux, coordinates, time)
+    FT = eltype(state)
+
+    # Set initial state to reference state with random perturbation
+    rnd = FT(1.0 + rand(Uniform(-1e-3, 1e-3)))
     state.ρ = aux.ref_state.ρ
     state.ρu = SVector{3, FT}(0, 0, 0)
     state.ρe = rnd * aux.ref_state.ρe
 
     nothing
-end</code></pre><h2 id="Initialize-CLIMA-1"><a class="docs-heading-anchor" href="#Initialize-CLIMA-1">Initialize CLIMA</a><a class="docs-heading-anchor-permalink" href="#Initialize-CLIMA-1" title="Permalink"></a></h2><p>Before we do anything further, we need to initialize CLIMA. Among other things, this will initialize the MPI for us.</p><pre><code class="language-julia">CLIMA.init()</code></pre><pre><code class="language-none">Dict{String,Any} with 0 entries</code></pre><h2 id="Setting-the-floating-type-precision-1"><a class="docs-heading-anchor" href="#Setting-the-floating-type-precision-1">Setting the floating-type precision</a><a class="docs-heading-anchor-permalink" href="#Setting-the-floating-type-precision-1" title="Permalink"></a></h2><p>CLIMA allows us to run a model with different floating-type precisions, with lower precision we get our results faster, and with higher precision, we may get more accurate results, depending on the questions we are after.</p><pre><code class="language-julia">FT = Float32</code></pre><pre><code class="language-none">Float32</code></pre><h2 id="Setup-model-configuration-1"><a class="docs-heading-anchor" href="#Setup-model-configuration-1">Setup model configuration</a><a class="docs-heading-anchor-permalink" href="#Setup-model-configuration-1" title="Permalink"></a></h2><p>Now that we have definied our forcing and initialization functions, and have initialized CLIMA, we can set up the model.</p><h2 id="Set-up-a-reference-state-1"><a class="docs-heading-anchor" href="#Set-up-a-reference-state-1">Set up a reference state</a><a class="docs-heading-anchor-permalink" href="#Set-up-a-reference-state-1" title="Permalink"></a></h2><p>We start by setting up a reference state. This is simply a vector field that we subtract from the solutions to the governing equations to both improve numerical stability of the implicit time stepper and enable faster model spin-up. The reference state assumes hydrostatic balance and ideal gas law, with a pressure <span>$p_r(z)$</span> and density <span>$\rho_r(z)$</span> that only depend on altitude <span>$z$</span> and are in hydrostatic balance with each other. In this example, the reference temperature field smoothly transitions from a linearly decaying profile near the surface to a constant temperature profile at the top of the domain.</p><pre><code class="language-julia">T_surface = FT(290) ## surface temperature (K)
+end</code></pre><h2 id="Initialize-CLIMA-1"><a class="docs-heading-anchor" href="#Initialize-CLIMA-1">Initialize CLIMA</a><a class="docs-heading-anchor-permalink" href="#Initialize-CLIMA-1" title="Permalink"></a></h2><p>Before we do anything further, we need to initialize CLIMA. Among other things, this will initialize the MPI for us.</p><pre><code class="language-julia">CLIMA.init()</code></pre><h2 id="Setting-the-floating-type-precision-1"><a class="docs-heading-anchor" href="#Setting-the-floating-type-precision-1">Setting the floating-type precision</a><a class="docs-heading-anchor-permalink" href="#Setting-the-floating-type-precision-1" title="Permalink"></a></h2><p>CLIMA allows us to run a model with different floating-type precisions, with lower precision we get our results faster, and with higher precision, we may get more accurate results, depending on the questions we are after.</p><pre><code class="language-julia">FT = Float32</code></pre><h2 id="Setup-model-configuration-1"><a class="docs-heading-anchor" href="#Setup-model-configuration-1">Setup model configuration</a><a class="docs-heading-anchor-permalink" href="#Setup-model-configuration-1" title="Permalink"></a></h2><p>Now that we have definied our forcing and initialization functions, and have initialized CLIMA, we can set up the model.</p><h2 id="Set-up-a-reference-state-1"><a class="docs-heading-anchor" href="#Set-up-a-reference-state-1">Set up a reference state</a><a class="docs-heading-anchor-permalink" href="#Set-up-a-reference-state-1" title="Permalink"></a></h2><p>We start by setting up a reference state. This is simply a vector field that we subtract from the solutions to the governing equations to both improve numerical stability of the implicit time stepper and enable faster model spin-up. The reference state assumes hydrostatic balance and ideal gas law, with a pressure <span>$p_r(z)$</span> and density <span>$\rho_r(z)$</span> that only depend on altitude <span>$z$</span> and are in hydrostatic balance with each other. In this example, the reference temperature field smoothly transitions from a linearly decaying profile near the surface to a constant temperature profile at the top of the domain.</p><pre><code class="language-julia">T_surface = FT(290) ## surface temperature (K)
 ΔT = FT(60)  ## temperature drop between surface and top of atmosphere (K)
 H_t = FT(8e3) ## height scale over which temperature drops (m)
 temp_profile_ref = DecayingTemperatureProfile(T_surface, ΔT, H_t)
-ref_state = HydrostaticState(temp_profile_ref, FT(0))</code></pre><pre><code class="language-none">CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32}(CLIMA.Atmos.DecayingTemperatureProfile{Float32}(290.0f0, 60.0f0, 8000.0f0), 0.0f0)</code></pre><h2 id="Set-up-a-Rayleigh-sponge-layer-1"><a class="docs-heading-anchor" href="#Set-up-a-Rayleigh-sponge-layer-1">Set up a Rayleigh sponge layer</a><a class="docs-heading-anchor-permalink" href="#Set-up-a-Rayleigh-sponge-layer-1" title="Permalink"></a></h2><p>To avoid wave reflection at the top of the domain, the model applies a sponge layer that linearly damps the momentum equations.</p><pre><code class="language-julia">domain_height = FT(30e3)                     ## height of the computational domain (m)
-z_sponge = FT(12e3)                     ## height at which sponge begins (m)
-α_relax = FT(1 / 60 / 15)                  ## sponge relaxation rate (1/s)
-exponent = FT(2)                        ## sponge exponent for squared-sinusoid profile
+ref_state = HydrostaticState(temp_profile_ref, FT(0))</code></pre><h2 id="Set-up-a-Rayleigh-sponge-layer-1"><a class="docs-heading-anchor" href="#Set-up-a-Rayleigh-sponge-layer-1">Set up a Rayleigh sponge layer</a><a class="docs-heading-anchor-permalink" href="#Set-up-a-Rayleigh-sponge-layer-1" title="Permalink"></a></h2><p>To avoid wave reflection at the top of the domain, the model applies a sponge layer that linearly damps the momentum equations.</p><pre><code class="language-julia">domain_height = FT(30e3)               ## height of the computational domain (m)
+z_sponge = FT(12e3)                    ## height at which sponge begins (m)
+α_relax = FT(1 / 60 / 15)              ## sponge relaxation rate (1/s)
+exponent = FT(2)                       ## sponge exponent for squared-sinusoid profile
 u_relax = SVector(FT(0), FT(0), FT(0)) ## relaxation velocity (m/s)
-sponge = RayleighSponge(domain_height, z_sponge, α_relax, u_relax, exponent)</code></pre><pre><code class="language-none">CLIMA.Atmos.RayleighSponge{Float32}(30000.0f0, 12000.0f0, 0.0011111111f0, Float32[0.0, 0.0, 0.0], 2.0f0)</code></pre><h2 id="Set-up-subgrid-scale-turbulence-models-1"><a class="docs-heading-anchor" href="#Set-up-subgrid-scale-turbulence-models-1">Set up subgrid-scale turbulence models</a><a class="docs-heading-anchor-permalink" href="#Set-up-subgrid-scale-turbulence-models-1" title="Permalink"></a></h2><p>In order to produce a stable simulation, we need to dissipate energy and enstrophy at the smallest scales of the developed flow field. To achieve this we set up diffusive forcing functions.</p><pre><code class="language-julia">c_smag = FT(0.21)   ## Smagorinsky constant
+sponge = RayleighSponge(domain_height, z_sponge, α_relax, u_relax, exponent)</code></pre><h2 id="Set-up-subgrid-scale-turbulence-models-1"><a class="docs-heading-anchor" href="#Set-up-subgrid-scale-turbulence-models-1">Set up subgrid-scale turbulence models</a><a class="docs-heading-anchor-permalink" href="#Set-up-subgrid-scale-turbulence-models-1" title="Permalink"></a></h2><p>In order to produce a stable simulation, we need to dissipate energy and enstrophy at the smallest scales of the developed flow field. To achieve this we set up diffusive forcing functions.</p><pre><code class="language-julia">c_smag = FT(0.21)   ## Smagorinsky constant
 τ_hyper = FT(4 * 3600) ## hyperdiffusion time scale
 turbulence_model = SmagorinskyLilly(c_smag)
-hyperdiffusion_model = StandardHyperDiffusion(FT(4 * 3600))</code></pre><pre><code class="language-none">CLIMA.Atmos.StandardHyperDiffusion{Float32}(14400.0f0)</code></pre><h2 id="Instantiate-the-model-using-the-Held-Suarez-setup-1"><a class="docs-heading-anchor" href="#Instantiate-the-model-using-the-Held-Suarez-setup-1">Instantiate the model using the Held Suarez setup</a><a class="docs-heading-anchor-permalink" href="#Instantiate-the-model-using-the-Held-Suarez-setup-1" title="Permalink"></a></h2><p>The Held Suarez setup was designed to produce an equilibrated state that is comparable to the zonal mean of the Earth’s atmosphere.</p><pre><code class="language-">model = AtmosModel{FT}(
+hyperdiffusion_model = StandardHyperDiffusion(FT(4 * 3600))</code></pre><h2 id="Instantiate-the-model-using-the-Held-Suarez-setup-1"><a class="docs-heading-anchor" href="#Instantiate-the-model-using-the-Held-Suarez-setup-1">Instantiate the model using the Held Suarez setup</a><a class="docs-heading-anchor-permalink" href="#Instantiate-the-model-using-the-Held-Suarez-setup-1" title="Permalink"></a></h2><p>The Held Suarez setup was designed to produce an equilibrated state that is comparable to the zonal mean of the Earth’s atmosphere.</p><pre><code class="language-julia">model = AtmosModel{FT}(
     AtmosGCMConfigType,
     param_set;
     ref_state = ref_state,
@@ -102,13 +105,13 @@ hyperdiffusion_model = StandardHyperDiffusion(FT(4 * 3600))</code></pre><pre><co
     moisture = DryModel(),
     source = (Gravity(), Coriolis(), held_suarez_forcing!, sponge),
     init_state = init_heldsuarez!,
-)</code></pre><p>This concludes the setup of the physical model!</p><h2 id="Set-up-the-driver-and-solver-configurations-1"><a class="docs-heading-anchor" href="#Set-up-the-driver-and-solver-configurations-1">Set up the driver &amp; solver configurations</a><a class="docs-heading-anchor-permalink" href="#Set-up-the-driver-and-solver-configurations-1" title="Permalink"></a></h2><p>We just need to set up a few parameters that define the resolution of the discontinuous Galerkin method and how long we want to run our model setup for.</p><pre><code class="language-julia">poly_order = 5                           ## discontinuous Galerkin polynomial order
-n_horz = 5                           ## horizontal element number
-n_vert = 5                           ## vertical element number
+)</code></pre><pre><code class="language-none">CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}(Main.ex-heldsuarez.EarthParameterSet(), CLIMA.Atmos.SphericalOrientation(), CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32}(CLIMA.Atmos.DecayingTemperatureProfile{Float32}(290.0f0, 60.0f0, 8000.0f0), 0.0f0), CLIMA.Atmos.SmagorinskyLilly{Float32}(0.21f0), CLIMA.Atmos.StandardHyperDiffusion{Float32}(14400.0f0), CLIMA.Atmos.DryModel(), CLIMA.Atmos.NoPrecipitation(), CLIMA.Atmos.NoRadiation(), (CLIMA.Atmos.Gravity(), CLIMA.Atmos.Coriolis(), Main.ex-heldsuarez.held_suarez_forcing!, CLIMA.Atmos.RayleighSponge{Float32}(30000.0f0, 12000.0f0, 0.0011111111f0, Float32[0.0, 0.0, 0.0], 2.0f0)), CLIMA.Atmos.NoTracers(), CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer}(CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip}(CLIMA.Atmos.FreeSlip()), CLIMA.Atmos.Insulating(), CLIMA.Atmos.Impermeable(), CLIMA.Atmos.ImpermeableTracer()), Main.ex-heldsuarez.init_heldsuarez!, nothing)</code></pre><p>This concludes the setup of the physical model!</p><h2 id="Set-up-the-driver-and-solver-configurations-1"><a class="docs-heading-anchor" href="#Set-up-the-driver-and-solver-configurations-1">Set up the driver &amp; solver configurations</a><a class="docs-heading-anchor-permalink" href="#Set-up-the-driver-and-solver-configurations-1" title="Permalink"></a></h2><p>We just need to set up a few parameters that define the resolution of the discontinuous Galerkin method and how long we want to run our model setup for.</p><pre><code class="language-julia">poly_order = 5                        ## discontinuous Galerkin polynomial order
+n_horz = 2                            ## horizontal element number
+n_vert = 2                            ## vertical element number
 resolution = (n_horz, n_vert)
-n_days = 120                         ## experiment day number
-timestart = FT(0)                       ## start time (s)
-timeend = FT(n_days * day(param_set)) ## end time (s)</code></pre><pre><code class="language-none">1.0368f7</code></pre><p>The next lines set up the spatial grid.</p><pre><code class="language-">driver_config = CLIMA.AtmosGCMConfiguration(
+n_days = 1                            ## experiment day number
+timestart = FT(0)                     ## start time (s)
+timeend = FT(n_days * day(param_set)) ## end time (s)</code></pre><p>The next lines set up the spatial grid.</p><pre><code class="language-julia">driver_config = CLIMA.AtmosGCMConfiguration(
     &quot;HeldSuarez&quot;,
     poly_order,
     resolution,
@@ -116,7 +119,127 @@ timeend = FT(n_days * day(param_set)) ## end time (s)</code></pre><pre><code cla
     param_set,
     init_heldsuarez!;
     model = model,
-)</code></pre><p>The next lines set up the time stepper.</p><pre><code class="language-">solver_config = CLIMA.SolverConfiguration(
+)</code></pre><pre><code class="language-none">CLIMA.DriverConfiguration{Float32}(CLIMA.ConfigTypes.AtmosGCMConfigType(), &quot;HeldSuarez&quot;, 5, Array, CLIMA.IMEXSolverType(CLIMA.Atmos.AtmosAcousticGravityLinearModel, CLIMA.ColumnwiseLUSolver.ManyColumnLU, CLIMA.ODESolvers.ARK2GiraldoKellyConstantinescu), CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}(Main.ex-heldsuarez.EarthParameterSet(), CLIMA.Atmos.SphericalOrientation(), CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32}(CLIMA.Atmos.DecayingTemperatureProfile{Float32}(290.0f0, 60.0f0, 8000.0f0), 0.0f0), CLIMA.Atmos.SmagorinskyLilly{Float32}(0.21f0), CLIMA.Atmos.StandardHyperDiffusion{Float32}(14400.0f0), CLIMA.Atmos.DryModel(), CLIMA.Atmos.NoPrecipitation(), CLIMA.Atmos.NoRadiation(), (CLIMA.Atmos.Gravity(), CLIMA.Atmos.Coriolis(), Main.ex-heldsuarez.held_suarez_forcing!, CLIMA.Atmos.RayleighSponge{Float32}(30000.0f0, 12000.0f0, 0.0011111111f0, Float32[0.0, 0.0, 0.0], 2.0f0)), CLIMA.Atmos.NoTracers(), CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer}(CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip}(CLIMA.Atmos.FreeSlip()), CLIMA.Atmos.Insulating(), CLIMA.Atmos.Impermeable(), CLIMA.Atmos.ImpermeableTracer()), Main.ex-heldsuarez.init_heldsuarez!, nothing), MPI.Comm(1140850688), CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}}(CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}(CLIMA.Mesh.Topologies.BoxElementTopology{3,Float32}(MPI.Comm(1140850688), 1:48, 1:48, 49:48, , Int64[], , [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[-6.386e6 -6.386e6 … -6.401e6 -6.401e6; 6.386e6 0.0 … 6.401e6 0.0; -6.386e6 -6.386e6 … 0.0 0.0]
+
+Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; 0.0 0.0 … 6.386e6 6.386e6]
+
+...
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; 0.0 0.0 … 6.401e6 6.401e6]
+
+Float32[6.371e6 6.371e6 … 6.386e6 6.386e6; 0.0 6.371e6 … 0.0 6.386e6; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; -6.386e6 -6.386e6 … 0.0 0.0], [21 22 … 41 42; 7 8 … 27 28; … ; 1 1 … 47 47; 2 2 … 48 48], [1 1 … 2 2; 1 1 … 2 2; … ; 5 6 … 5 6; 5 6 … 5 6], [3 3 … 1 1; 1 1 … 3 3; … ; 1 1 … 1 1; 1 1 … 1 1], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 3, 4, 2, 5, 7, 13, 15, 23, 21  …  22, 24, 16, 14, 8, 6, 9, 11, 12, 10], true), 2), Float32[-3.4567688e-7 -3.456841e-7 … -3.6782988e6 7494.0566; -3.2200347e-7 -3.2776953e-7 … -3.8845165e6 7487.125; … ; -3.6824375e-8 -9.381433e-15 … -0.1488394 7501.743; -9.35744e-15 -9.354788e-15 … -0.14947513 7489.817]
+
+Float32[-3.4317333e-7 -3.4323094e-7 … -3.686959e6 7423.7314; -3.2163595e-7 -3.2727692e-7 … -3.8936622e6 7481.8457; … ; -3.672708e-8 -9.3610405e-15 … -0.14918901 7514.077; -9.297805e-15 -9.292527e-15 … -0.14982623 7473.074]
+
+Float32[-2.8314133e-7 0.0 … 0.0 7508.6973; -2.5557276e-7 0.0 … 0.0 7498.431; … ; -5.172452e-8 2.8283608e-7 … 4.505951e6 7488.269; -1.3170257e-14 2.8206887e-7 … 4.5155845e6 7479.755]
+
+...
+
+Float32[0.0 0.0 … 0.0 7508.1313; -3.6678173e-8 0.0 … 0.0 7471.743; … ; -3.20498e-7 -3.2558344e-7 … 3.9028082e6 7454.7407; -3.4443383e-7 -3.43974e-7 … 3.6956195e6 7524.4946]
+
+Float32[0.0 2.8313443e-7 … -4.5049775e6 7508.6196; -5.2050996e-8 2.8280027e-7 … -4.4953665e6 7484.8804; … ; -2.5643553e-7 1.2140228e-14 … -0.114983186 7504.0957; -2.8169134e-7 1.3161021e-14 … -0.10569488 7473.067]
+
+Float32[0.0 2.8263537e-7 … -4.515584e6 7553.2236; -5.1886506e-8 2.822707e-7 … -4.5059505e6 7485.521; … ; -2.5556656e-7 1.2136458e-14 … -0.11525326 7560.331; -2.8151945e-7 1.32071164e-14 … -0.10594315 7554.8145], Float32[0.70710677 0.70710677 … 0.7071068 0.7071068; 0.70710677 0.70710677 … 0.7071068 0.7071068; … ; 7.86699e7 4.2110138e8 … 3.3726986e8 5.8828536e7; 9.321126e-14 1.6510478e-14 … 1.779862e-14 1.0128107e-13]
+
+Float32[-2.3366391e-8 -2.342791e-8 … -2.3392865e-8 -2.3481222e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.345602e7 4.737245e8 … 4.7485504e8 8.3494376e7; 1.01581456e-13 1.645849e-14 … 1.2664646e-14 7.159307e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 7.8671544e7 4.2112944e8 … 3.3719504e8 5.8815356e7; 9.321126e-14 1.6510475e-14 … 1.7798646e-14 1.0128114e-13]
+
+Float32[-2.3360007e-8 -2.3430587e-8 … -2.3399506e-8 -2.346409e-8; -2.6757242e-11 1.4413223e-11 … -9.6450146e-11 -1.9866118e-10; … ; 8.34595e7 4.7364515e8 … 4.7485504e8 8.353166e7; 1.0158146e-13 1.645849e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.5775843 0.6097148 … 0.9957568 1.0; -0.57723266 -0.5058244 … -0.092023805 -0.0001233141; … ; 2.1433508e10 1.2098791e11 … 1.5725553e11 2.7815141e10; 9.321126e-14 1.6510475e-14 … 1.2716565e-14 7.174163e-14]
+
+Float32[-0.57761204 -0.609709 … -0.99575686 -1.0; 0.5772229 0.5058241 … 0.092022985 0.000118733675; … ; 2.153474e10 1.21558024e11 … 1.5799725e11 2.7946168e10; 9.2899883e-14 1.6445975e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.70710677 0.7071068 … 0.70710677 0.70710677; 0.70710677 0.7071068 … 0.70710677 0.70710677; … ; 7.848866e7 4.2220515e8 … 3.3719504e8 5.935579e7; 9.2749864e-14 1.6442932e-14 … 1.7715291e-14 1.0080698e-13]
+
+Float32[-2.3394367e-8 -2.3403025e-8 … -2.3399998e-8 -2.3399506e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.406418e7 4.7453146e8 … 4.753842e8 8.36435e7; 1.0100497e-13 1.6363435e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 7.850183e7 4.222239e8 … 3.3719504e8 5.9355788e7; 9.2749864e-14 1.644293e-14 … 1.7715293e-14 1.0080705e-13]
+
+Float32[-2.3387589e-8 -2.3426646e-8 … -2.340427e-8 -2.340187e-8; -9.934727e-12 -3.6690945e-11 … 5.1537255e-12 1.9332248e-10; … ; 8.400244e7 4.744653e8 … 4.7570166e8 8.358758e7; 1.01004986e-13 1.6363436e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.5776063 0.6097116 … 0.99575686 1.0; -0.5772215 -0.5058193 … -0.092023015 -0.00010939501; … ; 2.1534724e10 1.2155813e11 … 1.579972e11 2.7946183e10; 9.2749864e-14 1.644293e-14 … 1.266161e-14 7.143341e-14]
+
+Float32[-0.5775764 -0.60971236 … -0.9957571 -1.0; 0.57723343 0.50582474 … 0.09202069 0.00011751415; … ; 2.1636002e10 1.2212962e11 … 1.587404e11 2.8077558e10; 9.246489e-14 1.6388502e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.70710677 0.70710677 … 0.70710677 0.7071068; 0.70710677 0.70710677 … 0.70710677 0.7071068; … ; 5.9136708e7 3.3612906e8 … 4.2145635e8 7.8903784e7; 1.0156704e-13 1.7847914e-14 … 1.6442842e-14 9.294274e-14]
+
+Float32[-2.3425516e-8 -2.339332e-8 … -2.3388576e-8 -2.3371893e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.358184e7 4.7322845e8 … 4.7453754e8 8.3457096e7; 7.180844e-14 1.2709394e-14 … 1.6405646e-14 1.0128124e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.334183e7 4.7396262e8 … 4.752783e8 8.35503e7; 1.0156704e-13 1.645697e-14 … 1.2651276e-14 7.159305e-14]
+
+Float32[0.7067215 0.7072561 … 0.7068709 0.7081328; -0.00042318864 4.4356675e-5 … -0.001018105 -0.00067945477; … ; 7.864355e7 4.2085357e8 … 3.3708298e8 5.8993384e7; 9.3217636e-14 1.6512572e-14 … 1.7805319e-14 1.0128124e-13]
+
+Float32[0.70686597 0.76891905 … 0.7058856 0.7068711; -0.70734733 -0.63934606 … -0.06550532 0.00039913572; … ; 1.9667657e10 1.21498575e11 … 1.1192534e11 1.9667638e10; 1.0156704e-13 1.645697e-14 … 1.7868167e-14 1.0152404e-13]
+
+Float32[-0.7068647 -0.7689187 … -0.70588917 -0.7068616; 0.7073487 0.63934654 … 0.065510675 -0.00038758066; … ; 1.9760431e10 1.2207122e11 … 1.1245289e11 1.9760523e10; 1.01357724e-13 1.6392178e-14 … 1.7805319e-14 1.0128124e-13]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.370069e7 4.7456454e8 … 4.7633664e8 8.435188e7; 7.1454744e-14 1.2653209e-14 … 1.6324934e-14 1.00807e-13]
+
+Float32[-0.70667005 -0.70735687 … -0.70723224 -0.70628023; 0.70754313 0.7068566 … 0.70698136 0.7079305; … ; 5.938511e7 3.3717437e8 … 4.2183053e8 7.9075304e7; 1.01007276e-13 1.7755366e-14 … 1.6381824e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.369126e7 4.745812e8 … 4.7633654e8 8.435181e7; 7.1454744e-14 1.2653208e-14 … 1.6324934e-14 1.0080705e-13]
+
+Float32[-0.70746046 -0.70704055 … -0.7071067 -0.70627785; 0.0023036164 -0.0017132243 … 0.00043006658 -0.0025152573; … ; 5.9288296e7 3.3728314e8 … 4.2160608e8 7.897e7; 1.0100728e-13 1.7755364e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-1.0 -0.99575686 … -0.6097114 -0.5775862; -0.00011611638 -0.092022784 … -0.5058227 -0.577236; … ; 2.7946287e10 1.5799725e11 … 1.2155805e11 2.1534702e10; 7.1454744e-14 1.2653208e-14 … 1.6448828e-14 9.274374e-14]
+
+Float32[1.0 0.9957569 … 0.6097078 0.57755774; 0.000118994496 0.092022456 … 0.50582653 0.5772446; … ; 2.8077662e10 1.5874035e11 … 1.2212991e11 2.1636137e10; 7.125785e-14 1.2605521e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.334299e7 4.7392294e8 … 4.7527837e8 8.35503e7; 1.0156704e-13 1.6456968e-14 … 1.2651277e-14 7.1593014e-14]
+
+Float32[-0.7068327 -0.7072404 … -0.7070284 -0.70781773; 0.7073807 0.70697314 … 0.70718527 0.7063945; … ; 7.866579e7 4.207787e8 … 3.3730726e8 5.8940636e7; 9.3217616e-14 1.6512572e-14 … 1.7805303e-14 1.0128127e-13]
+
+Float32[-0.7071068 -0.7071068 … -0.70710677 -0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 5.9135256e7 3.3612362e8 … 4.2145632e8 7.8903736e7; 1.0156704e-13 1.7847913e-14 … 1.6442863e-14 9.2942784e-14]
+
+Float32[2.3425857e-8 2.3391289e-8 … 2.3422665e-8 2.3355495e-8; -2.3521393e-10 -9.0114635e-12 … -5.515981e-12 8.056114e-11; … ; 8.357274e7 4.7323392e8 … 4.739026e8 8.3457096e7; 7.1808445e-14 1.2709394e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.70686597 -0.7058868 … -0.76891845 -0.70687145; 0.00042094867 -0.06550351 … -0.6393468 -0.70734185; … ; 1.9667659e10 1.1192537e11 … 1.21498345e11 1.9667644e10; 1.0156704e-13 1.7847913e-14 … 1.64655e-14 1.0152404e-13]
+
+Float32[0.7068631 0.7058882 … 0.76891756 0.70685875; -0.0003955653 0.06550369 … 0.6393478 0.7073547; … ; 1.9760423e10 1.1245309e11 … 1.2207129e11 1.9760474e10; 1.0135774e-13 1.7812102e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.398612e7 4.7453146e8 … 4.753842e8 8.3568936e7; 1.00990586e-13 1.636304e-14 … 1.2612224e-14 7.125791e-14]
+
+Float32[-0.7068027 -0.7072792 … -0.7071061 -0.70710367; 0.7074105 0.7069343 … 0.7071061 0.70710367; … ; 7.8593304e7 4.218965e8 … 3.37345e8 5.926378e7; 9.2763294e-14 1.6442583e-14 … 1.7715155e-14 1.00769206e-13]
+
+Float32[-0.7071068 -0.70710677 … -0.70710677 -0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 5.9367972e7 3.3731472e8 … 4.2160595e8 7.908828e7; 1.00990586e-13 1.7751585e-14 … 1.6386298e-14 9.250772e-14]
+
+Float32[2.3481617e-8 2.3394227e-8 … 2.3381299e-8 2.3310704e-8; -5.0216113e-11 2.3334217e-11 … 4.3997344e-11 5.09856e-11; … ; 8.361875e7 4.7455824e8 … 4.7674467e8 8.433671e7; 7.146194e-14 1.2654473e-14 … 1.6331625e-14 1.00769206e-13]
+
+Float32[-0.70686245 -0.70588815 … -0.7689181 -0.70686626; 0.00039521258 -0.06550847 … -0.63934726 -0.70734715; … ; 1.9760368e10 1.1245316e11 … 1.2207106e11 1.9760423e10; 1.00990586e-13 1.7751585e-14 … 1.6380672e-14 1.0101423e-13]
+
+Float32[0.7068699 0.70589054 … 0.76891756 0.7068567; -0.00039617866 0.06549954 … 0.6393478 0.7073566; … ; 1.9853343e10 1.1298176e11 … 1.226456e11 1.9853332e10; 1.008069e-13 1.7701969e-14 … 1.6331625e-14 1.00769206e-13], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], [1 6 … 1 181; 7 12 … 2 182; … ; 205 210 … 35 215; 211 216 … 36 216]
+
+[217 222 … 217 397; 223 228 … 218 398; … ; 421 426 … 251 431; 427 432 … 252 432]
+
+[433 438 … 433 613; 439 444 … 434 614; … ; 637 642 … 467 647; 643 648 … 468 648]
+
+...
+
+[9721 9726 … 9721 9901; 9727 9732 … 9722 9902; … ; 9925 9930 … 9755 9935; 9931 9936 … 9756 9936]
+
+[9937 9942 … 9937 10117; 9943 9948 … 9938 10118; … ; 10141 10146 … 9971 10151; 10147 10152 … 9972 10152]
+
+[10153 10158 … 10153 10333; 10159 10164 … 10154 10334; … ; 10357 10362 … 10187 10367; 10363 10368 … 10188 10368], [4351 1297 … 1 217; 4345 1303 … 2 218; … ; 4507 1501 … 35 251; 4501 1507 … 36 252]
+
+[4567 1513 … 181 397; 4561 1519 … 182 398; … ; 4723 1717 … 215 431; 4717 1723 … 216 432]
+
+[4783 865 … 433 649; 4777 871 … 434 650; … ; 4939 1069 … 467 683; 4933 1075 … 468 684]
+
+...
+
+[9294 5436 … 9685 9901; 9300 5430 … 9686 9902; … ; 9498 5592 … 9719 9935; 9504 5586 … 9720 9936]
+
+[8646 5652 … 9937 10153; 8652 5646 … 9938 10154; … ; 8850 5808 … 9971 10187; 8856 5802 … 9972 10188]
+
+[8862 5868 … 10117 10333; 8868 5862 … 10118 10334; … ; 9066 6024 … 10151 10367; 9072 6018 … 10152 10368], Int64[], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Bool[1, 1, 1, 1, 1, 1, 1, 1, 1, 1  …  1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Float32[0.0666666, 0.37847504, 0.55485797, 0.55485886, 0.37847477, 0.06666657], Float32[-7.500001 10.141418 … -1.3499136 0.50000024; -1.786365 3.5762787e-7 … 0.6535476 -0.23778127; … ; 0.2377811 -0.65354735 … -1.4305115e-6 1.7863661; -0.49999976 1.3499128 … -10.1414175 7.500002], Float32[0.0 0.0 … 0.0 0.0; 0.09135958 0.1637356 … -0.008943558 0.0032868516; … ; 0.06337984 0.38741845 … 0.21473905 -0.024692891; 0.06666665 0.3784751 … 0.37847477 0.06666652]), CLIMA.DGmethods.NumericalFluxes.Rusanov(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient(), CLIMA.AtmosGCMSpecificInfo{Float32}(30000.0f0, 2, 2))</code></pre><p>The next lines set up the time stepper.</p><pre><code class="language-julia">solver_config = CLIMA.SolverConfiguration(
     timestart,
     timeend,
     driver_config,
@@ -124,7 +247,1231 @@ timeend = FT(n_days * day(param_set)) ## end time (s)</code></pre><pre><code cla
     init_on_cpu = true,
     CFL_direction = HorizontalDirection(),
     diffdir = HorizontalDirection(),
-)</code></pre><h2 id="Set-up-spectral-exponential-filter-1"><a class="docs-heading-anchor" href="#Set-up-spectral-exponential-filter-1">Set up spectral exponential filter</a><a class="docs-heading-anchor-permalink" href="#Set-up-spectral-exponential-filter-1" title="Permalink"></a></h2><p>After every completed time step we apply a spectral filter to remove remaining small-scale noise introduced by the numerical procedures. This assures that our run remains stable.</p><pre><code class="language-">filterorder = 10
+)</code></pre><pre><code class="language-none">CLIMA.SolverConfiguration{Float32}(&quot;HeldSuarez&quot;, MPI.Comm(1140850688), CLIMA.DGmethods.DGModel{CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing},CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}},CLIMA.DGmethods.NumericalFluxes.Rusanov,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient,CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:∫dz, :∫dnz, :coord, :orientation, :ref_state, :turbulence, :hyperdiffusion, :moisture, :tracers, :radiation),Tuple{NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},StaticArrays.SArray{Tuple{3},Float32,1,3},NamedTuple{(:Φ, :∇Φ),Tuple{Float32,StaticArrays.SArray{Tuple{3},Float32,1,3}}},NamedTuple{(:ρ, :p, :T, :ρe, :ρq_tot),NTuple{5,Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:θ_v, :air_T),Tuple{Float32,Float32}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:∇h_tot, :turbulence, :hyperdiffusion, :moisture, :tracers),Tuple{StaticArrays.SArray{Tuple{3},Float32,1,3},NamedTuple{(:S, :N²),Tuple{StaticArrays.SHermitianCompact{3,Float32,6},Float32}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},Tuple{CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:hyperdiffusion,),Tuple{NamedTuple{(:u, :h_tot),Tuple{StaticArrays.SArray{Tuple{3},Float32,1,3},Float32}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:hyperdiffusion,),Tuple{NamedTuple{(:ν∇³u, :ν∇³h_tot),Tuple{StaticArrays.SArray{Tuple{3,3},Float32,2,9},StaticArrays.SArray{Tuple{3},Float32,1,3}}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}}},CLIMA.Mesh.Grids.EveryDirection,CLIMA.Mesh.Grids.HorizontalDirection,Nothing}(CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}(Main.ex-heldsuarez.EarthParameterSet(), CLIMA.Atmos.SphericalOrientation(), CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32}(CLIMA.Atmos.DecayingTemperatureProfile{Float32}(290.0f0, 60.0f0, 8000.0f0), 0.0f0), CLIMA.Atmos.SmagorinskyLilly{Float32}(0.21f0), CLIMA.Atmos.StandardHyperDiffusion{Float32}(14400.0f0), CLIMA.Atmos.DryModel(), CLIMA.Atmos.NoPrecipitation(), CLIMA.Atmos.NoRadiation(), (CLIMA.Atmos.Gravity(), CLIMA.Atmos.Coriolis(), Main.ex-heldsuarez.held_suarez_forcing!, CLIMA.Atmos.RayleighSponge{Float32}(30000.0f0, 12000.0f0, 0.0011111111f0, Float32[0.0, 0.0, 0.0], 2.0f0)), CLIMA.Atmos.NoTracers(), CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer}(CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip}(CLIMA.Atmos.FreeSlip()), CLIMA.Atmos.Insulating(), CLIMA.Atmos.Impermeable(), CLIMA.Atmos.ImpermeableTracer()), Main.ex-heldsuarez.init_heldsuarez!, nothing), CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}}(CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}(CLIMA.Mesh.Topologies.BoxElementTopology{3,Float32}(MPI.Comm(1140850688), 1:48, 1:48, 49:48, , Int64[], , [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[-6.386e6 -6.386e6 … -6.401e6 -6.401e6; 6.386e6 0.0 … 6.401e6 0.0; -6.386e6 -6.386e6 … 0.0 0.0]
+
+Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; 0.0 0.0 … 6.386e6 6.386e6]
+
+...
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; 0.0 0.0 … 6.401e6 6.401e6]
+
+Float32[6.371e6 6.371e6 … 6.386e6 6.386e6; 0.0 6.371e6 … 0.0 6.386e6; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; -6.386e6 -6.386e6 … 0.0 0.0], [21 22 … 41 42; 7 8 … 27 28; … ; 1 1 … 47 47; 2 2 … 48 48], [1 1 … 2 2; 1 1 … 2 2; … ; 5 6 … 5 6; 5 6 … 5 6], [3 3 … 1 1; 1 1 … 3 3; … ; 1 1 … 1 1; 1 1 … 1 1], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 3, 4, 2, 5, 7, 13, 15, 23, 21  …  22, 24, 16, 14, 8, 6, 9, 11, 12, 10], true), 2), Float32[-3.4567688e-7 -3.456841e-7 … -3.6782988e6 7494.0566; -3.2200347e-7 -3.2776953e-7 … -3.8845165e6 7487.125; … ; -3.6824375e-8 -9.381433e-15 … -0.1488394 7501.743; -9.35744e-15 -9.354788e-15 … -0.14947513 7489.817]
+
+Float32[-3.4317333e-7 -3.4323094e-7 … -3.686959e6 7423.7314; -3.2163595e-7 -3.2727692e-7 … -3.8936622e6 7481.8457; … ; -3.672708e-8 -9.3610405e-15 … -0.14918901 7514.077; -9.297805e-15 -9.292527e-15 … -0.14982623 7473.074]
+
+Float32[-2.8314133e-7 0.0 … 0.0 7508.6973; -2.5557276e-7 0.0 … 0.0 7498.431; … ; -5.172452e-8 2.8283608e-7 … 4.505951e6 7488.269; -1.3170257e-14 2.8206887e-7 … 4.5155845e6 7479.755]
+
+...
+
+Float32[0.0 0.0 … 0.0 7508.1313; -3.6678173e-8 0.0 … 0.0 7471.743; … ; -3.20498e-7 -3.2558344e-7 … 3.9028082e6 7454.7407; -3.4443383e-7 -3.43974e-7 … 3.6956195e6 7524.4946]
+
+Float32[0.0 2.8313443e-7 … -4.5049775e6 7508.6196; -5.2050996e-8 2.8280027e-7 … -4.4953665e6 7484.8804; … ; -2.5643553e-7 1.2140228e-14 … -0.114983186 7504.0957; -2.8169134e-7 1.3161021e-14 … -0.10569488 7473.067]
+
+Float32[0.0 2.8263537e-7 … -4.515584e6 7553.2236; -5.1886506e-8 2.822707e-7 … -4.5059505e6 7485.521; … ; -2.5556656e-7 1.2136458e-14 … -0.11525326 7560.331; -2.8151945e-7 1.32071164e-14 … -0.10594315 7554.8145], Float32[0.70710677 0.70710677 … 0.7071068 0.7071068; 0.70710677 0.70710677 … 0.7071068 0.7071068; … ; 7.86699e7 4.2110138e8 … 3.3726986e8 5.8828536e7; 9.321126e-14 1.6510478e-14 … 1.779862e-14 1.0128107e-13]
+
+Float32[-2.3366391e-8 -2.342791e-8 … -2.3392865e-8 -2.3481222e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.345602e7 4.737245e8 … 4.7485504e8 8.3494376e7; 1.01581456e-13 1.645849e-14 … 1.2664646e-14 7.159307e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 7.8671544e7 4.2112944e8 … 3.3719504e8 5.8815356e7; 9.321126e-14 1.6510475e-14 … 1.7798646e-14 1.0128114e-13]
+
+Float32[-2.3360007e-8 -2.3430587e-8 … -2.3399506e-8 -2.346409e-8; -2.6757242e-11 1.4413223e-11 … -9.6450146e-11 -1.9866118e-10; … ; 8.34595e7 4.7364515e8 … 4.7485504e8 8.353166e7; 1.0158146e-13 1.645849e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.5775843 0.6097148 … 0.9957568 1.0; -0.57723266 -0.5058244 … -0.092023805 -0.0001233141; … ; 2.1433508e10 1.2098791e11 … 1.5725553e11 2.7815141e10; 9.321126e-14 1.6510475e-14 … 1.2716565e-14 7.174163e-14]
+
+Float32[-0.57761204 -0.609709 … -0.99575686 -1.0; 0.5772229 0.5058241 … 0.092022985 0.000118733675; … ; 2.153474e10 1.21558024e11 … 1.5799725e11 2.7946168e10; 9.2899883e-14 1.6445975e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.70710677 0.7071068 … 0.70710677 0.70710677; 0.70710677 0.7071068 … 0.70710677 0.70710677; … ; 7.848866e7 4.2220515e8 … 3.3719504e8 5.935579e7; 9.2749864e-14 1.6442932e-14 … 1.7715291e-14 1.0080698e-13]
+
+Float32[-2.3394367e-8 -2.3403025e-8 … -2.3399998e-8 -2.3399506e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.406418e7 4.7453146e8 … 4.753842e8 8.36435e7; 1.0100497e-13 1.6363435e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 7.850183e7 4.222239e8 … 3.3719504e8 5.9355788e7; 9.2749864e-14 1.644293e-14 … 1.7715293e-14 1.0080705e-13]
+
+Float32[-2.3387589e-8 -2.3426646e-8 … -2.340427e-8 -2.340187e-8; -9.934727e-12 -3.6690945e-11 … 5.1537255e-12 1.9332248e-10; … ; 8.400244e7 4.744653e8 … 4.7570166e8 8.358758e7; 1.01004986e-13 1.6363436e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.5776063 0.6097116 … 0.99575686 1.0; -0.5772215 -0.5058193 … -0.092023015 -0.00010939501; … ; 2.1534724e10 1.2155813e11 … 1.579972e11 2.7946183e10; 9.2749864e-14 1.644293e-14 … 1.266161e-14 7.143341e-14]
+
+Float32[-0.5775764 -0.60971236 … -0.9957571 -1.0; 0.57723343 0.50582474 … 0.09202069 0.00011751415; … ; 2.1636002e10 1.2212962e11 … 1.587404e11 2.8077558e10; 9.246489e-14 1.6388502e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.70710677 0.70710677 … 0.70710677 0.7071068; 0.70710677 0.70710677 … 0.70710677 0.7071068; … ; 5.9136708e7 3.3612906e8 … 4.2145635e8 7.8903784e7; 1.0156704e-13 1.7847914e-14 … 1.6442842e-14 9.294274e-14]
+
+Float32[-2.3425516e-8 -2.339332e-8 … -2.3388576e-8 -2.3371893e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.358184e7 4.7322845e8 … 4.7453754e8 8.3457096e7; 7.180844e-14 1.2709394e-14 … 1.6405646e-14 1.0128124e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.334183e7 4.7396262e8 … 4.752783e8 8.35503e7; 1.0156704e-13 1.645697e-14 … 1.2651276e-14 7.159305e-14]
+
+Float32[0.7067215 0.7072561 … 0.7068709 0.7081328; -0.00042318864 4.4356675e-5 … -0.001018105 -0.00067945477; … ; 7.864355e7 4.2085357e8 … 3.3708298e8 5.8993384e7; 9.3217636e-14 1.6512572e-14 … 1.7805319e-14 1.0128124e-13]
+
+Float32[0.70686597 0.76891905 … 0.7058856 0.7068711; -0.70734733 -0.63934606 … -0.06550532 0.00039913572; … ; 1.9667657e10 1.21498575e11 … 1.1192534e11 1.9667638e10; 1.0156704e-13 1.645697e-14 … 1.7868167e-14 1.0152404e-13]
+
+Float32[-0.7068647 -0.7689187 … -0.70588917 -0.7068616; 0.7073487 0.63934654 … 0.065510675 -0.00038758066; … ; 1.9760431e10 1.2207122e11 … 1.1245289e11 1.9760523e10; 1.01357724e-13 1.6392178e-14 … 1.7805319e-14 1.0128124e-13]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.370069e7 4.7456454e8 … 4.7633664e8 8.435188e7; 7.1454744e-14 1.2653209e-14 … 1.6324934e-14 1.00807e-13]
+
+Float32[-0.70667005 -0.70735687 … -0.70723224 -0.70628023; 0.70754313 0.7068566 … 0.70698136 0.7079305; … ; 5.938511e7 3.3717437e8 … 4.2183053e8 7.9075304e7; 1.01007276e-13 1.7755366e-14 … 1.6381824e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.369126e7 4.745812e8 … 4.7633654e8 8.435181e7; 7.1454744e-14 1.2653208e-14 … 1.6324934e-14 1.0080705e-13]
+
+Float32[-0.70746046 -0.70704055 … -0.7071067 -0.70627785; 0.0023036164 -0.0017132243 … 0.00043006658 -0.0025152573; … ; 5.9288296e7 3.3728314e8 … 4.2160608e8 7.897e7; 1.0100728e-13 1.7755364e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-1.0 -0.99575686 … -0.6097114 -0.5775862; -0.00011611638 -0.092022784 … -0.5058227 -0.577236; … ; 2.7946287e10 1.5799725e11 … 1.2155805e11 2.1534702e10; 7.1454744e-14 1.2653208e-14 … 1.6448828e-14 9.274374e-14]
+
+Float32[1.0 0.9957569 … 0.6097078 0.57755774; 0.000118994496 0.092022456 … 0.50582653 0.5772446; … ; 2.8077662e10 1.5874035e11 … 1.2212991e11 2.1636137e10; 7.125785e-14 1.2605521e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.334299e7 4.7392294e8 … 4.7527837e8 8.35503e7; 1.0156704e-13 1.6456968e-14 … 1.2651277e-14 7.1593014e-14]
+
+Float32[-0.7068327 -0.7072404 … -0.7070284 -0.70781773; 0.7073807 0.70697314 … 0.70718527 0.7063945; … ; 7.866579e7 4.207787e8 … 3.3730726e8 5.8940636e7; 9.3217616e-14 1.6512572e-14 … 1.7805303e-14 1.0128127e-13]
+
+Float32[-0.7071068 -0.7071068 … -0.70710677 -0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 5.9135256e7 3.3612362e8 … 4.2145632e8 7.8903736e7; 1.0156704e-13 1.7847913e-14 … 1.6442863e-14 9.2942784e-14]
+
+Float32[2.3425857e-8 2.3391289e-8 … 2.3422665e-8 2.3355495e-8; -2.3521393e-10 -9.0114635e-12 … -5.515981e-12 8.056114e-11; … ; 8.357274e7 4.7323392e8 … 4.739026e8 8.3457096e7; 7.1808445e-14 1.2709394e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.70686597 -0.7058868 … -0.76891845 -0.70687145; 0.00042094867 -0.06550351 … -0.6393468 -0.70734185; … ; 1.9667659e10 1.1192537e11 … 1.21498345e11 1.9667644e10; 1.0156704e-13 1.7847913e-14 … 1.64655e-14 1.0152404e-13]
+
+Float32[0.7068631 0.7058882 … 0.76891756 0.70685875; -0.0003955653 0.06550369 … 0.6393478 0.7073547; … ; 1.9760423e10 1.1245309e11 … 1.2207129e11 1.9760474e10; 1.0135774e-13 1.7812102e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.398612e7 4.7453146e8 … 4.753842e8 8.3568936e7; 1.00990586e-13 1.636304e-14 … 1.2612224e-14 7.125791e-14]
+
+Float32[-0.7068027 -0.7072792 … -0.7071061 -0.70710367; 0.7074105 0.7069343 … 0.7071061 0.70710367; … ; 7.8593304e7 4.218965e8 … 3.37345e8 5.926378e7; 9.2763294e-14 1.6442583e-14 … 1.7715155e-14 1.00769206e-13]
+
+Float32[-0.7071068 -0.70710677 … -0.70710677 -0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 5.9367972e7 3.3731472e8 … 4.2160595e8 7.908828e7; 1.00990586e-13 1.7751585e-14 … 1.6386298e-14 9.250772e-14]
+
+Float32[2.3481617e-8 2.3394227e-8 … 2.3381299e-8 2.3310704e-8; -5.0216113e-11 2.3334217e-11 … 4.3997344e-11 5.09856e-11; … ; 8.361875e7 4.7455824e8 … 4.7674467e8 8.433671e7; 7.146194e-14 1.2654473e-14 … 1.6331625e-14 1.00769206e-13]
+
+Float32[-0.70686245 -0.70588815 … -0.7689181 -0.70686626; 0.00039521258 -0.06550847 … -0.63934726 -0.70734715; … ; 1.9760368e10 1.1245316e11 … 1.2207106e11 1.9760423e10; 1.00990586e-13 1.7751585e-14 … 1.6380672e-14 1.0101423e-13]
+
+Float32[0.7068699 0.70589054 … 0.76891756 0.7068567; -0.00039617866 0.06549954 … 0.6393478 0.7073566; … ; 1.9853343e10 1.1298176e11 … 1.226456e11 1.9853332e10; 1.008069e-13 1.7701969e-14 … 1.6331625e-14 1.00769206e-13], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], [1 6 … 1 181; 7 12 … 2 182; … ; 205 210 … 35 215; 211 216 … 36 216]
+
+[217 222 … 217 397; 223 228 … 218 398; … ; 421 426 … 251 431; 427 432 … 252 432]
+
+[433 438 … 433 613; 439 444 … 434 614; … ; 637 642 … 467 647; 643 648 … 468 648]
+
+...
+
+[9721 9726 … 9721 9901; 9727 9732 … 9722 9902; … ; 9925 9930 … 9755 9935; 9931 9936 … 9756 9936]
+
+[9937 9942 … 9937 10117; 9943 9948 … 9938 10118; … ; 10141 10146 … 9971 10151; 10147 10152 … 9972 10152]
+
+[10153 10158 … 10153 10333; 10159 10164 … 10154 10334; … ; 10357 10362 … 10187 10367; 10363 10368 … 10188 10368], [4351 1297 … 1 217; 4345 1303 … 2 218; … ; 4507 1501 … 35 251; 4501 1507 … 36 252]
+
+[4567 1513 … 181 397; 4561 1519 … 182 398; … ; 4723 1717 … 215 431; 4717 1723 … 216 432]
+
+[4783 865 … 433 649; 4777 871 … 434 650; … ; 4939 1069 … 467 683; 4933 1075 … 468 684]
+
+...
+
+[9294 5436 … 9685 9901; 9300 5430 … 9686 9902; … ; 9498 5592 … 9719 9935; 9504 5586 … 9720 9936]
+
+[8646 5652 … 9937 10153; 8652 5646 … 9938 10154; … ; 8850 5808 … 9971 10187; 8856 5802 … 9972 10188]
+
+[8862 5868 … 10117 10333; 8868 5862 … 10118 10334; … ; 9066 6024 … 10151 10367; 9072 6018 … 10152 10368], Int64[], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Bool[1, 1, 1, 1, 1, 1, 1, 1, 1, 1  …  1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Float32[0.0666666, 0.37847504, 0.55485797, 0.55485886, 0.37847477, 0.06666657], Float32[-7.500001 10.141418 … -1.3499136 0.50000024; -1.786365 3.5762787e-7 … 0.6535476 -0.23778127; … ; 0.2377811 -0.65354735 … -1.4305115e-6 1.7863661; -0.49999976 1.3499128 … -10.1414175 7.500002], Float32[0.0 0.0 … 0.0 0.0; 0.09135958 0.1637356 … -0.008943558 0.0032868516; … ; 0.06337984 0.38741845 … 0.21473905 -0.024692891; 0.06666665 0.3784751 … 0.37847477 0.06666652]), CLIMA.DGmethods.NumericalFluxes.Rusanov(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient(), Float32[-3.6782988e6 3.6782988e6 … 286.04117 289.98462; -3.8845165e6 3.2265625e6 … 286.0417 289.99103; … ; -6.35884e6 588353.2 … 421.83963 232.91702; -6.3860005e6 0.14947513 … 421.83594 232.91415]
+
+Float32[-3.686959e6 3.686959e6 … 421.5593 232.70032; -3.8936622e6 3.2341592e6 … 421.56693 232.70624; … ; -6.3737765e6 589735.2 … 789.44476 230.06824; -6.4010005e6 0.14982623 … 790.04974 230.32196]
+
+Float32[-4.5049775e6 4.5049775e6 … 286.05716 290.01294; -4.900868e6 4.070766e6 … 286.039 289.98715; … ; -4.505951e6 416914.2 … 421.77686 232.8617; -4.5155845e6 0.10569488 … 421.61844 232.73923]
+
+...
+
+Float32[6.386e6 0.0 … 421.66092 232.7857; 6.3588395e6 588353.1 … 421.5409 232.68613; … ; 3.9028082e6 3.2417562e6 … 790.03723 230.31685; 3.6956195e6 3.6956195e6 … 789.0584 229.91745]
+
+Float32[4.5049775e6 0.0 … 286.0538 290.00818; 4.4953665e6 415934.8 … 286.0464 289.99765; … ; 4.912407e6 4.0803505e6 … 421.73355 232.83502; 4.5155845e6 4.5155845e6 … 421.6726 232.7811]
+
+Float32[4.515584e6 0.0 … 421.61136 232.7406; 4.5059505e6 416914.12 … 421.60492 232.73561; … ; 4.9239455e6 4.0899345e6 … 789.4799 230.08942; 4.526191e6 4.526191e6 … 788.9613 229.87785], Float32[5.524424e-32 5.5249316e-32 … 5.528486e-32 5.528994e-32; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.529502e-32 5.53001e-32 … 5.5335644e-32 5.534072e-32; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.53458e-32 4.7022783e-32 … 5.5386426e-32 9.087253e-33; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[NaN 0.0 … NaN 1.0e-45; NaN 0.0 … NaN 0.0; … ; 0.0 0.0 … 5.757515e-32 2.1135504e-38; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN 1.0e-45 … NaN 1.5e-44; NaN 0.0 … NaN 0.0; … ; 5.7585305e-32 0.0 … 1.1097842e-34 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.1809972e-33 1.5e-44 … NaN 1.5e-44; 0.0 0.0 … NaN 0.0; … ; 3.915464e-37 0.0 … 5.767671e-32 0.0; 0.0 0.0 … 0.0 0.0], (Float32[5.76824e-32 5.768748e-32 … 5.773318e-32 5.773826e-32; 0.0 0.0 … 0.0 0.0; … ; 5.7687385e-32 5.769218e-32 … 5.7737885e-32 5.774296e-32; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.774334e-32 5.2410826e-33 … 5.779412e-32 5.77992e-32; 0.0 0.0 … 0.0 0.0; … ; 5.241059e-33 5.775312e-32 … 5.77992e-32 5.7803994e-32; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.7804276e-32 2.680421e-33 … 5.785506e-32 5.7860136e-32; 0.0 0.0 … 0.0 0.0; … ; 2.6804092e-33 5.7814245e-32 … 5.7860136e-32 5.786484e-32; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[2.1827633e-35 1.0e-45 … NaN 1.0e-45; 0.0 0.0 … NaN 0.0; … ; 6.042944e-32 2.0685239e-38 … 6.048022e-32 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN 1.5e-44 … NaN 1.5e-44; NaN 0.0 … NaN 0.0; … ; 6.0490375e-32 2.4866216e-33 … 2.6199308e-34 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN 1.0e-45 … NaN 0.0; NaN 0.0 … NaN 0.0; … ; 6.055131e-32 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0], Float32[0.0 0.0 0.0 0.0; 0.0 1.0e-45 0.0 0.0; … ; 8.412114e-32 0.0 0.0 8.3851997e-32; 0.0 0.0 0.0 0.0]
+
+Float32[0.0 0.0 0.0 0.0; 1.0e-45 0.0 0.0 0.0; … ; 0.0 0.0 0.0 8.382153e-32; 0.0 0.0 0.0 0.0]
+
+Float32[0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0; … ; 0.0 8.382153e-32 0.0 0.0; 0.0 0.0 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0; … ; 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0]
+
+Float32[0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0; … ; 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0]
+
+Float32[0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0; … ; 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0]), CLIMA.Mesh.Grids.EveryDirection(), CLIMA.Mesh.Grids.HorizontalDirection(), nothing), Float32[1.2772285 0.0 … 0.0 15424.665; 1.2772905 0.0 … 0.0 15425.027; … ; 0.18959127 0.0 … 0.0 22424.916; 0.18959127 0.0 … 0.0 22424.527]
+
+Float32[0.18959127 0.0 … 0.0 22395.438; 0.18959127 0.0 … 0.0 22396.242; … ; 0.020504385 0.0 … 0.0 5400.675; 0.020505909 0.0 … 0.0 5404.7085]
+
+Float32[1.2772905 0.0 … 0.0 15445.11; 1.2772905 0.0 … 0.0 15421.461; … ; 0.18957739 0.0 … 0.0 22416.678; 0.18957739 0.0 … 0.0 22400.021]
+
+...
+
+Float32[0.18960516 0.0 … 0.0 22407.766; 0.18959127 0.0 … 0.0 22393.508; … ; 0.020505909 0.0 … 0.0 5404.6333; 0.020505909 0.0 … 0.0 5398.757]
+
+Float32[1.2772905 0.0 … 0.0 15440.749; 1.2772905 0.0 … 0.0 15431.1; … ; 0.18959127 0.0 … 0.0 22413.762; 0.18957739 0.0 … 0.0 22405.717]
+
+Float32[0.18959127 0.0 … 0.0 22400.918; 0.18959127 0.0 … 0.0 22400.238; … ; 0.020505909 0.0 … 0.0 5401.287; 0.020505909 0.0 … 0.0 5398.1743], 0.0f0, 86400.0f0, 243.38028f0, true, 355, (), CLIMA.ODESolvers.AdditiveRungeKutta{Float32,Float32,CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:ρ, :ρu, :ρe, :turbulence, :hyperdiffusion, :moisture, :radiation, :tracers),Tuple{Float32,StaticArrays.SArray{Tuple{3},Float32,1,3},Float32,NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.ColumnwiseLUSolver.ManyColumnLU,CLIMA.ODESolvers.LowStorageVariant,NamedTuple{(:Qtt,),Tuple{CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:ρ, :ρu, :ρe, :turbulence, :hyperdiffusion, :moisture, :radiation, :tracers),Tuple{Float32,StaticArrays.SArray{Tuple{3},Float32,1,3},Float32,NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}}}},3,9}(243.38028f0, 0.0f0, CLIMA.DGmethods.DGModel{CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing},CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}},CLIMA.DGmethods.NumericalFluxes.Rusanov,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient,CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:∫dz, :∫dnz, :coord, :orientation, :ref_state, :turbulence, :hyperdiffusion, :moisture, :tracers, :radiation),Tuple{NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},StaticArrays.SArray{Tuple{3},Float32,1,3},NamedTuple{(:Φ, :∇Φ),Tuple{Float32,StaticArrays.SArray{Tuple{3},Float32,1,3}}},NamedTuple{(:ρ, :p, :T, :ρe, :ρq_tot),NTuple{5,Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:θ_v, :air_T),Tuple{Float32,Float32}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:∇h_tot, :turbulence, :hyperdiffusion, :moisture, :tracers),Tuple{StaticArrays.SArray{Tuple{3},Float32,1,3},NamedTuple{(:S, :N²),Tuple{StaticArrays.SHermitianCompact{3,Float32,6},Float32}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},Tuple{CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:hyperdiffusion,),Tuple{NamedTuple{(:u, :h_tot),Tuple{StaticArrays.SArray{Tuple{3},Float32,1,3},Float32}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:hyperdiffusion,),Tuple{NamedTuple{(:ν∇³u, :ν∇³h_tot),Tuple{StaticArrays.SArray{Tuple{3,3},Float32,2,9},StaticArrays.SArray{Tuple{3},Float32,1,3}}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}}},CLIMA.Mesh.Grids.EveryDirection,CLIMA.Mesh.Grids.HorizontalDirection,Nothing}(CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}(Main.ex-heldsuarez.EarthParameterSet(), CLIMA.Atmos.SphericalOrientation(), CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32}(CLIMA.Atmos.DecayingTemperatureProfile{Float32}(290.0f0, 60.0f0, 8000.0f0), 0.0f0), CLIMA.Atmos.SmagorinskyLilly{Float32}(0.21f0), CLIMA.Atmos.StandardHyperDiffusion{Float32}(14400.0f0), CLIMA.Atmos.DryModel(), CLIMA.Atmos.NoPrecipitation(), CLIMA.Atmos.NoRadiation(), (CLIMA.Atmos.Gravity(), CLIMA.Atmos.Coriolis(), Main.ex-heldsuarez.held_suarez_forcing!, CLIMA.Atmos.RayleighSponge{Float32}(30000.0f0, 12000.0f0, 0.0011111111f0, Float32[0.0, 0.0, 0.0], 2.0f0)), CLIMA.Atmos.NoTracers(), CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer}(CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip}(CLIMA.Atmos.FreeSlip()), CLIMA.Atmos.Insulating(), CLIMA.Atmos.Impermeable(), CLIMA.Atmos.ImpermeableTracer()), Main.ex-heldsuarez.init_heldsuarez!, nothing), CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}}(CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}(CLIMA.Mesh.Topologies.BoxElementTopology{3,Float32}(MPI.Comm(1140850688), 1:48, 1:48, 49:48, , Int64[], , [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[-6.386e6 -6.386e6 … -6.401e6 -6.401e6; 6.386e6 0.0 … 6.401e6 0.0; -6.386e6 -6.386e6 … 0.0 0.0]
+
+Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; 0.0 0.0 … 6.386e6 6.386e6]
+
+...
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; 0.0 0.0 … 6.401e6 6.401e6]
+
+Float32[6.371e6 6.371e6 … 6.386e6 6.386e6; 0.0 6.371e6 … 0.0 6.386e6; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; -6.386e6 -6.386e6 … 0.0 0.0], [21 22 … 41 42; 7 8 … 27 28; … ; 1 1 … 47 47; 2 2 … 48 48], [1 1 … 2 2; 1 1 … 2 2; … ; 5 6 … 5 6; 5 6 … 5 6], [3 3 … 1 1; 1 1 … 3 3; … ; 1 1 … 1 1; 1 1 … 1 1], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 3, 4, 2, 5, 7, 13, 15, 23, 21  …  22, 24, 16, 14, 8, 6, 9, 11, 12, 10], true), 2), Float32[-3.4567688e-7 -3.456841e-7 … -3.6782988e6 7494.0566; -3.2200347e-7 -3.2776953e-7 … -3.8845165e6 7487.125; … ; -3.6824375e-8 -9.381433e-15 … -0.1488394 7501.743; -9.35744e-15 -9.354788e-15 … -0.14947513 7489.817]
+
+Float32[-3.4317333e-7 -3.4323094e-7 … -3.686959e6 7423.7314; -3.2163595e-7 -3.2727692e-7 … -3.8936622e6 7481.8457; … ; -3.672708e-8 -9.3610405e-15 … -0.14918901 7514.077; -9.297805e-15 -9.292527e-15 … -0.14982623 7473.074]
+
+Float32[-2.8314133e-7 0.0 … 0.0 7508.6973; -2.5557276e-7 0.0 … 0.0 7498.431; … ; -5.172452e-8 2.8283608e-7 … 4.505951e6 7488.269; -1.3170257e-14 2.8206887e-7 … 4.5155845e6 7479.755]
+
+...
+
+Float32[0.0 0.0 … 0.0 7508.1313; -3.6678173e-8 0.0 … 0.0 7471.743; … ; -3.20498e-7 -3.2558344e-7 … 3.9028082e6 7454.7407; -3.4443383e-7 -3.43974e-7 … 3.6956195e6 7524.4946]
+
+Float32[0.0 2.8313443e-7 … -4.5049775e6 7508.6196; -5.2050996e-8 2.8280027e-7 … -4.4953665e6 7484.8804; … ; -2.5643553e-7 1.2140228e-14 … -0.114983186 7504.0957; -2.8169134e-7 1.3161021e-14 … -0.10569488 7473.067]
+
+Float32[0.0 2.8263537e-7 … -4.515584e6 7553.2236; -5.1886506e-8 2.822707e-7 … -4.5059505e6 7485.521; … ; -2.5556656e-7 1.2136458e-14 … -0.11525326 7560.331; -2.8151945e-7 1.32071164e-14 … -0.10594315 7554.8145], Float32[0.70710677 0.70710677 … 0.7071068 0.7071068; 0.70710677 0.70710677 … 0.7071068 0.7071068; … ; 7.86699e7 4.2110138e8 … 3.3726986e8 5.8828536e7; 9.321126e-14 1.6510478e-14 … 1.779862e-14 1.0128107e-13]
+
+Float32[-2.3366391e-8 -2.342791e-8 … -2.3392865e-8 -2.3481222e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.345602e7 4.737245e8 … 4.7485504e8 8.3494376e7; 1.01581456e-13 1.645849e-14 … 1.2664646e-14 7.159307e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 7.8671544e7 4.2112944e8 … 3.3719504e8 5.8815356e7; 9.321126e-14 1.6510475e-14 … 1.7798646e-14 1.0128114e-13]
+
+Float32[-2.3360007e-8 -2.3430587e-8 … -2.3399506e-8 -2.346409e-8; -2.6757242e-11 1.4413223e-11 … -9.6450146e-11 -1.9866118e-10; … ; 8.34595e7 4.7364515e8 … 4.7485504e8 8.353166e7; 1.0158146e-13 1.645849e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.5775843 0.6097148 … 0.9957568 1.0; -0.57723266 -0.5058244 … -0.092023805 -0.0001233141; … ; 2.1433508e10 1.2098791e11 … 1.5725553e11 2.7815141e10; 9.321126e-14 1.6510475e-14 … 1.2716565e-14 7.174163e-14]
+
+Float32[-0.57761204 -0.609709 … -0.99575686 -1.0; 0.5772229 0.5058241 … 0.092022985 0.000118733675; … ; 2.153474e10 1.21558024e11 … 1.5799725e11 2.7946168e10; 9.2899883e-14 1.6445975e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.70710677 0.7071068 … 0.70710677 0.70710677; 0.70710677 0.7071068 … 0.70710677 0.70710677; … ; 7.848866e7 4.2220515e8 … 3.3719504e8 5.935579e7; 9.2749864e-14 1.6442932e-14 … 1.7715291e-14 1.0080698e-13]
+
+Float32[-2.3394367e-8 -2.3403025e-8 … -2.3399998e-8 -2.3399506e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.406418e7 4.7453146e8 … 4.753842e8 8.36435e7; 1.0100497e-13 1.6363435e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 7.850183e7 4.222239e8 … 3.3719504e8 5.9355788e7; 9.2749864e-14 1.644293e-14 … 1.7715293e-14 1.0080705e-13]
+
+Float32[-2.3387589e-8 -2.3426646e-8 … -2.340427e-8 -2.340187e-8; -9.934727e-12 -3.6690945e-11 … 5.1537255e-12 1.9332248e-10; … ; 8.400244e7 4.744653e8 … 4.7570166e8 8.358758e7; 1.01004986e-13 1.6363436e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.5776063 0.6097116 … 0.99575686 1.0; -0.5772215 -0.5058193 … -0.092023015 -0.00010939501; … ; 2.1534724e10 1.2155813e11 … 1.579972e11 2.7946183e10; 9.2749864e-14 1.644293e-14 … 1.266161e-14 7.143341e-14]
+
+Float32[-0.5775764 -0.60971236 … -0.9957571 -1.0; 0.57723343 0.50582474 … 0.09202069 0.00011751415; … ; 2.1636002e10 1.2212962e11 … 1.587404e11 2.8077558e10; 9.246489e-14 1.6388502e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.70710677 0.70710677 … 0.70710677 0.7071068; 0.70710677 0.70710677 … 0.70710677 0.7071068; … ; 5.9136708e7 3.3612906e8 … 4.2145635e8 7.8903784e7; 1.0156704e-13 1.7847914e-14 … 1.6442842e-14 9.294274e-14]
+
+Float32[-2.3425516e-8 -2.339332e-8 … -2.3388576e-8 -2.3371893e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.358184e7 4.7322845e8 … 4.7453754e8 8.3457096e7; 7.180844e-14 1.2709394e-14 … 1.6405646e-14 1.0128124e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.334183e7 4.7396262e8 … 4.752783e8 8.35503e7; 1.0156704e-13 1.645697e-14 … 1.2651276e-14 7.159305e-14]
+
+Float32[0.7067215 0.7072561 … 0.7068709 0.7081328; -0.00042318864 4.4356675e-5 … -0.001018105 -0.00067945477; … ; 7.864355e7 4.2085357e8 … 3.3708298e8 5.8993384e7; 9.3217636e-14 1.6512572e-14 … 1.7805319e-14 1.0128124e-13]
+
+Float32[0.70686597 0.76891905 … 0.7058856 0.7068711; -0.70734733 -0.63934606 … -0.06550532 0.00039913572; … ; 1.9667657e10 1.21498575e11 … 1.1192534e11 1.9667638e10; 1.0156704e-13 1.645697e-14 … 1.7868167e-14 1.0152404e-13]
+
+Float32[-0.7068647 -0.7689187 … -0.70588917 -0.7068616; 0.7073487 0.63934654 … 0.065510675 -0.00038758066; … ; 1.9760431e10 1.2207122e11 … 1.1245289e11 1.9760523e10; 1.01357724e-13 1.6392178e-14 … 1.7805319e-14 1.0128124e-13]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.370069e7 4.7456454e8 … 4.7633664e8 8.435188e7; 7.1454744e-14 1.2653209e-14 … 1.6324934e-14 1.00807e-13]
+
+Float32[-0.70667005 -0.70735687 … -0.70723224 -0.70628023; 0.70754313 0.7068566 … 0.70698136 0.7079305; … ; 5.938511e7 3.3717437e8 … 4.2183053e8 7.9075304e7; 1.01007276e-13 1.7755366e-14 … 1.6381824e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.369126e7 4.745812e8 … 4.7633654e8 8.435181e7; 7.1454744e-14 1.2653208e-14 … 1.6324934e-14 1.0080705e-13]
+
+Float32[-0.70746046 -0.70704055 … -0.7071067 -0.70627785; 0.0023036164 -0.0017132243 … 0.00043006658 -0.0025152573; … ; 5.9288296e7 3.3728314e8 … 4.2160608e8 7.897e7; 1.0100728e-13 1.7755364e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-1.0 -0.99575686 … -0.6097114 -0.5775862; -0.00011611638 -0.092022784 … -0.5058227 -0.577236; … ; 2.7946287e10 1.5799725e11 … 1.2155805e11 2.1534702e10; 7.1454744e-14 1.2653208e-14 … 1.6448828e-14 9.274374e-14]
+
+Float32[1.0 0.9957569 … 0.6097078 0.57755774; 0.000118994496 0.092022456 … 0.50582653 0.5772446; … ; 2.8077662e10 1.5874035e11 … 1.2212991e11 2.1636137e10; 7.125785e-14 1.2605521e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.334299e7 4.7392294e8 … 4.7527837e8 8.35503e7; 1.0156704e-13 1.6456968e-14 … 1.2651277e-14 7.1593014e-14]
+
+Float32[-0.7068327 -0.7072404 … -0.7070284 -0.70781773; 0.7073807 0.70697314 … 0.70718527 0.7063945; … ; 7.866579e7 4.207787e8 … 3.3730726e8 5.8940636e7; 9.3217616e-14 1.6512572e-14 … 1.7805303e-14 1.0128127e-13]
+
+Float32[-0.7071068 -0.7071068 … -0.70710677 -0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 5.9135256e7 3.3612362e8 … 4.2145632e8 7.8903736e7; 1.0156704e-13 1.7847913e-14 … 1.6442863e-14 9.2942784e-14]
+
+Float32[2.3425857e-8 2.3391289e-8 … 2.3422665e-8 2.3355495e-8; -2.3521393e-10 -9.0114635e-12 … -5.515981e-12 8.056114e-11; … ; 8.357274e7 4.7323392e8 … 4.739026e8 8.3457096e7; 7.1808445e-14 1.2709394e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.70686597 -0.7058868 … -0.76891845 -0.70687145; 0.00042094867 -0.06550351 … -0.6393468 -0.70734185; … ; 1.9667659e10 1.1192537e11 … 1.21498345e11 1.9667644e10; 1.0156704e-13 1.7847913e-14 … 1.64655e-14 1.0152404e-13]
+
+Float32[0.7068631 0.7058882 … 0.76891756 0.70685875; -0.0003955653 0.06550369 … 0.6393478 0.7073547; … ; 1.9760423e10 1.1245309e11 … 1.2207129e11 1.9760474e10; 1.0135774e-13 1.7812102e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.398612e7 4.7453146e8 … 4.753842e8 8.3568936e7; 1.00990586e-13 1.636304e-14 … 1.2612224e-14 7.125791e-14]
+
+Float32[-0.7068027 -0.7072792 … -0.7071061 -0.70710367; 0.7074105 0.7069343 … 0.7071061 0.70710367; … ; 7.8593304e7 4.218965e8 … 3.37345e8 5.926378e7; 9.2763294e-14 1.6442583e-14 … 1.7715155e-14 1.00769206e-13]
+
+Float32[-0.7071068 -0.70710677 … -0.70710677 -0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 5.9367972e7 3.3731472e8 … 4.2160595e8 7.908828e7; 1.00990586e-13 1.7751585e-14 … 1.6386298e-14 9.250772e-14]
+
+Float32[2.3481617e-8 2.3394227e-8 … 2.3381299e-8 2.3310704e-8; -5.0216113e-11 2.3334217e-11 … 4.3997344e-11 5.09856e-11; … ; 8.361875e7 4.7455824e8 … 4.7674467e8 8.433671e7; 7.146194e-14 1.2654473e-14 … 1.6331625e-14 1.00769206e-13]
+
+Float32[-0.70686245 -0.70588815 … -0.7689181 -0.70686626; 0.00039521258 -0.06550847 … -0.63934726 -0.70734715; … ; 1.9760368e10 1.1245316e11 … 1.2207106e11 1.9760423e10; 1.00990586e-13 1.7751585e-14 … 1.6380672e-14 1.0101423e-13]
+
+Float32[0.7068699 0.70589054 … 0.76891756 0.7068567; -0.00039617866 0.06549954 … 0.6393478 0.7073566; … ; 1.9853343e10 1.1298176e11 … 1.226456e11 1.9853332e10; 1.008069e-13 1.7701969e-14 … 1.6331625e-14 1.00769206e-13], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], [1 6 … 1 181; 7 12 … 2 182; … ; 205 210 … 35 215; 211 216 … 36 216]
+
+[217 222 … 217 397; 223 228 … 218 398; … ; 421 426 … 251 431; 427 432 … 252 432]
+
+[433 438 … 433 613; 439 444 … 434 614; … ; 637 642 … 467 647; 643 648 … 468 648]
+
+...
+
+[9721 9726 … 9721 9901; 9727 9732 … 9722 9902; … ; 9925 9930 … 9755 9935; 9931 9936 … 9756 9936]
+
+[9937 9942 … 9937 10117; 9943 9948 … 9938 10118; … ; 10141 10146 … 9971 10151; 10147 10152 … 9972 10152]
+
+[10153 10158 … 10153 10333; 10159 10164 … 10154 10334; … ; 10357 10362 … 10187 10367; 10363 10368 … 10188 10368], [4351 1297 … 1 217; 4345 1303 … 2 218; … ; 4507 1501 … 35 251; 4501 1507 … 36 252]
+
+[4567 1513 … 181 397; 4561 1519 … 182 398; … ; 4723 1717 … 215 431; 4717 1723 … 216 432]
+
+[4783 865 … 433 649; 4777 871 … 434 650; … ; 4939 1069 … 467 683; 4933 1075 … 468 684]
+
+...
+
+[9294 5436 … 9685 9901; 9300 5430 … 9686 9902; … ; 9498 5592 … 9719 9935; 9504 5586 … 9720 9936]
+
+[8646 5652 … 9937 10153; 8652 5646 … 9938 10154; … ; 8850 5808 … 9971 10187; 8856 5802 … 9972 10188]
+
+[8862 5868 … 10117 10333; 8868 5862 … 10118 10334; … ; 9066 6024 … 10151 10367; 9072 6018 … 10152 10368], Int64[], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Bool[1, 1, 1, 1, 1, 1, 1, 1, 1, 1  …  1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Float32[0.0666666, 0.37847504, 0.55485797, 0.55485886, 0.37847477, 0.06666657], Float32[-7.500001 10.141418 … -1.3499136 0.50000024; -1.786365 3.5762787e-7 … 0.6535476 -0.23778127; … ; 0.2377811 -0.65354735 … -1.4305115e-6 1.7863661; -0.49999976 1.3499128 … -10.1414175 7.500002], Float32[0.0 0.0 … 0.0 0.0; 0.09135958 0.1637356 … -0.008943558 0.0032868516; … ; 0.06337984 0.38741845 … 0.21473905 -0.024692891; 0.06666665 0.3784751 … 0.37847477 0.06666652]), CLIMA.DGmethods.NumericalFluxes.Rusanov(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient(), Float32[-3.6782988e6 3.6782988e6 … 286.04117 289.98462; -3.8845165e6 3.2265625e6 … 286.0417 289.99103; … ; -6.35884e6 588353.2 … 421.83963 232.91702; -6.3860005e6 0.14947513 … 421.83594 232.91415]
+
+Float32[-3.686959e6 3.686959e6 … 421.5593 232.70032; -3.8936622e6 3.2341592e6 … 421.56693 232.70624; … ; -6.3737765e6 589735.2 … 789.44476 230.06824; -6.4010005e6 0.14982623 … 790.04974 230.32196]
+
+Float32[-4.5049775e6 4.5049775e6 … 286.05716 290.01294; -4.900868e6 4.070766e6 … 286.039 289.98715; … ; -4.505951e6 416914.2 … 421.77686 232.8617; -4.5155845e6 0.10569488 … 421.61844 232.73923]
+
+...
+
+Float32[6.386e6 0.0 … 421.66092 232.7857; 6.3588395e6 588353.1 … 421.5409 232.68613; … ; 3.9028082e6 3.2417562e6 … 790.03723 230.31685; 3.6956195e6 3.6956195e6 … 789.0584 229.91745]
+
+Float32[4.5049775e6 0.0 … 286.0538 290.00818; 4.4953665e6 415934.8 … 286.0464 289.99765; … ; 4.912407e6 4.0803505e6 … 421.73355 232.83502; 4.5155845e6 4.5155845e6 … 421.6726 232.7811]
+
+Float32[4.515584e6 0.0 … 421.61136 232.7406; 4.5059505e6 416914.12 … 421.60492 232.73561; … ; 4.9239455e6 4.0899345e6 … 789.4799 230.08942; 4.526191e6 4.526191e6 … 788.9613 229.87785], Float32[5.524424e-32 5.5249316e-32 … 5.528486e-32 5.528994e-32; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.529502e-32 5.53001e-32 … 5.5335644e-32 5.534072e-32; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.53458e-32 4.7022783e-32 … 5.5386426e-32 9.087253e-33; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[NaN 0.0 … NaN 1.0e-45; NaN 0.0 … NaN 0.0; … ; 0.0 0.0 … 5.757515e-32 2.1135504e-38; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN 1.0e-45 … NaN 1.5e-44; NaN 0.0 … NaN 0.0; … ; 5.7585305e-32 0.0 … 1.1097842e-34 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.1809972e-33 1.5e-44 … NaN 1.5e-44; 0.0 0.0 … NaN 0.0; … ; 3.915464e-37 0.0 … 5.767671e-32 0.0; 0.0 0.0 … 0.0 0.0], (Float32[5.76824e-32 5.768748e-32 … 5.773318e-32 5.773826e-32; 0.0 0.0 … 0.0 0.0; … ; 5.7687385e-32 5.769218e-32 … 5.7737885e-32 5.774296e-32; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.774334e-32 5.2410826e-33 … 5.779412e-32 5.77992e-32; 0.0 0.0 … 0.0 0.0; … ; 5.241059e-33 5.775312e-32 … 5.77992e-32 5.7803994e-32; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.7804276e-32 2.680421e-33 … 5.785506e-32 5.7860136e-32; 0.0 0.0 … 0.0 0.0; … ; 2.6804092e-33 5.7814245e-32 … 5.7860136e-32 5.786484e-32; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[2.1827633e-35 1.0e-45 … NaN 1.0e-45; 0.0 0.0 … NaN 0.0; … ; 6.042944e-32 2.0685239e-38 … 6.048022e-32 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN 1.5e-44 … NaN 1.5e-44; NaN 0.0 … NaN 0.0; … ; 6.0490375e-32 2.4866216e-33 … 2.6199308e-34 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN 1.0e-45 … NaN 0.0; NaN 0.0 … NaN 0.0; … ; 6.055131e-32 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0], Float32[0.0 0.0 0.0 0.0; 0.0 1.0e-45 0.0 0.0; … ; 8.412114e-32 0.0 0.0 8.3851997e-32; 0.0 0.0 0.0 0.0]
+
+Float32[0.0 0.0 0.0 0.0; 1.0e-45 0.0 0.0 0.0; … ; 0.0 0.0 0.0 8.382153e-32; 0.0 0.0 0.0 0.0]
+
+Float32[0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0; … ; 0.0 8.382153e-32 0.0 0.0; 0.0 0.0 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0; … ; 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0]
+
+Float32[0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0; … ; 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0]
+
+Float32[0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0; … ; 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0]), CLIMA.Mesh.Grids.EveryDirection(), CLIMA.Mesh.Grids.HorizontalDirection(), nothing), CLIMA.DGmethods.DGModel{CLIMA.Atmos.AtmosAcousticGravityLinearModel{CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}},CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}},CLIMA.DGmethods.NumericalFluxes.Rusanov,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient,CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:∫dz, :∫dnz, :coord, :orientation, :ref_state, :turbulence, :hyperdiffusion, :moisture, :tracers, :radiation),Tuple{NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},StaticArrays.SArray{Tuple{3},Float32,1,3},NamedTuple{(:Φ, :∇Φ),Tuple{Float32,StaticArrays.SArray{Tuple{3},Float32,1,3}}},NamedTuple{(:ρ, :p, :T, :ρe, :ρq_tot),NTuple{5,Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:θ_v, :air_T),Tuple{Float32,Float32}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(),Tuple{}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},Tuple{CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(),Tuple{}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(),Tuple{}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}}},CLIMA.Mesh.Grids.VerticalDirection,CLIMA.Mesh.Grids.VerticalDirection,Nothing}(CLIMA.Atmos.AtmosAcousticGravityLinearModel{CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}}(CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}(Main.ex-heldsuarez.EarthParameterSet(), CLIMA.Atmos.SphericalOrientation(), CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32}(CLIMA.Atmos.DecayingTemperatureProfile{Float32}(290.0f0, 60.0f0, 8000.0f0), 0.0f0), CLIMA.Atmos.SmagorinskyLilly{Float32}(0.21f0), CLIMA.Atmos.StandardHyperDiffusion{Float32}(14400.0f0), CLIMA.Atmos.DryModel(), CLIMA.Atmos.NoPrecipitation(), CLIMA.Atmos.NoRadiation(), (CLIMA.Atmos.Gravity(), CLIMA.Atmos.Coriolis(), Main.ex-heldsuarez.held_suarez_forcing!, CLIMA.Atmos.RayleighSponge{Float32}(30000.0f0, 12000.0f0, 0.0011111111f0, Float32[0.0, 0.0, 0.0], 2.0f0)), CLIMA.Atmos.NoTracers(), CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer}(CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip}(CLIMA.Atmos.FreeSlip()), CLIMA.Atmos.Insulating(), CLIMA.Atmos.Impermeable(), CLIMA.Atmos.ImpermeableTracer()), Main.ex-heldsuarez.init_heldsuarez!, nothing)), CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}}(CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}(CLIMA.Mesh.Topologies.BoxElementTopology{3,Float32}(MPI.Comm(1140850688), 1:48, 1:48, 49:48, , Int64[], , [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[-6.386e6 -6.386e6 … -6.401e6 -6.401e6; 6.386e6 0.0 … 6.401e6 0.0; -6.386e6 -6.386e6 … 0.0 0.0]
+
+Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; 0.0 0.0 … 6.386e6 6.386e6]
+
+...
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; 0.0 0.0 … 6.401e6 6.401e6]
+
+Float32[6.371e6 6.371e6 … 6.386e6 6.386e6; 0.0 6.371e6 … 0.0 6.386e6; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; -6.386e6 -6.386e6 … 0.0 0.0], [21 22 … 41 42; 7 8 … 27 28; … ; 1 1 … 47 47; 2 2 … 48 48], [1 1 … 2 2; 1 1 … 2 2; … ; 5 6 … 5 6; 5 6 … 5 6], [3 3 … 1 1; 1 1 … 3 3; … ; 1 1 … 1 1; 1 1 … 1 1], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 3, 4, 2, 5, 7, 13, 15, 23, 21  …  22, 24, 16, 14, 8, 6, 9, 11, 12, 10], true), 2), Float32[-3.4567688e-7 -3.456841e-7 … -3.6782988e6 7494.0566; -3.2200347e-7 -3.2776953e-7 … -3.8845165e6 7487.125; … ; -3.6824375e-8 -9.381433e-15 … -0.1488394 7501.743; -9.35744e-15 -9.354788e-15 … -0.14947513 7489.817]
+
+Float32[-3.4317333e-7 -3.4323094e-7 … -3.686959e6 7423.7314; -3.2163595e-7 -3.2727692e-7 … -3.8936622e6 7481.8457; … ; -3.672708e-8 -9.3610405e-15 … -0.14918901 7514.077; -9.297805e-15 -9.292527e-15 … -0.14982623 7473.074]
+
+Float32[-2.8314133e-7 0.0 … 0.0 7508.6973; -2.5557276e-7 0.0 … 0.0 7498.431; … ; -5.172452e-8 2.8283608e-7 … 4.505951e6 7488.269; -1.3170257e-14 2.8206887e-7 … 4.5155845e6 7479.755]
+
+...
+
+Float32[0.0 0.0 … 0.0 7508.1313; -3.6678173e-8 0.0 … 0.0 7471.743; … ; -3.20498e-7 -3.2558344e-7 … 3.9028082e6 7454.7407; -3.4443383e-7 -3.43974e-7 … 3.6956195e6 7524.4946]
+
+Float32[0.0 2.8313443e-7 … -4.5049775e6 7508.6196; -5.2050996e-8 2.8280027e-7 … -4.4953665e6 7484.8804; … ; -2.5643553e-7 1.2140228e-14 … -0.114983186 7504.0957; -2.8169134e-7 1.3161021e-14 … -0.10569488 7473.067]
+
+Float32[0.0 2.8263537e-7 … -4.515584e6 7553.2236; -5.1886506e-8 2.822707e-7 … -4.5059505e6 7485.521; … ; -2.5556656e-7 1.2136458e-14 … -0.11525326 7560.331; -2.8151945e-7 1.32071164e-14 … -0.10594315 7554.8145], Float32[0.70710677 0.70710677 … 0.7071068 0.7071068; 0.70710677 0.70710677 … 0.7071068 0.7071068; … ; 7.86699e7 4.2110138e8 … 3.3726986e8 5.8828536e7; 9.321126e-14 1.6510478e-14 … 1.779862e-14 1.0128107e-13]
+
+Float32[-2.3366391e-8 -2.342791e-8 … -2.3392865e-8 -2.3481222e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.345602e7 4.737245e8 … 4.7485504e8 8.3494376e7; 1.01581456e-13 1.645849e-14 … 1.2664646e-14 7.159307e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 7.8671544e7 4.2112944e8 … 3.3719504e8 5.8815356e7; 9.321126e-14 1.6510475e-14 … 1.7798646e-14 1.0128114e-13]
+
+Float32[-2.3360007e-8 -2.3430587e-8 … -2.3399506e-8 -2.346409e-8; -2.6757242e-11 1.4413223e-11 … -9.6450146e-11 -1.9866118e-10; … ; 8.34595e7 4.7364515e8 … 4.7485504e8 8.353166e7; 1.0158146e-13 1.645849e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.5775843 0.6097148 … 0.9957568 1.0; -0.57723266 -0.5058244 … -0.092023805 -0.0001233141; … ; 2.1433508e10 1.2098791e11 … 1.5725553e11 2.7815141e10; 9.321126e-14 1.6510475e-14 … 1.2716565e-14 7.174163e-14]
+
+Float32[-0.57761204 -0.609709 … -0.99575686 -1.0; 0.5772229 0.5058241 … 0.092022985 0.000118733675; … ; 2.153474e10 1.21558024e11 … 1.5799725e11 2.7946168e10; 9.2899883e-14 1.6445975e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.70710677 0.7071068 … 0.70710677 0.70710677; 0.70710677 0.7071068 … 0.70710677 0.70710677; … ; 7.848866e7 4.2220515e8 … 3.3719504e8 5.935579e7; 9.2749864e-14 1.6442932e-14 … 1.7715291e-14 1.0080698e-13]
+
+Float32[-2.3394367e-8 -2.3403025e-8 … -2.3399998e-8 -2.3399506e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.406418e7 4.7453146e8 … 4.753842e8 8.36435e7; 1.0100497e-13 1.6363435e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 7.850183e7 4.222239e8 … 3.3719504e8 5.9355788e7; 9.2749864e-14 1.644293e-14 … 1.7715293e-14 1.0080705e-13]
+
+Float32[-2.3387589e-8 -2.3426646e-8 … -2.340427e-8 -2.340187e-8; -9.934727e-12 -3.6690945e-11 … 5.1537255e-12 1.9332248e-10; … ; 8.400244e7 4.744653e8 … 4.7570166e8 8.358758e7; 1.01004986e-13 1.6363436e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.5776063 0.6097116 … 0.99575686 1.0; -0.5772215 -0.5058193 … -0.092023015 -0.00010939501; … ; 2.1534724e10 1.2155813e11 … 1.579972e11 2.7946183e10; 9.2749864e-14 1.644293e-14 … 1.266161e-14 7.143341e-14]
+
+Float32[-0.5775764 -0.60971236 … -0.9957571 -1.0; 0.57723343 0.50582474 … 0.09202069 0.00011751415; … ; 2.1636002e10 1.2212962e11 … 1.587404e11 2.8077558e10; 9.246489e-14 1.6388502e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.70710677 0.70710677 … 0.70710677 0.7071068; 0.70710677 0.70710677 … 0.70710677 0.7071068; … ; 5.9136708e7 3.3612906e8 … 4.2145635e8 7.8903784e7; 1.0156704e-13 1.7847914e-14 … 1.6442842e-14 9.294274e-14]
+
+Float32[-2.3425516e-8 -2.339332e-8 … -2.3388576e-8 -2.3371893e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.358184e7 4.7322845e8 … 4.7453754e8 8.3457096e7; 7.180844e-14 1.2709394e-14 … 1.6405646e-14 1.0128124e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.334183e7 4.7396262e8 … 4.752783e8 8.35503e7; 1.0156704e-13 1.645697e-14 … 1.2651276e-14 7.159305e-14]
+
+Float32[0.7067215 0.7072561 … 0.7068709 0.7081328; -0.00042318864 4.4356675e-5 … -0.001018105 -0.00067945477; … ; 7.864355e7 4.2085357e8 … 3.3708298e8 5.8993384e7; 9.3217636e-14 1.6512572e-14 … 1.7805319e-14 1.0128124e-13]
+
+Float32[0.70686597 0.76891905 … 0.7058856 0.7068711; -0.70734733 -0.63934606 … -0.06550532 0.00039913572; … ; 1.9667657e10 1.21498575e11 … 1.1192534e11 1.9667638e10; 1.0156704e-13 1.645697e-14 … 1.7868167e-14 1.0152404e-13]
+
+Float32[-0.7068647 -0.7689187 … -0.70588917 -0.7068616; 0.7073487 0.63934654 … 0.065510675 -0.00038758066; … ; 1.9760431e10 1.2207122e11 … 1.1245289e11 1.9760523e10; 1.01357724e-13 1.6392178e-14 … 1.7805319e-14 1.0128124e-13]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.370069e7 4.7456454e8 … 4.7633664e8 8.435188e7; 7.1454744e-14 1.2653209e-14 … 1.6324934e-14 1.00807e-13]
+
+Float32[-0.70667005 -0.70735687 … -0.70723224 -0.70628023; 0.70754313 0.7068566 … 0.70698136 0.7079305; … ; 5.938511e7 3.3717437e8 … 4.2183053e8 7.9075304e7; 1.01007276e-13 1.7755366e-14 … 1.6381824e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.369126e7 4.745812e8 … 4.7633654e8 8.435181e7; 7.1454744e-14 1.2653208e-14 … 1.6324934e-14 1.0080705e-13]
+
+Float32[-0.70746046 -0.70704055 … -0.7071067 -0.70627785; 0.0023036164 -0.0017132243 … 0.00043006658 -0.0025152573; … ; 5.9288296e7 3.3728314e8 … 4.2160608e8 7.897e7; 1.0100728e-13 1.7755364e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-1.0 -0.99575686 … -0.6097114 -0.5775862; -0.00011611638 -0.092022784 … -0.5058227 -0.577236; … ; 2.7946287e10 1.5799725e11 … 1.2155805e11 2.1534702e10; 7.1454744e-14 1.2653208e-14 … 1.6448828e-14 9.274374e-14]
+
+Float32[1.0 0.9957569 … 0.6097078 0.57755774; 0.000118994496 0.092022456 … 0.50582653 0.5772446; … ; 2.8077662e10 1.5874035e11 … 1.2212991e11 2.1636137e10; 7.125785e-14 1.2605521e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.334299e7 4.7392294e8 … 4.7527837e8 8.35503e7; 1.0156704e-13 1.6456968e-14 … 1.2651277e-14 7.1593014e-14]
+
+Float32[-0.7068327 -0.7072404 … -0.7070284 -0.70781773; 0.7073807 0.70697314 … 0.70718527 0.7063945; … ; 7.866579e7 4.207787e8 … 3.3730726e8 5.8940636e7; 9.3217616e-14 1.6512572e-14 … 1.7805303e-14 1.0128127e-13]
+
+Float32[-0.7071068 -0.7071068 … -0.70710677 -0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 5.9135256e7 3.3612362e8 … 4.2145632e8 7.8903736e7; 1.0156704e-13 1.7847913e-14 … 1.6442863e-14 9.2942784e-14]
+
+Float32[2.3425857e-8 2.3391289e-8 … 2.3422665e-8 2.3355495e-8; -2.3521393e-10 -9.0114635e-12 … -5.515981e-12 8.056114e-11; … ; 8.357274e7 4.7323392e8 … 4.739026e8 8.3457096e7; 7.1808445e-14 1.2709394e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.70686597 -0.7058868 … -0.76891845 -0.70687145; 0.00042094867 -0.06550351 … -0.6393468 -0.70734185; … ; 1.9667659e10 1.1192537e11 … 1.21498345e11 1.9667644e10; 1.0156704e-13 1.7847913e-14 … 1.64655e-14 1.0152404e-13]
+
+Float32[0.7068631 0.7058882 … 0.76891756 0.70685875; -0.0003955653 0.06550369 … 0.6393478 0.7073547; … ; 1.9760423e10 1.1245309e11 … 1.2207129e11 1.9760474e10; 1.0135774e-13 1.7812102e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.398612e7 4.7453146e8 … 4.753842e8 8.3568936e7; 1.00990586e-13 1.636304e-14 … 1.2612224e-14 7.125791e-14]
+
+Float32[-0.7068027 -0.7072792 … -0.7071061 -0.70710367; 0.7074105 0.7069343 … 0.7071061 0.70710367; … ; 7.8593304e7 4.218965e8 … 3.37345e8 5.926378e7; 9.2763294e-14 1.6442583e-14 … 1.7715155e-14 1.00769206e-13]
+
+Float32[-0.7071068 -0.70710677 … -0.70710677 -0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 5.9367972e7 3.3731472e8 … 4.2160595e8 7.908828e7; 1.00990586e-13 1.7751585e-14 … 1.6386298e-14 9.250772e-14]
+
+Float32[2.3481617e-8 2.3394227e-8 … 2.3381299e-8 2.3310704e-8; -5.0216113e-11 2.3334217e-11 … 4.3997344e-11 5.09856e-11; … ; 8.361875e7 4.7455824e8 … 4.7674467e8 8.433671e7; 7.146194e-14 1.2654473e-14 … 1.6331625e-14 1.00769206e-13]
+
+Float32[-0.70686245 -0.70588815 … -0.7689181 -0.70686626; 0.00039521258 -0.06550847 … -0.63934726 -0.70734715; … ; 1.9760368e10 1.1245316e11 … 1.2207106e11 1.9760423e10; 1.00990586e-13 1.7751585e-14 … 1.6380672e-14 1.0101423e-13]
+
+Float32[0.7068699 0.70589054 … 0.76891756 0.7068567; -0.00039617866 0.06549954 … 0.6393478 0.7073566; … ; 1.9853343e10 1.1298176e11 … 1.226456e11 1.9853332e10; 1.008069e-13 1.7701969e-14 … 1.6331625e-14 1.00769206e-13], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], [1 6 … 1 181; 7 12 … 2 182; … ; 205 210 … 35 215; 211 216 … 36 216]
+
+[217 222 … 217 397; 223 228 … 218 398; … ; 421 426 … 251 431; 427 432 … 252 432]
+
+[433 438 … 433 613; 439 444 … 434 614; … ; 637 642 … 467 647; 643 648 … 468 648]
+
+...
+
+[9721 9726 … 9721 9901; 9727 9732 … 9722 9902; … ; 9925 9930 … 9755 9935; 9931 9936 … 9756 9936]
+
+[9937 9942 … 9937 10117; 9943 9948 … 9938 10118; … ; 10141 10146 … 9971 10151; 10147 10152 … 9972 10152]
+
+[10153 10158 … 10153 10333; 10159 10164 … 10154 10334; … ; 10357 10362 … 10187 10367; 10363 10368 … 10188 10368], [4351 1297 … 1 217; 4345 1303 … 2 218; … ; 4507 1501 … 35 251; 4501 1507 … 36 252]
+
+[4567 1513 … 181 397; 4561 1519 … 182 398; … ; 4723 1717 … 215 431; 4717 1723 … 216 432]
+
+[4783 865 … 433 649; 4777 871 … 434 650; … ; 4939 1069 … 467 683; 4933 1075 … 468 684]
+
+...
+
+[9294 5436 … 9685 9901; 9300 5430 … 9686 9902; … ; 9498 5592 … 9719 9935; 9504 5586 … 9720 9936]
+
+[8646 5652 … 9937 10153; 8652 5646 … 9938 10154; … ; 8850 5808 … 9971 10187; 8856 5802 … 9972 10188]
+
+[8862 5868 … 10117 10333; 8868 5862 … 10118 10334; … ; 9066 6024 … 10151 10367; 9072 6018 … 10152 10368], Int64[], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Bool[1, 1, 1, 1, 1, 1, 1, 1, 1, 1  …  1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Float32[0.0666666, 0.37847504, 0.55485797, 0.55485886, 0.37847477, 0.06666657], Float32[-7.500001 10.141418 … -1.3499136 0.50000024; -1.786365 3.5762787e-7 … 0.6535476 -0.23778127; … ; 0.2377811 -0.65354735 … -1.4305115e-6 1.7863661; -0.49999976 1.3499128 … -10.1414175 7.500002], Float32[0.0 0.0 … 0.0 0.0; 0.09135958 0.1637356 … -0.008943558 0.0032868516; … ; 0.06337984 0.38741845 … 0.21473905 -0.024692891; 0.06666665 0.3784751 … 0.37847477 0.06666652]), CLIMA.DGmethods.NumericalFluxes.Rusanov(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient(), Float32[-3.6782988e6 3.6782988e6 … 286.04117 289.98462; -3.8845165e6 3.2265625e6 … 286.0417 289.99103; … ; -6.35884e6 588353.2 … 421.83963 232.91702; -6.3860005e6 0.14947513 … 421.83594 232.91415]
+
+Float32[-3.686959e6 3.686959e6 … 421.5593 232.70032; -3.8936622e6 3.2341592e6 … 421.56693 232.70624; … ; -6.3737765e6 589735.2 … 789.44476 230.06824; -6.4010005e6 0.14982623 … 790.04974 230.32196]
+
+Float32[-4.5049775e6 4.5049775e6 … 286.05716 290.01294; -4.900868e6 4.070766e6 … 286.039 289.98715; … ; -4.505951e6 416914.2 … 421.77686 232.8617; -4.5155845e6 0.10569488 … 421.61844 232.73923]
+
+...
+
+Float32[6.386e6 0.0 … 421.66092 232.7857; 6.3588395e6 588353.1 … 421.5409 232.68613; … ; 3.9028082e6 3.2417562e6 … 790.03723 230.31685; 3.6956195e6 3.6956195e6 … 789.0584 229.91745]
+
+Float32[4.5049775e6 0.0 … 286.0538 290.00818; 4.4953665e6 415934.8 … 286.0464 289.99765; … ; 4.912407e6 4.0803505e6 … 421.73355 232.83502; 4.5155845e6 4.5155845e6 … 421.6726 232.7811]
+
+Float32[4.515584e6 0.0 … 421.61136 232.7406; 4.5059505e6 416914.12 … 421.60492 232.73561; … ; 4.9239455e6 4.0899345e6 … 789.4799 230.08942; 4.526191e6 4.526191e6 … 788.9613 229.87785], , (, ), CLIMA.Mesh.Grids.VerticalDirection(), CLIMA.Mesh.Grids.VerticalDirection(), nothing), CLIMA.ColumnwiseLUSolver.ColumnwiseLU{CLIMA.DGmethods.DGModel{CLIMA.Atmos.AtmosAcousticGravityLinearModel{CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}},CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}},CLIMA.DGmethods.NumericalFluxes.Rusanov,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient,CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:∫dz, :∫dnz, :coord, :orientation, :ref_state, :turbulence, :hyperdiffusion, :moisture, :tracers, :radiation),Tuple{NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},StaticArrays.SArray{Tuple{3},Float32,1,3},NamedTuple{(:Φ, :∇Φ),Tuple{Float32,StaticArrays.SArray{Tuple{3},Float32,1,3}}},NamedTuple{(:ρ, :p, :T, :ρe, :ρq_tot),NTuple{5,Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:θ_v, :air_T),Tuple{Float32,Float32}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(),Tuple{}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},Tuple{CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(),Tuple{}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(),Tuple{}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}}},CLIMA.Mesh.Grids.VerticalDirection,CLIMA.Mesh.Grids.VerticalDirection,Nothing},Array{Float32,5}}(CLIMA.DGmethods.DGModel{CLIMA.Atmos.AtmosAcousticGravityLinearModel{CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}},CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}},CLIMA.DGmethods.NumericalFluxes.Rusanov,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive,CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient,CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(:∫dz, :∫dnz, :coord, :orientation, :ref_state, :turbulence, :hyperdiffusion, :moisture, :tracers, :radiation),Tuple{NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},NamedTuple{(:radiation,),Tuple{NamedTuple{(),Tuple{}}}},StaticArrays.SArray{Tuple{3},Float32,1,3},NamedTuple{(:Φ, :∇Φ),Tuple{Float32,StaticArrays.SArray{Tuple{3},Float32,1,3}}},NamedTuple{(:ρ, :p, :T, :ρe, :ρq_tot),NTuple{5,Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:Δ,),Tuple{Float32}},NamedTuple{(:θ_v, :air_T),Tuple{Float32,Float32}},NamedTuple{(),Tuple{}},NamedTuple{(),Tuple{}}}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(),Tuple{}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},Tuple{CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(),Tuple{}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}},CLIMA.MPIStateArrays.MPIStateArray{Float32,NamedTuple{(),Tuple{}},Array{Float32,3},Array{Int64,1},SubArray{Float32,3,Array{Float32,3},Tuple{Base.Slice{Base.OneTo{Int64}},Base.Slice{Base.OneTo{Int64}},UnitRange{Int64}},true},CLIMA.MPIStateArrays.CMBuffers.CMBuffer{Float32,Array{Float32,2},Nothing}}},CLIMA.Mesh.Grids.VerticalDirection,CLIMA.Mesh.Grids.VerticalDirection,Nothing}(CLIMA.Atmos.AtmosAcousticGravityLinearModel{CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}}(CLIMA.Atmos.AtmosModel{Float32,Main.ex-heldsuarez.EarthParameterSet,CLIMA.Atmos.SphericalOrientation,CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32},CLIMA.Atmos.SmagorinskyLilly{Float32},CLIMA.Atmos.StandardHyperDiffusion{Float32},CLIMA.Atmos.DryModel,CLIMA.Atmos.NoPrecipitation,CLIMA.Atmos.NoRadiation,Tuple{CLIMA.Atmos.Gravity,CLIMA.Atmos.Coriolis,typeof(Main.ex-heldsuarez.held_suarez_forcing!),CLIMA.Atmos.RayleighSponge{Float32}},CLIMA.Atmos.NoTracers,CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer},typeof(Main.ex-heldsuarez.init_heldsuarez!),Nothing}(Main.ex-heldsuarez.EarthParameterSet(), CLIMA.Atmos.SphericalOrientation(), CLIMA.Atmos.HydrostaticState{CLIMA.Atmos.DecayingTemperatureProfile{Float32},Float32}(CLIMA.Atmos.DecayingTemperatureProfile{Float32}(290.0f0, 60.0f0, 8000.0f0), 0.0f0), CLIMA.Atmos.SmagorinskyLilly{Float32}(0.21f0), CLIMA.Atmos.StandardHyperDiffusion{Float32}(14400.0f0), CLIMA.Atmos.DryModel(), CLIMA.Atmos.NoPrecipitation(), CLIMA.Atmos.NoRadiation(), (CLIMA.Atmos.Gravity(), CLIMA.Atmos.Coriolis(), Main.ex-heldsuarez.held_suarez_forcing!, CLIMA.Atmos.RayleighSponge{Float32}(30000.0f0, 12000.0f0, 0.0011111111f0, Float32[0.0, 0.0, 0.0], 2.0f0)), CLIMA.Atmos.NoTracers(), CLIMA.Atmos.AtmosBC{CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip},CLIMA.Atmos.Insulating,CLIMA.Atmos.Impermeable,CLIMA.Atmos.ImpermeableTracer}(CLIMA.Atmos.Impenetrable{CLIMA.Atmos.FreeSlip}(CLIMA.Atmos.FreeSlip()), CLIMA.Atmos.Insulating(), CLIMA.Atmos.Impermeable(), CLIMA.Atmos.ImpermeableTracer()), Main.ex-heldsuarez.init_heldsuarez!, nothing)), CLIMA.Mesh.Grids.DiscontinuousSpectralElementGrid{Float32,3,5,216,Array,Array{Float32,1},Array{Float32,2},Array{Float32,3},Array{Float32,4},Array{Int64,1},Array{Int64,2},Array{Int64,3},CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}}(CLIMA.Mesh.Topologies.StackedCubedSphereTopology{Float32}(CLIMA.Mesh.Topologies.BoxElementTopology{3,Float32}(MPI.Comm(1140850688), 1:48, 1:48, 49:48, , Int64[], , [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[-6.386e6 -6.386e6 … -6.401e6 -6.401e6; 6.386e6 0.0 … 6.401e6 0.0; -6.386e6 -6.386e6 … 0.0 0.0]
+
+Float32[-6.371e6 -6.371e6 … -6.386e6 -6.386e6; 6.371e6 0.0 … 6.386e6 0.0; 0.0 0.0 … 6.386e6 6.386e6]
+
+...
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; 0.0 0.0 … 6.401e6 6.401e6]
+
+Float32[6.371e6 6.371e6 … 6.386e6 6.386e6; 0.0 6.371e6 … 0.0 6.386e6; -6.371e6 -6.371e6 … 0.0 0.0]
+
+Float32[6.386e6 6.386e6 … 6.401e6 6.401e6; 0.0 6.386e6 … 0.0 6.401e6; -6.386e6 -6.386e6 … 0.0 0.0], [21 22 … 41 42; 7 8 … 27 28; … ; 1 1 … 47 47; 2 2 … 48 48], [1 1 … 2 2; 1 1 … 2 2; … ; 5 6 … 5 6; 5 6 … 5 6], [3 3 … 1 1; 1 1 … 3 3; … ; 1 1 … 1 1; 1 1 … 1 1], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 3, 4, 2, 5, 7, 13, 15, 23, 21  …  22, 24, 16, 14, 8, 6, 9, 11, 12, 10], true), 2), Float32[-3.4567688e-7 -3.456841e-7 … -3.6782988e6 7494.0566; -3.2200347e-7 -3.2776953e-7 … -3.8845165e6 7487.125; … ; -3.6824375e-8 -9.381433e-15 … -0.1488394 7501.743; -9.35744e-15 -9.354788e-15 … -0.14947513 7489.817]
+
+Float32[-3.4317333e-7 -3.4323094e-7 … -3.686959e6 7423.7314; -3.2163595e-7 -3.2727692e-7 … -3.8936622e6 7481.8457; … ; -3.672708e-8 -9.3610405e-15 … -0.14918901 7514.077; -9.297805e-15 -9.292527e-15 … -0.14982623 7473.074]
+
+Float32[-2.8314133e-7 0.0 … 0.0 7508.6973; -2.5557276e-7 0.0 … 0.0 7498.431; … ; -5.172452e-8 2.8283608e-7 … 4.505951e6 7488.269; -1.3170257e-14 2.8206887e-7 … 4.5155845e6 7479.755]
+
+...
+
+Float32[0.0 0.0 … 0.0 7508.1313; -3.6678173e-8 0.0 … 0.0 7471.743; … ; -3.20498e-7 -3.2558344e-7 … 3.9028082e6 7454.7407; -3.4443383e-7 -3.43974e-7 … 3.6956195e6 7524.4946]
+
+Float32[0.0 2.8313443e-7 … -4.5049775e6 7508.6196; -5.2050996e-8 2.8280027e-7 … -4.4953665e6 7484.8804; … ; -2.5643553e-7 1.2140228e-14 … -0.114983186 7504.0957; -2.8169134e-7 1.3161021e-14 … -0.10569488 7473.067]
+
+Float32[0.0 2.8263537e-7 … -4.515584e6 7553.2236; -5.1886506e-8 2.822707e-7 … -4.5059505e6 7485.521; … ; -2.5556656e-7 1.2136458e-14 … -0.11525326 7560.331; -2.8151945e-7 1.32071164e-14 … -0.10594315 7554.8145], Float32[0.70710677 0.70710677 … 0.7071068 0.7071068; 0.70710677 0.70710677 … 0.7071068 0.7071068; … ; 7.86699e7 4.2110138e8 … 3.3726986e8 5.8828536e7; 9.321126e-14 1.6510478e-14 … 1.779862e-14 1.0128107e-13]
+
+Float32[-2.3366391e-8 -2.342791e-8 … -2.3392865e-8 -2.3481222e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.345602e7 4.737245e8 … 4.7485504e8 8.3494376e7; 1.01581456e-13 1.645849e-14 … 1.2664646e-14 7.159307e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 7.8671544e7 4.2112944e8 … 3.3719504e8 5.8815356e7; 9.321126e-14 1.6510475e-14 … 1.7798646e-14 1.0128114e-13]
+
+Float32[-2.3360007e-8 -2.3430587e-8 … -2.3399506e-8 -2.346409e-8; -2.6757242e-11 1.4413223e-11 … -9.6450146e-11 -1.9866118e-10; … ; 8.34595e7 4.7364515e8 … 4.7485504e8 8.353166e7; 1.0158146e-13 1.645849e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.5775843 0.6097148 … 0.9957568 1.0; -0.57723266 -0.5058244 … -0.092023805 -0.0001233141; … ; 2.1433508e10 1.2098791e11 … 1.5725553e11 2.7815141e10; 9.321126e-14 1.6510475e-14 … 1.2716565e-14 7.174163e-14]
+
+Float32[-0.57761204 -0.609709 … -0.99575686 -1.0; 0.5772229 0.5058241 … 0.092022985 0.000118733675; … ; 2.153474e10 1.21558024e11 … 1.5799725e11 2.7946168e10; 9.2899883e-14 1.6445975e-14 … 1.26646545e-14 7.159307e-14]
+
+Float32[0.70710677 0.7071068 … 0.70710677 0.70710677; 0.70710677 0.7071068 … 0.70710677 0.70710677; … ; 7.848866e7 4.2220515e8 … 3.3719504e8 5.935579e7; 9.2749864e-14 1.6442932e-14 … 1.7715291e-14 1.0080698e-13]
+
+Float32[-2.3394367e-8 -2.3403025e-8 … -2.3399998e-8 -2.3399506e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.406418e7 4.7453146e8 … 4.753842e8 8.36435e7; 1.0100497e-13 1.6363435e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.7071068 0.70710677 … 0.70710677 0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 7.850183e7 4.222239e8 … 3.3719504e8 5.9355788e7; 9.2749864e-14 1.644293e-14 … 1.7715293e-14 1.0080705e-13]
+
+Float32[-2.3387589e-8 -2.3426646e-8 … -2.340427e-8 -2.340187e-8; -9.934727e-12 -3.6690945e-11 … 5.1537255e-12 1.9332248e-10; … ; 8.400244e7 4.744653e8 … 4.7570166e8 8.358758e7; 1.01004986e-13 1.6363436e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.5776063 0.6097116 … 0.99575686 1.0; -0.5772215 -0.5058193 … -0.092023015 -0.00010939501; … ; 2.1534724e10 1.2155813e11 … 1.579972e11 2.7946183e10; 9.2749864e-14 1.644293e-14 … 1.266161e-14 7.143341e-14]
+
+Float32[-0.5775764 -0.60971236 … -0.9957571 -1.0; 0.57723343 0.50582474 … 0.09202069 0.00011751415; … ; 2.1636002e10 1.2212962e11 … 1.587404e11 2.8077558e10; 9.246489e-14 1.6388502e-14 … 1.2612065e-14 7.125796e-14]
+
+Float32[0.70710677 0.70710677 … 0.70710677 0.7071068; 0.70710677 0.70710677 … 0.70710677 0.7071068; … ; 5.9136708e7 3.3612906e8 … 4.2145635e8 7.8903784e7; 1.0156704e-13 1.7847914e-14 … 1.6442842e-14 9.294274e-14]
+
+Float32[-2.3425516e-8 -2.339332e-8 … -2.3388576e-8 -2.3371893e-8; -1.0 -1.0 … -1.0 -1.0; … ; 8.358184e7 4.7322845e8 … 4.7453754e8 8.3457096e7; 7.180844e-14 1.2709394e-14 … 1.6405646e-14 1.0128124e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.334183e7 4.7396262e8 … 4.752783e8 8.35503e7; 1.0156704e-13 1.645697e-14 … 1.2651276e-14 7.159305e-14]
+
+Float32[0.7067215 0.7072561 … 0.7068709 0.7081328; -0.00042318864 4.4356675e-5 … -0.001018105 -0.00067945477; … ; 7.864355e7 4.2085357e8 … 3.3708298e8 5.8993384e7; 9.3217636e-14 1.6512572e-14 … 1.7805319e-14 1.0128124e-13]
+
+Float32[0.70686597 0.76891905 … 0.7058856 0.7068711; -0.70734733 -0.63934606 … -0.06550532 0.00039913572; … ; 1.9667657e10 1.21498575e11 … 1.1192534e11 1.9667638e10; 1.0156704e-13 1.645697e-14 … 1.7868167e-14 1.0152404e-13]
+
+Float32[-0.7068647 -0.7689187 … -0.70588917 -0.7068616; 0.7073487 0.63934654 … 0.065510675 -0.00038758066; … ; 1.9760431e10 1.2207122e11 … 1.1245289e11 1.9760523e10; 1.01357724e-13 1.6392178e-14 … 1.7805319e-14 1.0128124e-13]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.370069e7 4.7456454e8 … 4.7633664e8 8.435188e7; 7.1454744e-14 1.2653209e-14 … 1.6324934e-14 1.00807e-13]
+
+Float32[-0.70667005 -0.70735687 … -0.70723224 -0.70628023; 0.70754313 0.7068566 … 0.70698136 0.7079305; … ; 5.938511e7 3.3717437e8 … 4.2183053e8 7.9075304e7; 1.01007276e-13 1.7755366e-14 … 1.6381824e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; 8.369126e7 4.745812e8 … 4.7633654e8 8.435181e7; 7.1454744e-14 1.2653208e-14 … 1.6324934e-14 1.0080705e-13]
+
+Float32[-0.70746046 -0.70704055 … -0.7071067 -0.70627785; 0.0023036164 -0.0017132243 … 0.00043006658 -0.0025152573; … ; 5.9288296e7 3.3728314e8 … 4.2160608e8 7.897e7; 1.0100728e-13 1.7755364e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-1.0 -0.99575686 … -0.6097114 -0.5775862; -0.00011611638 -0.092022784 … -0.5058227 -0.577236; … ; 2.7946287e10 1.5799725e11 … 1.2155805e11 2.1534702e10; 7.1454744e-14 1.2653208e-14 … 1.6448828e-14 9.274374e-14]
+
+Float32[1.0 0.9957569 … 0.6097078 0.57755774; 0.000118994496 0.092022456 … 0.50582653 0.5772446; … ; 2.8077662e10 1.5874035e11 … 1.2212991e11 2.1636137e10; 7.125785e-14 1.2605521e-14 … 1.6381827e-14 9.250809e-14]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.334299e7 4.7392294e8 … 4.7527837e8 8.35503e7; 1.0156704e-13 1.6456968e-14 … 1.2651277e-14 7.1593014e-14]
+
+Float32[-0.7068327 -0.7072404 … -0.7070284 -0.70781773; 0.7073807 0.70697314 … 0.70718527 0.7063945; … ; 7.866579e7 4.207787e8 … 3.3730726e8 5.8940636e7; 9.3217616e-14 1.6512572e-14 … 1.7805303e-14 1.0128127e-13]
+
+Float32[-0.7071068 -0.7071068 … -0.70710677 -0.70710677; -0.0 -0.0 … -0.0 -0.0; … ; 5.9135256e7 3.3612362e8 … 4.2145632e8 7.8903736e7; 1.0156704e-13 1.7847913e-14 … 1.6442863e-14 9.2942784e-14]
+
+Float32[2.3425857e-8 2.3391289e-8 … 2.3422665e-8 2.3355495e-8; -2.3521393e-10 -9.0114635e-12 … -5.515981e-12 8.056114e-11; … ; 8.357274e7 4.7323392e8 … 4.739026e8 8.3457096e7; 7.1808445e-14 1.2709394e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.70686597 -0.7058868 … -0.76891845 -0.70687145; 0.00042094867 -0.06550351 … -0.6393468 -0.70734185; … ; 1.9667659e10 1.1192537e11 … 1.21498345e11 1.9667644e10; 1.0156704e-13 1.7847913e-14 … 1.64655e-14 1.0152404e-13]
+
+Float32[0.7068631 0.7058882 … 0.76891756 0.70685875; -0.0003955653 0.06550369 … 0.6393478 0.7073547; … ; 1.9760423e10 1.1245309e11 … 1.2207129e11 1.9760474e10; 1.0135774e-13 1.7812102e-14 … 1.6405646e-14 1.0128127e-13]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -1.0 -1.0 … -1.0 -1.0; … ; 8.398612e7 4.7453146e8 … 4.753842e8 8.3568936e7; 1.00990586e-13 1.636304e-14 … 1.2612224e-14 7.125791e-14]
+
+Float32[-0.7068027 -0.7072792 … -0.7071061 -0.70710367; 0.7074105 0.7069343 … 0.7071061 0.70710367; … ; 7.8593304e7 4.218965e8 … 3.37345e8 5.926378e7; 9.2763294e-14 1.6442583e-14 … 1.7715155e-14 1.00769206e-13]
+
+Float32[-0.7071068 -0.70710677 … -0.70710677 -0.7071068; -0.0 -0.0 … -0.0 -0.0; … ; 5.9367972e7 3.3731472e8 … 4.2160595e8 7.908828e7; 1.00990586e-13 1.7751585e-14 … 1.6386298e-14 9.250772e-14]
+
+Float32[2.3481617e-8 2.3394227e-8 … 2.3381299e-8 2.3310704e-8; -5.0216113e-11 2.3334217e-11 … 4.3997344e-11 5.09856e-11; … ; 8.361875e7 4.7455824e8 … 4.7674467e8 8.433671e7; 7.146194e-14 1.2654473e-14 … 1.6331625e-14 1.00769206e-13]
+
+Float32[-0.70686245 -0.70588815 … -0.7689181 -0.70686626; 0.00039521258 -0.06550847 … -0.63934726 -0.70734715; … ; 1.9760368e10 1.1245316e11 … 1.2207106e11 1.9760423e10; 1.00990586e-13 1.7751585e-14 … 1.6380672e-14 1.0101423e-13]
+
+Float32[0.7068699 0.70589054 … 0.76891756 0.7068567; -0.00039617866 0.06549954 … 0.6393478 0.7073566; … ; 1.9853343e10 1.1298176e11 … 1.226456e11 1.9853332e10; 1.008069e-13 1.7701969e-14 … 1.6331625e-14 1.00769206e-13], [0 0 … 0 0; 0 0 … 0 0; … ; 1 0 … 1 0; 0 1 … 0 1], [1 6 … 1 181; 7 12 … 2 182; … ; 205 210 … 35 215; 211 216 … 36 216]
+
+[217 222 … 217 397; 223 228 … 218 398; … ; 421 426 … 251 431; 427 432 … 252 432]
+
+[433 438 … 433 613; 439 444 … 434 614; … ; 637 642 … 467 647; 643 648 … 468 648]
+
+...
+
+[9721 9726 … 9721 9901; 9727 9732 … 9722 9902; … ; 9925 9930 … 9755 9935; 9931 9936 … 9756 9936]
+
+[9937 9942 … 9937 10117; 9943 9948 … 9938 10118; … ; 10141 10146 … 9971 10151; 10147 10152 … 9972 10152]
+
+[10153 10158 … 10153 10333; 10159 10164 … 10154 10334; … ; 10357 10362 … 10187 10367; 10363 10368 … 10188 10368], [4351 1297 … 1 217; 4345 1303 … 2 218; … ; 4507 1501 … 35 251; 4501 1507 … 36 252]
+
+[4567 1513 … 181 397; 4561 1519 … 182 398; … ; 4723 1717 … 215 431; 4717 1723 … 216 432]
+
+[4783 865 … 433 649; 4777 871 … 434 650; … ; 4939 1069 … 467 683; 4933 1075 … 468 684]
+
+...
+
+[9294 5436 … 9685 9901; 9300 5430 … 9686 9902; … ; 9498 5592 … 9719 9935; 9504 5586 … 9720 9936]
+
+[8646 5652 … 9937 10153; 8652 5646 … 9938 10154; … ; 8850 5808 … 9971 10187; 8856 5802 … 9972 10188]
+
+[8862 5868 … 10117 10333; 8868 5862 … 10118 10334; … ; 9066 6024 … 10151 10367; 9072 6018 … 10152 10368], Int64[], Int64[], UnitRange{Int64}[], UnitRange{Int64}[], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  39, 40, 41, 42, 43, 44, 45, 46, 47, 48], Int64[], Bool[1, 1, 1, 1, 1, 1, 1, 1, 1, 1  …  1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Float32[0.0666666, 0.37847504, 0.55485797, 0.55485886, 0.37847477, 0.06666657], Float32[-7.500001 10.141418 … -1.3499136 0.50000024; -1.786365 3.5762787e-7 … 0.6535476 -0.23778127; … ; 0.2377811 -0.65354735 … -1.4305115e-6 1.7863661; -0.49999976 1.3499128 … -10.1414175 7.500002], Float32[0.0 0.0 … 0.0 0.0; 0.09135958 0.1637356 … -0.008943558 0.0032868516; … ; 0.06337984 0.38741845 … 0.21473905 -0.024692891; 0.06666665 0.3784751 … 0.37847477 0.06666652]), CLIMA.DGmethods.NumericalFluxes.Rusanov(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxDiffusive(), CLIMA.DGmethods.NumericalFluxes.CentralNumericalFluxGradient(), Float32[-3.6782988e6 3.6782988e6 … 286.04117 289.98462; -3.8845165e6 3.2265625e6 … 286.0417 289.99103; … ; -6.35884e6 588353.2 … 421.83963 232.91702; -6.3860005e6 0.14947513 … 421.83594 232.91415]
+
+Float32[-3.686959e6 3.686959e6 … 421.5593 232.70032; -3.8936622e6 3.2341592e6 … 421.56693 232.70624; … ; -6.3737765e6 589735.2 … 789.44476 230.06824; -6.4010005e6 0.14982623 … 790.04974 230.32196]
+
+Float32[-4.5049775e6 4.5049775e6 … 286.05716 290.01294; -4.900868e6 4.070766e6 … 286.039 289.98715; … ; -4.505951e6 416914.2 … 421.77686 232.8617; -4.5155845e6 0.10569488 … 421.61844 232.73923]
+
+...
+
+Float32[6.386e6 0.0 … 421.66092 232.7857; 6.3588395e6 588353.1 … 421.5409 232.68613; … ; 3.9028082e6 3.2417562e6 … 790.03723 230.31685; 3.6956195e6 3.6956195e6 … 789.0584 229.91745]
+
+Float32[4.5049775e6 0.0 … 286.0538 290.00818; 4.4953665e6 415934.8 … 286.0464 289.99765; … ; 4.912407e6 4.0803505e6 … 421.73355 232.83502; 4.5155845e6 4.5155845e6 … 421.6726 232.7811]
+
+Float32[4.515584e6 0.0 … 421.61136 232.7406; 4.5059505e6 416914.12 … 421.60492 232.73561; … ; 4.9239455e6 4.0899345e6 … 789.4799 230.08942; 4.526191e6 4.526191e6 … 788.9613 229.87785], , (, ), CLIMA.Mesh.Grids.VerticalDirection(), CLIMA.Mesh.Grids.VerticalDirection(), nothing), Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[-214.10382 -226.19194 … -261.73352 -262.4762; -187.48964 -199.82141 … -236.20102 -237.34053; … ; -24.309761 -26.388199 … -34.032856 -34.139225; 0.14068274 0.12513563 … -0.043441165 -0.04574357]
+
+Float32[214.10419 187.48975 … 24.310162 -0.14244118; 226.19153 199.82143 … 26.359983 -0.12416565; … ; 261.73407 236.45157 … 34.032417 0.04419018; 262.47656 237.34036 … 34.139637 0.04425193]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.06609825 0.05488289 … 0.0061569666 -3.6023634e-5; 0.066211745 0.05512981 … 0.00615356 -2.8864299e-5; … ; 0.06628866 0.055208758 … 0.006159812 7.945853e-6; 0.06638092 0.055173583 … 0.006138663 7.939997e-6]
+
+Float32[1.9551505 1.8527752 … 1.6049497 1.6022451; 1.8527718 1.750278 … 1.4793152 1.4720478; … ; 1.6049526 1.4814645 … 1.1484202 1.1379205; 1.6022494 1.4720473 … 1.1379206 1.1377746]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[-0.9812866 -0.9294966 … -0.8045364 -0.8031047; -0.91304713 -0.86239046 … -0.7283664 -0.7249322; … ; -0.14767261 -0.13613428 … -0.10532508 -0.10427423; 0.00085935637 0.000645324 … -0.00013381628 -0.0001403174]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0027524182 0.0029118864 … 0.0033617713 0.0033704268; 0.0024136424 0.002568804 … 0.0030398592 0.0030488435; … ; 0.00031219542 0.00033925913 … 0.00043745598 0.00043947544; -1.8701137e-6 -1.6047856e-6 … 5.4445604e-7 5.6004575e-7]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-0.0027524536 -0.0024136463 … -0.0003121842 1.8253746e-6; -0.0029118771 -0.002568806 … -0.00033925305 1.6130153e-6; … ; -0.0033617807 -0.0030399144 … -0.00043746317 -5.603756e-7; -0.0033704143 -0.0030488465 … -0.00043947314 -5.3789705e-7]
+
+Float32[-0.17107074 -0.15840548 … -0.023723314 0.0001391502; -0.19111682 -0.1792243 … -0.028024934 0.00013366024; … ; -0.2554812 -0.25107035 … -0.046706144 -6.00124e-5; -0.25693163 -0.25264618 … -0.0470675 -5.7965015e-5]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-0.0011016214 -0.001163745 … -0.0013458465 -0.0013472383; -0.001163745 -0.0012368158 … -0.0014642082 -0.0014666921; … ; -0.0013458477 -0.0014642348 … -0.001891777 -0.0019022278; -0.0013472373 -0.0014666911 … -0.0019022281 -0.0019063094]
+
+Float32[0.00022151596 0.00021461133 … 0.000194176 0.00019403386; 0.00017814482 0.0001711645 … 0.00015189599 0.00015152781; … ; 1.7971332e-5 1.6908549e-5 … 1.3779789e-5 1.3745323e-5; -4.199411e-8 2.684479e-9 … -3.098524e-8 3.210893e-9]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[-262.6746 -261.93137 … -226.14897 -214.20573; -237.2028 -236.39476 … -199.62051 -187.61209; … ; -34.10391 -34.051163 … -26.377056 -24.316936; -0.04348879 -0.04404575 … 0.12866755 0.14810032]
+
+Float32[0.15607803 -24.326326 … -187.45554 -214.20264; 0.12405319 -26.382341 … -199.62016 -226.33873; … ; -0.04425374 -34.051693 … -236.35445 -261.8185; -0.03964594 -34.12158 … -237.3918 -262.4611]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[3.9477964e-5 -0.0061607603 … -0.054873865 -0.06612474; 2.8840765e-5 -0.006157994 … -0.055077847 -0.066246696; … ; -7.962338e-6 -0.0061630867 … -0.055187535 -0.06623572; -7.106778e-6 -0.0061387015 … -0.055163685 -0.06641707]
+
+Float32[1.6039114 1.6060116 … 1.8524777 1.9558023; 1.4714617 1.4801534 … 1.748741 1.8535166; … ; 1.1381823 1.1489675 … 1.480932 1.6019001; 1.1356192 1.1385539 … 1.4712095 1.6041633]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[-0.8039386 -0.80504847 … -0.9293146 -0.9816151; -0.72457325 -0.72876346 … -0.86166096 -0.91338927; … ; -0.104302526 -0.10537045 … -0.13608244 -0.14739001; -0.00013313195 -0.00013583088 … 0.0006630465 0.00090582494]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0033699088 0.0033611252 … 0.0029120208 0.0027528026; 0.0030487601 0.0030400262 … 0.0025685532 0.002413615; … ; 0.00043924822 0.00043752635 … 0.00033924106 0.00031255657; 6.080006e-7 5.234233e-7 … -1.5741176e-6 -1.8783968e-6]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-1.9064738e-6 0.0003121458 … 0.0024137553 0.0027528992; -1.5972894e-6 0.00033927467 … 0.0025685541 0.0029118476; … ; 5.4337164e-7 0.00043752242 … 0.0030397938 0.0033655565; 5.416731e-7 0.00043924057 … 0.0030520651 0.003370774]
+
+Float32[-0.00014531123 0.023718003 … 0.15843122 0.17104986; -0.00013233845 0.028022591 … 0.17928794 0.19110693; … ; 5.8225203e-5 0.046695877 … 0.25110972 0.2554702; 5.8353686e-5 0.04707983 … 0.25263742 0.256931]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-0.0013470519 -0.0013455991 … -0.0011637982 -0.0011017481; -0.0014666555 -0.0014642902 … -0.0012366939 -0.0011637211; … ; -0.0019012172 -0.0018920747 … -0.0014641803 -0.0013473803; -0.0019070767 -0.0019011551 … -0.001468235 -0.0013473467]
+
+Float32[0.00019391408 0.00019408372 … 0.0002146156 0.0002215568; 0.00015155543 0.00015184081 … 0.00017123586 0.00017809404; … ; 1.3759829e-5 1.3778944e-5 … 1.6917047e-5 1.7958278e-5; 1.3363953e-8 -2.9087325e-8 … -3.1687317e-9 5.117004e-9]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.041638304 0.04424557 … -0.12663539 -0.15700957; 34.121265 34.051666 … 26.360033 24.316912; … ; 237.06546 236.49171 … 199.72942 187.60863; 262.77484 261.83047 … 226.33286 214.1664]
+
+Float32[-0.04176693 -34.12114 … -237.06555 -262.77435; -0.044363048 -34.051674 … -236.20145 -261.83078; … ; 0.12601992 -26.39218 … -199.72987 -226.33273; 0.15941572 -24.318525 … -187.60954 -214.16426]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[-7.4867316e-6 -0.0061390274 … -0.055118203 -0.06645141; -7.981737e-6 -0.0061622662 … -0.05515093 -0.06630979; … ; 2.9299863e-5 -0.006161245 … -0.055117518 -0.066225864; 4.031367e-5 -0.006158774 … -0.054895416 -0.066131204]
+
+Float32[1.1355447 1.1387112 … 1.4707932 1.6038339; 1.1387111 1.1486564 … 1.479925 1.6053969; … ; 1.4707924 1.4812167 … 1.750298 1.852394; 1.6038351 1.6053987 … 1.8523984 1.9565607]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.00012745369 0.00013646219 … -0.0006533003 -0.00095896574; 0.104346484 0.10534457 … 0.13599257 0.14770211; … ; 0.7242605 0.72930104 … 0.8623919 0.9128698; 0.803897 0.804795 … 0.92926824 0.9819846]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-5.6727225e-7 -5.516627e-7 … 1.5442572e-6 1.8695268e-6; -0.00043919202 -0.00043754367 … -0.00033926067 -0.00031222912; … ; -0.0030489492 -0.003039994 … -0.0025684177 -0.0024145222; -0.003370432 -0.003361857 … -0.0029129386 -0.0027523066]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.636752e-7 0.000439189 … 0.0030489461 0.003370405; 5.5214923e-7 0.0004375443 … 0.003039939 0.003361872; … ; -1.5662656e-6 0.00033926388 … 0.002568421 0.0029129433; -1.8441514e-6 0.00031221795 … 0.002414534 0.0027523255]
+
+Float32[6.0717968e-5 0.04706281 … 0.25267112 0.2568656; 5.916725e-5 0.04669731 … 0.25113156 0.25547075; … ; -0.00012979367 0.028020812 … 0.17928378 0.19112316; -0.00014054676 0.0237243 … 0.15841877 0.17106734]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-0.0019068858 -0.0019009641 … -0.0014667455 -0.0013472851; -0.0019009643 -0.0018921247 … -0.0014642479 -0.001345882; … ; -0.0014667433 -0.0014642762 … -0.0012366339 -0.0011641565; -0.001347275 -0.0013458881 … -0.0011641583 -0.00110152]
+
+Float32[3.7655057e-9 1.1947426e-8 … -2.919601e-8 3.5256036e-8; -1.3749153e-5 -1.3778655e-5 … -1.6918846e-5 -1.7970551e-5; … ; -0.00015160248 -0.00015181137 … -0.00017119177 -0.00017813; -0.00019388934 -0.00019415791 … -0.0002146018 -0.00022154082]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[262.6746 261.93137 … 226.14897 214.20573; 237.2028 236.39476 … 199.62051 187.61209; … ; 34.10391 34.051163 … 26.377056 24.316936; 0.04348879 0.04404575 … -0.12866755 -0.14810032]
+
+Float32[0.15607803 -24.326326 … -187.45554 -214.20264; 0.12405319 -26.382341 … -199.62016 -226.33873; … ; -0.04425374 -34.051693 … -236.35445 -261.8185; -0.03964594 -34.12158 … -237.3918 -262.4611]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[-3.9477964e-5 0.0061607603 … 0.054873865 0.06612474; -2.8840765e-5 0.006157994 … 0.055077847 0.066246696; … ; 7.962338e-6 0.0061630867 … 0.055187535 0.06623572; 7.106778e-6 0.0061387015 … 0.055163685 0.06641707]
+
+Float32[-1.6039114 -1.6060116 … -1.8524777 -1.9558023; -1.4714617 -1.4801534 … -1.748741 -1.8535166; … ; -1.1381823 -1.1489675 … -1.480932 -1.6019001; -1.1356192 -1.1385539 … -1.4712095 -1.6041633]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.8039386 0.80504847 … 0.9293146 0.9816151; 0.72457325 0.72876346 … 0.86166096 0.91338927; … ; 0.104302526 0.10537045 … 0.13608244 0.14739001; 0.00013313195 0.00013583088 … -0.0006630465 -0.00090582494]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-0.0033699088 -0.0033611252 … -0.0029120208 -0.0027528026; -0.0030487601 -0.0030400262 … -0.0025685532 -0.002413615; … ; -0.00043924822 -0.00043752635 … -0.00033924106 -0.00031255657; -6.080006e-7 -5.234233e-7 … 1.5741176e-6 1.8783968e-6]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-1.9064738e-6 0.0003121458 … 0.0024137553 0.0027528992; -1.5972894e-6 0.00033927467 … 0.0025685541 0.0029118476; … ; 5.4337164e-7 0.00043752242 … 0.0030397938 0.0033655565; 5.416731e-7 0.00043924057 … 0.0030520651 0.003370774]
+
+Float32[0.00014531123 -0.023718003 … -0.15843122 -0.17104986; 0.00013233845 -0.028022591 … -0.17928794 -0.19110693; … ; -5.8225203e-5 -0.046695877 … -0.25110972 -0.2554702; -5.8353686e-5 -0.04707983 … -0.25263742 -0.256931]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0013470519 0.0013455991 … 0.0011637982 0.0011017481; 0.0014666555 0.0014642902 … 0.0012366939 0.0011637211; … ; 0.0019012172 0.0018920747 … 0.0014641803 0.0013473803; 0.0019070767 0.0019011551 … 0.001468235 0.0013473467]
+
+Float32[-0.00019391408 -0.00019408372 … -0.0002146156 -0.0002215568; -0.00015155543 -0.00015184081 … -0.00017123586 -0.00017809404; … ; -1.3759829e-5 -1.3778944e-5 … -1.6917047e-5 -1.7958278e-5; -1.3363953e-8 2.9087325e-8 … 3.1687317e-9 -5.117004e-9]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[-0.041638304 -0.04424557 … 0.12663539 0.15700957; -34.121265 -34.051666 … -26.360033 -24.316912; … ; -237.06546 -236.49171 … -199.72942 -187.60863; -262.77484 -261.83047 … -226.33286 -214.1664]
+
+Float32[-0.04176693 -34.12114 … -237.06555 -262.77435; -0.044363048 -34.051674 … -236.20145 -261.83078; … ; 0.12601992 -26.39218 … -199.72987 -226.33273; 0.15941572 -24.318525 … -187.60954 -214.16426]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[7.4867316e-6 0.0061390274 … 0.055118203 0.06645141; 7.981737e-6 0.0061622662 … 0.05515093 0.06630979; … ; -2.9299863e-5 0.006161245 … 0.055117518 0.066225864; -4.031367e-5 0.006158774 … 0.054895416 0.066131204]
+
+Float32[-1.1355447 -1.1387112 … -1.4707932 -1.6038339; -1.1387111 -1.1486564 … -1.479925 -1.6053969; … ; -1.4707924 -1.4812167 … -1.750298 -1.852394; -1.6038351 -1.6053987 … -1.8523984 -1.9565607]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[-0.00012745369 -0.00013646219 … 0.0006533003 0.00095896574; -0.104346484 -0.10534457 … -0.13599257 -0.14770211; … ; -0.7242605 -0.72930104 … -0.8623919 -0.9128698; -0.803897 -0.804795 … -0.92926824 -0.9819846]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.6727225e-7 5.516627e-7 … -1.5442572e-6 -1.8695268e-6; 0.00043919202 0.00043754367 … 0.00033926067 0.00031222912; … ; 0.0030489492 0.003039994 … 0.0025684177 0.0024145222; 0.003370432 0.003361857 … 0.0029129386 0.0027523066]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[5.636752e-7 0.000439189 … 0.0030489461 0.003370405; 5.5214923e-7 0.0004375443 … 0.003039939 0.003361872; … ; -1.5662656e-6 0.00033926388 … 0.002568421 0.0029129433; -1.8441514e-6 0.00031221795 … 0.002414534 0.0027523255]
+
+Float32[-6.0717968e-5 -0.04706281 … -0.25267112 -0.2568656; -5.916725e-5 -0.04669731 … -0.25113156 -0.25547075; … ; 0.00012979367 -0.028020812 … -0.17928378 -0.19112316; 0.00014054676 -0.0237243 … -0.15841877 -0.17106734]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0019068858 0.0019009641 … 0.0014667455 0.0013472851; 0.0019009643 0.0018921247 … 0.0014642479 0.001345882; … ; 0.0014667433 0.0014642762 … 0.0012366339 0.0011641565; 0.001347275 0.0013458881 … 0.0011641583 0.00110152]
+
+Float32[-3.7655057e-9 -1.1947426e-8 … 2.919601e-8 -3.5256036e-8; 1.3749153e-5 1.3778655e-5 … 1.6918846e-5 1.7970551e-5; … ; 0.00015160248 0.00015181137 … 0.00017119177 0.00017813; 0.00019388934 0.00019415791 … 0.0002146018 0.00022154082]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.15632004 0.123931944 … -0.0439264 -0.039948914; -24.326757 -26.382309 … -34.015404 -34.121353; … ; -187.45593 -199.9194 … -236.3546 -237.39153; -214.20241 -226.33961 … -261.81824 -262.46774]
+
+Float32[262.6747 237.20258 … 34.10404 0.044750247; 261.93106 236.39507 … 34.014763 0.04341922; … ; 226.14958 199.91975 … 26.376514 -0.12904355; 214.20485 187.61313 … 24.317099 -0.14630653]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[-0.06644024 -0.05514653 … -0.0061361534 -8.021754e-6; -0.066335306 -0.055177826 … -0.006156612 -7.81141e-6; … ; -0.06620093 -0.055163994 … -0.0061587766 2.9986348e-5; -0.06612499 -0.05491231 … -0.0061518163 3.70226e-5]
+
+Float32[-1.6039108 -1.4714608 … -1.1381822 -1.1356182; -1.6060121 -1.4801545 … -1.1478164 -1.1385536; … ; -1.8524841 -1.7515866 … -1.4809318 -1.4712082; -1.9557911 -1.8535256 … -1.6018969 -1.6041023]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.0009551657 0.00063926 … -0.00013548307 -0.0001222901; -0.14776535 -0.13601658 … -0.10527202 -0.1043262; … ; -0.9128841 -0.8630749 … -0.72915804 -0.7244536; -0.98159474 -0.92983854 … -0.8030077 -0.80401]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-1.8874622e-6 -1.6050047e-6 … 5.479463e-7 5.27429e-7; 0.00031214496 0.00033927363 … 0.00043746814 0.00043924083; … ; 0.0024137609 0.002568771 … 0.0030397975 0.0030520633; 0.0027528987 0.002911827 … 0.0033655642 0.0033707537]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-0.0033699041 -0.0030487662 … -0.0004392576 -6.140808e-7; -0.003361115 -0.003040027 … -0.00043746617 -5.1869205e-7; … ; -0.0029120247 -0.0025687786 … -0.00033925014 1.5652832e-6; -0.0027528189 -0.002413614 … -0.00031255934 1.915028e-6]
+
+Float32[0.25685248 0.25257528 … 0.047074705 6.615407e-5; 0.25540605 0.25107586 … 0.046706792 5.5596054e-5; … ; 0.19112153 0.17921546 … 0.028023167 -0.00012957017; 0.17104572 0.1584187 … 0.023724362 -0.00014596454]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0013470593 0.0014666545 … 0.0019012173 0.0019070785; 0.0013455984 0.00146429 … 0.0018918276 0.001901154; … ; 0.001163803 0.0012368006 … 0.0014641797 0.0014682368; 0.0011017397 0.0011637269 … 0.0013473823 0.0013473488]
+
+Float32[-3.6497642e-8 1.2704787e-8 … -1.30901e-8 -2.955332e-8; 1.796441e-5 1.6912098e-5 … 1.37814e-5 1.3752192e-5; … ; 0.00017815943 0.00017112664 … 0.00015184665 0.00015159589; 0.00022157682 0.00021455619 … 0.00019423912 0.00019405577]
+
+...
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]
+
+Float32[-0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0; … ; -0.0 -0.0 … -0.0 -0.0; -0.0 -0.0 … -0.0 -0.0]), CLIMA.ColumnwiseLUSolver.ManyColumnLU(), (Float32[1.2772285 0.0 … 0.0 15424.665; 1.2772905 0.0 … 0.0 15425.027; … ; 0.18959127 0.0 … 0.0 22424.916; 0.18959127 0.0 … 0.0 22424.527]
+
+Float32[0.18959127 0.0 … 0.0 22395.438; 0.18959127 0.0 … 0.0 22396.242; … ; 0.020504385 0.0 … 0.0 5400.675; 0.020505909 0.0 … 0.0 5404.7085]
+
+Float32[1.2772905 0.0 … 0.0 15445.11; 1.2772905 0.0 … 0.0 15421.461; … ; 0.18957739 0.0 … 0.0 22416.678; 0.18957739 0.0 … 0.0 22400.021]
+
+...
+
+Float32[0.18960516 0.0 … 0.0 22407.766; 0.18959127 0.0 … 0.0 22393.508; … ; 0.020505909 0.0 … 0.0 5404.6333; 0.020505909 0.0 … 0.0 5398.757]
+
+Float32[1.2772905 0.0 … 0.0 15440.749; 1.2772905 0.0 … 0.0 15431.1; … ; 0.18959127 0.0 … 0.0 22413.762; 0.18957739 0.0 … 0.0 22405.717]
+
+Float32[0.18959127 0.0 … 0.0 22400.918; 0.18959127 0.0 … 0.0 22400.238; … ; 0.020505909 0.0 … 0.0 5401.287; 0.020505909 0.0 … 0.0 5398.1743], Float32[7.610997e-31 8.630411e-38 … 1.5817086e-37 7.703451e-38; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[8.6552444e-38 1.2543401e-37 … 5.4981885e-38 2.8940154e-38; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[1.5040645e-37 2.874442e-38 … 4.902531e-38 9.843169e-38; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 … -4.464103e14 0.0; 0.0 0.0 … 4.5681e-41 0.0; … ; -4.464103e14 0.0 … 4.9040233e-31 0.0; 4.5681e-41 0.0 … 0.0 0.0]
+
+Float32[-1.0724816e7 2.4910647e-38 … 0.0 0.0; 4.5681e-41 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 -1.0896176e7; 0.0 0.0 … 0.0 4.5681e-41]
+
+Float32[1.8055593e-34 0.0 … 1.5025648e-31 0.0; 0.0 0.0 … 0.0 0.0; … ; 1.5019997e-31 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0], Float32[-2.95934e-38 1.1678536e-38 … 2.9810598e15 4.6658095e-14; 6.159776e-36 0.00012254778 … 3.9702353e-38 1.0065669e-37; … ; 6.359427e-13 0.12698801 … 4.0980575e-7 3.499847e-23; 8.955669e-33 -1.00105835e-8 … 7.455184e-12 1.1693818e-37]
+
+Float32[10311.795 6.290901e-33 … 8.956218e-33 1.1882368e-36; 2.3936545e-21 1.9420342e-37 … 6.9403537e-37 1.6789013e-13; … ; -2.0637918 NaN … 1.5545683e-33 2.46326e-9; 0.0001812057 NaN … -10831.502 3.1261385e-38]
+
+Float32[5.393219e-19 5.393219e-19 … 2.9159935e-11 1.1386366e-35; 2.000241e-36 5.2063005e-37 … 5.9345446e-20 4.9125336e-37; … ; -5.2698907e-31 3.0959352e-8 … -2.9202558e12 8.501264e23; 4.4878864e7 3.023463e-11 … 5.39322e-19 3.0510847e-11]
+
+...
+
+Float32[1.5373007e-10 3.87265e-39 … 3.585427e-37 8.558555e-36; 1.1962363e-13 1.5397165e-10 … 2.8507438e-37 4.961038e-36; … ; 4.6014814e-13 5.969403e-39 … 8.464513e-36 2.10693e-34; 7.703686e14 6.612255e-39 … 5.5017645e-36 2.1064859e-34]
+
+Float32[2.1520684e-34 7.4648975e-33 … 4.3894407e-30 4.2232075e-31; 2.1069301e-34 8.7167336e-33 … 3.5759287e-30 3.8218298e-31; … ; 7.3685996e-33 1.564225e-31 … 4.3004704e-29 2.4465536e-28; 7.4167485e-33 1.4871878e-31 … 4.1927937e-31 2.3518898e-28]
+
+Float32[2.2098934e-28 1.1995306e-27 … 4.9630837e-24 8.110694e-23; 2.1941147e-28 1.1995306e-27 … 5.4050284e-24 8.110694e-23; … ; 1.1995306e-27 2.3440233e-25 … 8.152056e-23 1.7352704e-21; 1.1995306e-27 2.360181e-25 … 8.110695e-23 1.7352704e-21]), (Float32[-2.4390421e14 9.775e-42 … 1.0e-45 -2.692515e13; 4.5681e-41 0.0 … 0.0 0.0; … ; 1.0e-45 -2.692515e13 … 2.9685e-41 1.0e-45; 0.0 0.0 … 0.0 0.0]
+
+Float32[3.5252e-41 2.1053e-41 … 5.134e-42 1.508942e-30; 0.0 0.0 … 0.0 0.0; … ; 2.1053e-41 1.508942e-30 … -2.692515e13 8.2088e-41; 0.0 0.0 … 0.0 0.0]
+
+Float32[1.0e-45 -2.692515e13 … 5.134e-42 1.0e-45; 0.0 0.0 … 0.0 0.0; … ; 1.1076e-41 1.0e-45 … 1.508942e-30 1.0e-45; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[1.25388e-40 3.5314935e-31 … -2.692515e13 1.39365e-40; 0.0 0.0 … 0.0 0.0; … ; -2.692515e13 1.38202e-40 … 8.0e-45 1.08162e-40; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 8.0e-45 … 3.5314935e-31 1.0e-45; 0.0 0.0 … 0.0 0.0; … ; 3.5314935e-31 1.0e-45 … 1.4179e-40 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[-2.692515e13 1.43151e-40 … 1.8e-44 9.775e-42; 0.0 0.0 … 0.0 0.0; … ; 8.0e-45 1.3356e-40 … 3.4e-44 -2.692515e13; 0.0 0.0 … 0.0 0.0], Float32[1.7731898e6 7469.149 … 5.7566005e-9 -1.5891542e-8; 1.7662235e6 7508.135 … 5.9637767e-10 1.0771882e-5; … ; 7511.028 3.6434054e-7 … 7.1883514e-5 3.0264417e-7; 7492.654 3.2625962e-7 … 8.138401e-5 3.2637573e-7]
+
+Float32[0.0 -1.9233723e-7 … 0.0 3.4938498e-7; 4.194737e-8 -1.9374657e-7 … 1.009223e-11 3.5007193e-7; … ; -3.0318714e-7 -8.652526e-5 … 3.646056e-7 -7.18838e-5; -3.2125723e-7 -8.1312195e-5 … 3.8488415e-7 -6.7458954e-5]
+
+Float32[-6.45145e-5 1.017793e14 … 2.0367308e11 0.0; -6.424633e-5 5.772642e14 … 1.1544384e12 515506.22; … ; 3.4992206e14 2.8577793e-15 … 3.4383965e6 -4.1395472e6; 6.0765403e13 1.6456732e-14 … 3.893662e6 -3.893663e6]
+
+...
+
+Float32[2.3556e-41 1.2757e-41 … 1.18e-43 1.32e-43; 0.0 0.0 … 0.0 0.0; … ; 1.4e-44 1.0e-45 … 1.4e-44 1.0e-45; 1.8e-44 6.0e-45 … 1.4e-44 6.0e-45]
+
+Float32[2.5665e-41 2.628e-41 … 2.344e-42 1.22e-43; 0.0 0.0 … 0.0 0.0; … ; 1.0e-45 1.0e-45 … 1.4e-44 1.0e-45; 6.0e-45 6.0e-45 … 1.4e-44 6.0e-45]
+
+Float32[2.6971e-41 2.7666e-41 … 2.259e-42 2.899e-42; 0.0 0.0 … 0.0 0.0; … ; 1.0e-45 1.0e-45 … 1.4e-44 1.4e-44; 6.0e-45 6.0e-45 … 1.4e-44 1.4e-44], Float32[3.1923e-41 3.2175e-41 … 3.2848e-41 3.3642e-41; 0.0 0.0 … 0.0 0.0; … ; 2.654e-42 3.222e-42 … 3.1501e-41 3.1832e-41; 0.0 0.0 … 0.0 0.0]
+
+Float32[3.4536e-41 3.539e-41 … 3.7094e-41 3.8002e-41; 0.0 0.0 … 0.0 0.0; … ; 1.9349e-41 3.2454e-41 … 2.2645e-41 2.4013e-41; 0.0 0.0 … 0.0 0.0]
+
+Float32[3.8848e-41 3.9802e-41 … 4.0381e-41 4.0633e-41; 0.0 0.0 … 0.0 0.0; … ; 2.4394e-41 1.52e-42 … 1.305e-42 4.343e-42; 0.0 0.0 … 0.0 0.0]
+
+...
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]
+
+Float32[0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0]), Float32[NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; 3.1578278e-35 5.0807805e-34 … 1.6057221e-37 3.9857816e-32; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; 9.8425647e-32 1.0038997e-34 … 1.8846366e-36 1.0486463e-31; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN 3.3527358e-34 … NaN NaN; NaN 0.0 … NaN NaN; … ; 1.26646545e-14 1.4962632e-31 … 1.6290377e-31 1.812191e-31; 7.159307e-14 0.0 … 0.0 0.0]
+
+...
+
+Float32[NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; 1.8352552e-34 1.8419133e-34 … 1.677816e-31 2.8395564e-36; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; 1.3692064e-31 9.068786e-33 … 3.9825198e-35 3.9234466e-31; 0.0 0.0 … 0.0 0.0]
+
+Float32[1.2811447e-34 NaN … NaN NaN; 0.0 NaN … NaN NaN; … ; 1.6759879e-31 2.0429982e-34 … 3.5133062e-31 4.712901e-31; 0.0 0.0 … 0.0 0.0], Float32[0.0 0.0 0.0; 0.58578646 0.0 0.0; 0.5 0.5 0.0], Float32[0.0 0.0 0.0; 0.29289323 0.29289323 0.0; 0.35355338 0.35355338 0.29289323], Float32[0.35355338, 0.35355338, 0.29289323], Float32[0.0, 0.58578646, 1.0], false, CLIMA.ODESolvers.LowStorageVariant(), (Qtt = Float32[NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; 2.2293214e-34 1.4431027e-32 … 5.514446e-35 4.7488467e-31; 0.0 0.0 … 0.0 0.0]
+
+Float32[1.072988e-36 NaN … NaN NaN; 0.0 NaN … NaN NaN; … ; 1.9225137e-34 2.8983136e-33 … 8.618201e-35 8.093979e-36; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; 4.990359e-35 5.2065657e-34 … 5.419851e6 7510.7827; 0.0 0.0 … 5.9133835e6 7492.5283]
+
+...
+
+Float32[NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; 5.024614e-35 4.8147744e-36 … 5.1000915e-37 1.0770293e-31; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; 1.7837704e-31 6.7436587e-31 … 1.70631e-31 1.2951258e-31; 0.0 0.0 … 0.0 0.0]
+
+Float32[NaN 1.6184809e-33 … NaN NaN; NaN 0.0 … NaN NaN; … ; 3.1776316e-33 5.095568e-33 … 1.0774232e-35 3.980759e-7; 0.0 0.0 … 0.0 3.598519e-7],)))</code></pre><h2 id="Set-up-spectral-exponential-filter-1"><a class="docs-heading-anchor" href="#Set-up-spectral-exponential-filter-1">Set up spectral exponential filter</a><a class="docs-heading-anchor-permalink" href="#Set-up-spectral-exponential-filter-1" title="Permalink"></a></h2><p>After every completed time step we apply a spectral filter to remove remaining small-scale noise introduced by the numerical procedures. This assures that our run remains stable.</p><pre><code class="language-julia">filterorder = 10
 filter = ExponentialFilter(solver_config.dg.grid, 0, filterorder)
 cbfilter = GenericCallbacks.EveryXSimulationSteps(1) do
     Filters.apply!(
@@ -134,7 +1481,7 @@ cbfilter = GenericCallbacks.EveryXSimulationSteps(1) do
         filter,
     )
     nothing
-end</code></pre><h2 id="Setup-diagnostic-output-1"><a class="docs-heading-anchor" href="#Setup-diagnostic-output-1">Setup diagnostic output</a><a class="docs-heading-anchor-permalink" href="#Setup-diagnostic-output-1" title="Permalink"></a></h2><p>Choose frequency and resolution of output, and a diagnostics group (dgngrp) which defines output variables. This needs to be defined in <a href="https://climate-machine.github.io/CLIMA/latest/generated/Diagnostics">diagnostics</a>.</p><pre><code class="language-">interval = &quot;1000steps&quot;
+end</code></pre><pre><code class="language-none">CLIMA.GenericCallbacks.EveryXSimulationSteps([0], 1, Main.ex-heldsuarez.var&quot;#1#2&quot;())</code></pre><h2 id="Setup-diagnostic-output-1"><a class="docs-heading-anchor" href="#Setup-diagnostic-output-1">Setup diagnostic output</a><a class="docs-heading-anchor-permalink" href="#Setup-diagnostic-output-1" title="Permalink"></a></h2><p>Choose frequency and resolution of output, and a diagnostics group (dgngrp) which defines output variables. This needs to be defined in <a href="https://climate-machine.github.io/CLIMA/latest/generated/Diagnostics">diagnostics</a>.</p><pre><code class="language-julia">interval = &quot;1000steps&quot;
 _planet_radius = FT(planet_radius(param_set))
 info = driver_config.config_info
 boundaries = [
@@ -150,9 +1497,9 @@ dgn_config = setup_dump_state_and_aux_diagnostics(
     driver_config.name,
     interpol = interpol,
     project = true,
-)</code></pre><h2 id="Run-the-model-1"><a class="docs-heading-anchor" href="#Run-the-model-1">Run the model</a><a class="docs-heading-anchor-permalink" href="#Run-the-model-1" title="Permalink"></a></h2><p>Finally, we can run the model using the physical setup and solvers from above. We use the spectral filter in our callbacks after every time step, and collect the diagnostics output.</p><pre><code class="language-">result = CLIMA.invoke!(
+)</code></pre><pre><code class="language-none">CLIMA.Diagnostics.DiagnosticsGroup(&quot;DumpStateAndAux&quot;, CLIMA.Diagnostics.dump_state_and_aux_init, CLIMA.Diagnostics.dump_state_and_aux_fini, CLIMA.Diagnostics.dump_state_and_aux_collect, &quot;1000steps&quot;, &quot;HeldSuarez&quot;, CLIMA.Writers.NetCDFWriter(), CLIMA.Mesh.Interpolation.InterpolationCubedSphere{Float32,Int64,Array{Float32,1},Array{Float32,1},Array{Int64,1},Array{UInt8,2},Array{UInt16,1},Array{Int32,1}}(48, 21793, 21793, 5, 31, 19, 37, Float32[6.371e6, 6.372e6, 6.373e6, 6.374e6, 6.375e6, 6.376e6, 6.377e6, 6.378e6, 6.379e6, 6.38e6  …  6.392e6, 6.393e6, 6.394e6, 6.395e6, 6.396e6, 6.397e6, 6.398e6, 6.399e6, 6.4e6, 6.401e6], Float32[-90.0, -80.0, -70.0, -60.0, -50.0, -40.0, -30.0, -20.0, -10.0, 0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0], Float32[-180.0, -170.0, -160.0, -150.0, -140.0, -130.0, -120.0, -110.0, -100.0, -90.0  …  90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0, 160.0, 170.0, 180.0], Float32[1.0, -0.33333337, 0.111111075, 0.5555555, 1.0, 1.0, -0.7777777, -0.33333334, 0.11111108, 0.5555556  …  -1.0, -0.5555556, -0.11111097, 0.33333337, 0.77777785, -1.0, -0.5555555, -0.11111111, 0.3333334, 0.7777778], Float32[-0.7777777, -0.9597917, -0.8561467, -0.7969982, -0.7777777, -0.33333328, -0.6446445, -0.4973364, -0.40296462, -0.35027814  …  0.11111112, 0.098508544, 0.058985066, -0.013150092, -0.12950076, 0.5555556, 0.5488408, 0.52766293, 0.4885158, 0.4238898], Float32[-0.99993336, -1.0, -1.0, -1.0, -0.99993336, -0.99993336, -1.0, -1.0, -1.0, -1.0  …  1.0, 1.0, 0.99993336, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], UInt8[0x06 0x00 … 0x00 0x00; 0x00 0x00 … 0x00 0x00; 0x00 0x01 … 0x06 0x06], Float32[2.0603427e-7, -0.00027878853, 0.0010034617, -0.00043826856, 2.0603427e-7, -6.3644126e-7, -0.00013461086, 0.00052953657, -0.0011209293, 0.00072937075  …  -0.039052896, -0.0017756509, -8.9406086e-8, -0.00059567177, 0.0001465879, 0.04347423, 0.0018974866, -0.0017042225, 0.00052065274, -0.00013283508], UInt16[0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001  …  0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f], UInt16[0x0006, 0x0006, 0x0006, 0x0006, 0x0006, 0x0007, 0x0007, 0x0007, 0x0007, 0x0007  …  0x0008, 0x0008, 0x0008, 0x0008, 0x0008, 0x0009, 0x0009, 0x0009, 0x0009, 0x0009], UInt16[0x0001, 0x0022, 0x0023, 0x0024, 0x0025, 0x0001, 0x0021, 0x0022, 0x0023, 0x0024  …  0x0013, 0x0014, 0x0015, 0x0016, 0x0017, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017], [0, 345, 713, 1148, 1612, 1897, 2201, 2426, 2666, 2891  …  19102, 19406, 19631, 19871, 20156, 20460, 20820, 21204, 21489, 21793], Float32[-1.0, -0.76505536, -0.28523165, 0.28523168, 0.76505536, 0.99999994], Float32[0.0666666, 0.37847504, 0.55485797, 0.55485886, 0.37847477, 0.06666657], Float32[-1.3125002, 3.1272573, -3.7864819, 3.7864823, -3.1272578, 1.3125008], Int32[21793], UInt16[0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001  …  0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f, 0x001f], UInt16[0x0006, 0x0006, 0x0006, 0x0006, 0x0006, 0x0007, 0x0007, 0x0007, 0x0007, 0x0007  …  0x0008, 0x0008, 0x0008, 0x0008, 0x0008, 0x0009, 0x0009, 0x0009, 0x0009, 0x0009], UInt16[0x0001, 0x0022, 0x0023, 0x0024, 0x0025, 0x0001, 0x0021, 0x0022, 0x0023, 0x0024  …  0x0013, 0x0014, 0x0015, 0x0016, 0x0017, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017]), true, 0)</code></pre><h2 id="Run-the-model-1"><a class="docs-heading-anchor" href="#Run-the-model-1">Run the model</a><a class="docs-heading-anchor-permalink" href="#Run-the-model-1" title="Permalink"></a></h2><p>Finally, we can run the model using the physical setup and solvers from above. We use the spectral filter in our callbacks after every time step, and collect the diagnostics output.</p><pre><code class="language-">result = CLIMA.invoke!(
     solver_config;
     diagnostics_config = dgn_config,
     user_callbacks = (cbfilter,),
     check_euclidean_distance = true,
-)</code></pre><h2 id="References-1"><a class="docs-heading-anchor" href="#References-1">References</a><a class="docs-heading-anchor-permalink" href="#References-1" title="Permalink"></a></h2><ul><li>Held, I.M. and M.J. Suarez, 1994: A Proposal for the Intercomparison</li></ul><p>the Dynamical Cores of Atmospheric General Circulation Models. Bull. # Amer. Meteor. Soc., 75, 1825–1830, https://doi.org/10.1175/1520-0477(1994)075&lt;1825:APFTIO&gt;2.0.CO;2</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../Installation/">« Installation</a><a class="docs-footer-nextpage" href="../../Numerics/LinearSolvers/cg/">Conjugate Gradient »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 27 April 2020 19:04">Monday 27 April 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+)</code></pre><h2 id="References-1"><a class="docs-heading-anchor" href="#References-1">References</a><a class="docs-heading-anchor-permalink" href="#References-1" title="Permalink"></a></h2><ul><li>Held, I.M. and M.J. Suarez, 1994: A Proposal for the Intercomparison</li></ul><p>the Dynamical Cores of Atmospheric General Circulation Models. Bull. # Amer. Meteor. Soc., 75, 1825–1830, https://doi.org/10.1175/1520-0477(1994)075&lt;1825:APFTIO&gt;2.0.CO;2</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../Installation/">« Installation</a><a class="docs-footer-nextpage" href="../../Numerics/LinearSolvers/cg/">Conjugate Gradient »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 28 April 2020 15:52">Tuesday 28 April 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

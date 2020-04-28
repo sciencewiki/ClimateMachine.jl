@@ -17,6 +17,7 @@ using CLIMAParameters.Planet: R_d, day, grav, cp_d, cv_d, planet_radius
 
 struct EarthParameterSet <: AbstractEarthParameterSet end
 const param_set = EarthParameterSet()
+nothing # hide
 
 function held_suarez_forcing!(
     balance_law,
@@ -30,7 +31,7 @@ function held_suarez_forcing!(
     FT = eltype(state)
 
     # Parameters
-    T_ref::FT = 255        # reference temperature for Held-Suarez forcing (K)
+    T_ref::FT = 255 # reference temperature for Held-Suarez forcing (K)
 
     # Extract the state
     ρ = state.ρ
@@ -82,10 +83,12 @@ function held_suarez_forcing!(
     source.ρe -= k_T * ρ * _cv_d * (T - T_equil)
     return nothing
 end
+nothing # hide
 
 function init_heldsuarez!(balance_law, state, aux, coordinates, time)
     FT = eltype(state)
 
+    # Set initial state to reference state with random perturbation
     rnd = FT(1.0 + rand(Uniform(-1e-3, 1e-3)))
     state.ρ = aux.ref_state.ρ
     state.ρu = SVector{3, FT}(0, 0, 0)
@@ -93,28 +96,34 @@ function init_heldsuarez!(balance_law, state, aux, coordinates, time)
 
     nothing
 end
+nothing # hide
 
 CLIMA.init()
+nothing # hide
 
 FT = Float32
+nothing # hide
 
 T_surface = FT(290) ## surface temperature (K)
 ΔT = FT(60)  ## temperature drop between surface and top of atmosphere (K)
 H_t = FT(8e3) ## height scale over which temperature drops (m)
 temp_profile_ref = DecayingTemperatureProfile(T_surface, ΔT, H_t)
 ref_state = HydrostaticState(temp_profile_ref, FT(0))
+nothing # hide
 
-domain_height = FT(30e3)                     ## height of the computational domain (m)
-z_sponge = FT(12e3)                     ## height at which sponge begins (m)
-α_relax = FT(1 / 60 / 15)                  ## sponge relaxation rate (1/s)
-exponent = FT(2)                        ## sponge exponent for squared-sinusoid profile
+domain_height = FT(30e3)               ## height of the computational domain (m)
+z_sponge = FT(12e3)                    ## height at which sponge begins (m)
+α_relax = FT(1 / 60 / 15)              ## sponge relaxation rate (1/s)
+exponent = FT(2)                       ## sponge exponent for squared-sinusoid profile
 u_relax = SVector(FT(0), FT(0), FT(0)) ## relaxation velocity (m/s)
 sponge = RayleighSponge(domain_height, z_sponge, α_relax, u_relax, exponent)
+nothing # hide
 
 c_smag = FT(0.21)   ## Smagorinsky constant
 τ_hyper = FT(4 * 3600) ## hyperdiffusion time scale
 turbulence_model = SmagorinskyLilly(c_smag)
 hyperdiffusion_model = StandardHyperDiffusion(FT(4 * 3600))
+nothing # hide
 
 model = AtmosModel{FT}(
     AtmosGCMConfigType,
@@ -127,13 +136,14 @@ model = AtmosModel{FT}(
     init_state = init_heldsuarez!,
 )
 
-poly_order = 5                           ## discontinuous Galerkin polynomial order
-n_horz = 5                           ## horizontal element number
-n_vert = 5                           ## vertical element number
+poly_order = 5                        ## discontinuous Galerkin polynomial order
+n_horz = 2                            ## horizontal element number
+n_vert = 2                            ## vertical element number
 resolution = (n_horz, n_vert)
-n_days = 120                         ## experiment day number
-timestart = FT(0)                       ## start time (s)
+n_days = 1                            ## experiment day number
+timestart = FT(0)                     ## start time (s)
 timeend = FT(n_days * day(param_set)) ## end time (s)
+nothing # hide
 
 driver_config = CLIMA.AtmosGCMConfiguration(
     "HeldSuarez",
