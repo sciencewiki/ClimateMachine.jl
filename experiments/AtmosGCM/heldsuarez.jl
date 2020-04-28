@@ -169,6 +169,7 @@ function config_diagnostics(FT, driver_config)
         driver_config.name,
         interpol = interpol,
         project = true,
+        #model = driver_config.bl
     )
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end
