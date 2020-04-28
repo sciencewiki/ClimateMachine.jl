@@ -135,10 +135,11 @@ model = AtmosModel{FT}(
     source = (Gravity(), Coriolis(), held_suarez_forcing!, sponge),
     init_state = init_heldsuarez!,
 )
+nothing # hide
 
 poly_order = 5                        ## discontinuous Galerkin polynomial order
-n_horz = 5                            ## horizontal element number
-n_vert = 5                            ## vertical element number
+n_horz = 2                            ## horizontal element number
+n_vert = 2                            ## vertical element number
 resolution = (n_horz, n_vert)
 n_days = 1                            ## experiment day number
 timestart = FT(0)                     ## start time (s)
@@ -154,6 +155,7 @@ driver_config = CLIMA.AtmosGCMConfiguration(
     init_heldsuarez!;
     model = model,
 )
+nothing # hide
 
 solver_config = CLIMA.SolverConfiguration(
     timestart,
@@ -164,6 +166,7 @@ solver_config = CLIMA.SolverConfiguration(
     CFL_direction = HorizontalDirection(),
     diffdir = HorizontalDirection(),
 )
+nothing # hide
 
 filterorder = 10
 filter = ExponentialFilter(solver_config.dg.grid, 0, filterorder)
@@ -176,6 +179,7 @@ cbfilter = GenericCallbacks.EveryXSimulationSteps(1) do
     )
     nothing
 end
+nothing # hide
 
 interval = "1000steps"
 _planet_radius = FT(planet_radius(param_set))
@@ -194,6 +198,7 @@ dgn_config = setup_dump_state_and_aux_diagnostics(
     interpol = interpol,
     project = true,
 )
+nothing # hide
 
 result = CLIMA.invoke!(
     solver_config;
@@ -201,6 +206,7 @@ result = CLIMA.invoke!(
     user_callbacks = (cbfilter,),
     check_euclidean_distance = true,
 )
+nothing # hide
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 
