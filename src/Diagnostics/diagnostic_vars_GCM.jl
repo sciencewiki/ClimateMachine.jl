@@ -7,7 +7,7 @@ function vars_diagnostic(FT)
         u::FT
         v::FT
         w::FT
-        T::FT                   # air temperature
+        T::FT                  # air temperature
         #q_tot::FT
         #e_tot::FT
         #q_liq::FT
@@ -19,7 +19,6 @@ function vars_diagnostic(FT)
         #h_t::FT
         #qt_sgs::FT
         #ht_sgs::FT
-
         # vertical fluxes
         #vert_eddy_mass_flux::FT # <w′ρ′>
         #vert_eddy_u_flux::FT    # <w′u′>
@@ -31,20 +30,16 @@ function vars_diagnostic(FT)
         #vert_eddy_thd_flux::FT  # <w′θ′>
         #vert_eddy_thv_flux::FT  # <w′θ_v′>
         #vert_eddy_thl_flux::FT  # <w′θ_liq′>
-
         # zonal means
         #u_zm::FT                 # zonal mean zonal wind
         #T_zm::FT                 # zonal mean air temperature
-
         # covariances
         #uvcovariance::FT          # u*v*
         #vtcovariance::FT          # v*T*
-
         # eddy kinetic energy
         #EKE::FT                   # 1/2 (u**2 +v**2)
-
         # other sample vars for now
-        vort_rel::FT               # relative vorticity
+        vortrel::FT               # relative vorticity
         #streamf_hor::FT             # horizontal streamfunction
 
     end

@@ -251,6 +251,19 @@ macro visitQ(nhorzelem, nvertelem, Nqk, Nq, expr)
     end)
 end
 
+macro visitIQ(nlon, nlat, nrad, expr)
+    return esc(quote
+        for lo in 1:nlon
+            for la in 1:nlat
+                for le in 1:nrad
+                    $expr
+                end
+            end
+        end
+    end)
+end
+
+
 # Helpers to extract data from `Q`, etc.
 function extract_state(dg, localQ, ijk, e)
     bl = dg.balancelaw

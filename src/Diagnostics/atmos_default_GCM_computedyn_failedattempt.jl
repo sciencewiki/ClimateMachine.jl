@@ -1,20 +1,10 @@
-# # Dry Atmosphere GCM Config File
+# # Dry atmosphere GCM Config filter
 # 
 # This file computes selected diagnostics for the GCM and outputs them on the
 # spherical interpolated diagnostic grid.
 #
 # It is called by setting ```dgn_config``` in the GCM run file
 # (e.g. heldsuarez.jl) to ```setup_atmos_default_GCM_diagnostics```
-#
-# TODO:
-# - the struct functions need to be used to generalise the choices
-#   - these require Array(FT, 1) but interpolation requires FT
-#   - maybe will need to define a conversion function? struct(num_thermo(FT), Nel)(vari) --> Array(num_thermo(FT), vari, Nel)
-# - elementwise aggregation of interpolated vars very slow
-# - enable zonal means and calculation of covariances using those means
-# - add more variables, including hioriz streamfunction from laplacial of vorticity (LN)
-# - density weighting
-# - maybe change thermo/dun separation to local/nonlocal vars?
 
 using Statistics
 using ..Atmos
@@ -41,7 +31,8 @@ function atmos_default_GCM_init(dgngrp::DiagnosticsGroup, currtime)
     @assert dgngrp.interpol !== nothing
 end
 
-# Set up thermodynamic vars (user-selected) - this func needs to be integrated into ```compute_thermo!```
+# Set up thermodynamic vars (user-selected).
+# These must be names in ```diagnostic_vars_GCM.jl`` and calculated in ```compute_thermo!```
 function vars_thermo(FT)
     @vars begin
         T::FT
@@ -51,72 +42,55 @@ end
 num_thermo(FT) = varsize(vars_thermo(FT))
 thermo_vars(array) = Vars{vars_thermo(eltype(array))}(array)
 
-function compute_thermo!(bl, state, aux, ijk, e, thermoQ)
-    ts = thermo_state(bl, state, aux)
-    #th = thermo_vars(Array{Float32,1}(thermoQ[ijk, :, e]))
-    #th.T = air_temperature(ts) # this df works
-    #th.θ_dry = dry_pottemp(ts)
+# Compute thermodynamic vars
+function compute_thermo!(bl, state, auxstate, thermoQ, dgngrp ,FT)
+    bl = Settings.dg.balancelaw
+    FTa = eltype(auxstate)
+    FTs = eltype(state)
 
-    thermoQ[ijk, 1, e] = air_temperature(ts)
-    thermoQ[ijk, 2, e] = dry_pottemp(ts)
+    ts = thermo_state( bl, Vars{vars_state(bl, FTs)}(state[:,:,:]), Vars{vars_aux(bl, FTa)}(auxstate[:,:,:]) ) # thermodynamic state
+    th = thermo_vars(thermoQ) # init thermoQ
+    th.T = air_temperature(ts)
+    th.θ_dry = dry_pottemp(ts)
+
     return nothing
 end
 
-# Set up dynamic vars (user-selected) - this func needs to be integrated into ```compute_dyn!```
+# Set up dynamic vars (user-selected).
+# These must be names in ```diagnostic_vars_GCM.jl`` and calculated in ```compute_dyn!```
 function vars_dyn(FT)
     @vars begin
-        Ω₁::FT
-        Ω₂::FT
-        Ω₃::FT
+        vort_rel::SVector{3, FT}
     end
 end
 num_dyn(FT) = varsize(vars_dyn(FT))
 dyn_vars(array) = Vars{vars_dyn(eltype(array))}(array)
 
-function compute_dyn!( ijk, e, dynQ, vortvec)
+# Compute dynamic vars
+function compute_dyn!(bl, state, aux, dynQ, dgngrp, FT)
     #ts = thermo_state(bl, state, aux) # thermodynamic state
-    #dy = dyn_vars(Array{Float32,1}(dynQ[ijk, : , e])) # init dynQ
-    ##@info @sprintf("""vortvec %s""", vortvec)
-    #dy.Ω₁= vortvec[1]
-    #dy.Ω₂= vortvec[2]
-    #dy.Ω₃= vortvec[3]
+    dy = dyn_vars(dynQ) # init dynQ
 
-    dynQ[ijk, 1 , e] = vortvec[1]
-    dynQ[ijk, 2 , e] = vortvec[2]
-    dynQ[ijk, 3 , e] = vortvec[3]
+    # Relative vorticity (NB: computationally intensive, so on gpu)
+    vgrad = compute_vec_grad(Settings.dg.balancelaw, Settings.Q, Settings.dg)
+    vort_all = compute_vorticity(Settings.dg, vgrad)
+
+    @info @sprintf("""vort_all.data %s""", size(vort_all.data))
+    @info @sprintf("""dynq %s""", size(dynQ))
+    dy.vort_rel = vort_all.data
+
     return nothing
 end
 
-# Set up state vars on interpolated grid - this func needs to be integrated into ```compute_diagnosticsums_GCM!```
+# set up struct for interpolated state vars
 function vars_statei(FT)
     @vars begin
         ρ::FT
-        ρu::FT
-        ρv::FT
-        ρw::FT
+        ρu::SVector{3, FT}
         ρe::FT
     end
 end
 statei_vars(array) = Vars{vars_statei(eltype(array))}(array)
-
-# Set up thermo vars on interpolated grid - this func needs to be integrated into ```compute_diagnosticsums_GCM!```
-function vars_thermoi(FT)
-    @vars begin
-        T::FT
-        θ_dry::FT
-    end
-end
-thermoi_vars(array) = Vars{vars_thermoi(eltype(array))}(array)
-
-# Set up dynamic vars on interpolated grid - this func needs to be integrated into ```compute_diagnosticsums_GCM!```
-function vars_dyni(FT)
-    @vars begin
-        Ω₁::FT
-        Ω₂::FT
-        Ω₃::FT
-    end
-end
-dyni_vars(array) = Vars{vars_dyni(eltype(array))}(array)
 
 # aggregate all diags, including calculations done after interpolation to sphere
 function compute_diagnosticsums_GCM!(
@@ -124,38 +98,27 @@ function compute_diagnosticsums_GCM!(
     all_thermo_data,
     all_dyn_data,
     dsumsi,
-    lo,
-    la,
-    le
     )
 
-    # set up empty variable structs with interpolated arrays as templates
-    #state_i = statei_vars(Array{Float32,1}(all_state_data[le,la,lo,:]))
-    #th_i = thermoi_vars(Array{Float32,1}(all_thermo_data[le,la,lo,:]))
-    #dyn_i = dyni_vars(Array{Float32,1}(all_thermo_data[le,la,lo,:]))
+    # set up variable structs with empty arrays
+    state_i  = statei_vars(all_state_data)
+    th_i = thermo_vars(all_thermo_data)
+    dyn_i = dyn_vars(all_dyn_data)
 
-    state_i = statei_vars(all_state_data[lo,la,le,:])
-    th_i = thermoi_vars(all_thermo_data[lo,la,le,:])
-    dyn_i = dyni_vars(all_thermo_data[lo,la,le,:])
+    ds = diagnostic_vars(dsumsi)
 
     # calculate ds. vars that will be saved (these need to be selected from the diagnostic_vars(_GCM) file)
-    """ds = diagnostic_vars(dsumsi[lo,la,le,:])
-    ds.u = state_i.ρu / state_i.ρ
-    ds.v = state_i.ρv / state_i.ρ
-    ds.w = state_i.ρw / state_i.ρ
+    ds.u = state_i.ρu[1] / state_i.ρ
+    ds.v = state_i.ρu[2] / state_i.ρ
+    ds.w = state_i.ρu[3] / state_i.ρ
+
     ds.T     = th_i.T
     ds.thd = th_i.θ_dry
-    ds.vortrel = dyn_i.Ω₃"""
-
-    dsumsi[lo,la,le,1] = state_i.ρu / state_i.ρ
-    dsumsi[lo,la,le,2] = state_i.ρv / state_i.ρ
-    dsumsi[lo,la,le,3] = state_i.ρw / state_i.ρ
-    dsumsi[lo,la,le,4] = th_i.T
-    dsumsi[lo,la,le,5] = th_i.θ_dry
-    dsumsi[lo,la,le,6] = dyn_i.Ω₃
-    #@info @sprintf("""size(dyn_i.Ω₃) %s""", size(dyn_i.Ω₃))
+    ds.vort_rel = dyn_i.vort_rel[3]
+    #ds.vort_rel = all_dyn_data[3] # temporary fix
 
     # zonal means
+    #@info @sprintf("""size u is %s""", size(ds.u[:,:,:]))
     #ds.T_zm = mean(.*1., ds.T; dims = 3)
     #ds.u_zm = mean((ds.u); dims = 3 )
     #v_zm = mean(ds.v; dims = 3)
@@ -273,41 +236,38 @@ function atmos_default_GCM_collect(dgngrp::DiagnosticsGroup, currtime)
     FT = eltype(localQ)
     Nel = size(localQ, 3) # # of spectral elements
     Npl = size(localQ, 1) # # of dof per element
+
     nstate = num_state(bl, FT)
 
-    # Initiate local variables (e.g. thermoQ - obtained from elementwise)
-    #thermoQ = [zeros(FT, num_thermo(FT)) for _ in 1:npoints, _ in 1:nrealelem]
-    thermoQ =DA{FT}(undef, Npl, num_thermo(FT), Nel)
+    @info @sprintf("""localQ %s""", size(localQ))
 
-    # nonlocal vars
-    # e.g. Relative vorticity (NB: computationally intensive, so on gpu)
-    #dynQ = [zeros(FT, num_dyn(FT)) for _ in 1:npoints, _ in 1:nrealelem]
-    dynQ =DA{FT}(undef, Npl, num_dyn(FT), Nel)
-    vgrad = compute_vec_grad(Settings.dg.balancelaw, Settings.Q, Settings.dg)
-    vort_all = compute_vorticity(Settings.dg, vgrad)
+    # Compute and aggregate local thermo variables
+    thermoQ = DA{FT}(undef, Npl, num_thermo(FT), Nel)
+    compute_thermo!(bl, Q, dg.auxstate, thermoQ, dgngrp, FT)
 
-    # compute thermo and dynamical vars element-wise
-    @visitQ nhorzelem nvertelem Nqk Nq begin
-        state = extract_state(dg, localQ, ijk, e)
-        aux = extract_aux(dg, localaux, ijk, e)
+    # Compute and aggregate local dynamic variables
+    dynQ = DA{FT}(undef, Npl, num_dyn(FT), Nel)
+    compute_dyn!(bl, Q, dg.auxstate, dynQ, dgngrp, FT)
+    # this is a temporary fix - better to use a struct using compute_dyn!
+    #vgrad = compute_vec_grad(Settings.dg.balancelaw, Settings.Q, Settings.dg)
+    #vort_all = compute_vorticity(Settings.dg, vgrad)
+    #dynQ =  Array(vort_all.data)
 
-        compute_thermo!(bl, state, aux, ijk, e, thermoQ)
-        compute_dyn!(ijk, e, dynQ, Array(vort_all.data)[ijk, : ,e])
-    end
+    @info @sprintf("""Ignre this %s""", size(dynQ))
+    @info @sprintf("""num_dyn %s""", num_dyn(FT))
 
-    # interpolate and project variables onto a sphere
+    # interpolate and project local variables onto a sphere
     all_state_data = nothing
     all_thermo_data = nothing
-    all_dyn_data = nothing
     if dgngrp.interpol !== nothing
         # interpolate the state, thermo and dyn vars to sphere (u and vorticity need projection to zonal, merid)
-        istate = DA(Array{FT}(undef, dgngrp.interpol.Npl, num_state(bl, FT))) # empty on cubed sphere structure (here, Npl = # of interpolation points on the local process)
+        istate = DA(Array{FT}(undef, dgngrp.interpol.Npl, num_state(bl, FT))) # empty on interpolated grid (here, Npl = # of interpolation points on the local process)
         interpolate_local!(dgngrp.interpol, localQ, istate)
 
-        ithermo = DA(Array{FT}(undef, dgngrp.interpol.Npl, num_thermo(FT))) # empty on cubed sphere structure
+        ithermo = DA(Array{FT}(undef, dgngrp.interpol.Npl, num_thermo(FT))) # empty on interpolated grid
         interpolate_local!(dgngrp.interpol, thermoQ, ithermo)
 
-        idyn = DA(Array{FT}(undef, dgngrp.interpol.Npl, num_dyn(FT) )) # empty on cubed sphere structure
+        idyn = DA(Array{FT}(undef, dgngrp.interpol.Npl, 3 )) # empty on interpolated grid
         interpolate_local!(dgngrp.interpol, dynQ , idyn)
 
         if dgngrp.project
@@ -321,7 +281,6 @@ function atmos_default_GCM_collect(dgngrp::DiagnosticsGroup, currtime)
                 error("Can only project for InterpolationCubedSphere")
             end
         end
-
         all_state_data =
             accumulate_interpolated_data(mpicomm, dgngrp.interpol, istate)
 
@@ -335,27 +294,21 @@ function atmos_default_GCM_collect(dgngrp::DiagnosticsGroup, currtime)
     end
 
     # combine state, thermo and dyn variables, and their manioulations on the interpolated grid
-    nlon = size(all_thermo_data,1) # actually diff order [lon, lat, rad] - but doesnt matter for now
-    nlat = size(all_thermo_data,2)
-    nrad = size(all_thermo_data,3)
+    dsumsi =  DA(Array{FT}(undef, size(all_state_data,1), size(all_state_data,2), size(all_state_data,3), num_diagnostic(FT))) # sets up the output array (as in diagnostic_vars_GCM.jl)
+    compute_diagnosticsums_GCM!(all_state_data, all_thermo_data, all_dyn_data, dsumsi)
 
-    #dsumsi = [zeros(FT, num_diagnostic(FT)) for  _ in 1:nlon, _ in 1:nlat, _ in 1:nrad]
-    dsumsi =  DA(Array{FT}(undef, nlon, nlat, nrad, num_diagnostic(FT)))
-
-    @visitIQ nlon nlat nrad begin
-        compute_diagnosticsums_GCM!(all_state_data, all_thermo_data, all_dyn_data, dsumsi, lo, la, le)
-    end
-
-    # attribute names to the vars in dsumsi and collect in a dict
-    varvals = OrderedDict()
-    varnames = flattenednames(vars_diagnostic(FT))
-    for vari in 1:length(varnames)
-        varvals[varnames[vari]] = dsumsi[:,:,:,vari]
-    end
-
+    @info @sprintf("""all_state_data: %s""", size(all_state_data))
+    @info @sprintf("""dsumsi %s""", size(dsumsi))
 
     # get dimensions for the interpolated grid
     dims = get_dims(dgngrp)
+
+    # collect all vars into one Dict
+    varvals = OrderedDict()
+    varnames = flattenednames(vars_diagnostic(FT))
+    for i in 1:length(varnames)
+        varvals[varnames[i]] = dsumsi[:, :, :, i]
+    end
 
     # write diagnostics
     write_data(dgngrp.writer, dfilename, dims, varvals, currtime)
