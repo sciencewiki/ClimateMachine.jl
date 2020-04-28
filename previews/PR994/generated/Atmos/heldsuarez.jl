@@ -154,8 +154,7 @@ driver_config = CLIMA.AtmosGCMConfiguration(
     param_set,
     init_heldsuarez!;
     model = model,
-)
-nothing # hide
+);
 
 solver_config = CLIMA.SolverConfiguration(
     timestart,
@@ -165,8 +164,7 @@ solver_config = CLIMA.SolverConfiguration(
     init_on_cpu = true,
     CFL_direction = HorizontalDirection(),
     diffdir = HorizontalDirection(),
-)
-nothing # hide
+);
 
 filterorder = 10
 filter = ExponentialFilter(solver_config.dg.grid, 0, filterorder)
@@ -179,7 +177,6 @@ cbfilter = GenericCallbacks.EveryXSimulationSteps(1) do
     )
     nothing
 end
-nothing # hide
 
 interval = "1000steps"
 _planet_radius = FT(planet_radius(param_set))
