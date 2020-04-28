@@ -21,17 +21,13 @@ using CLIMAParameters.Planet: R_d, day, grav, cp_d, cv_d, planet_radius
 struct EarthParameterSet <: AbstractEarthParameterSet end
 const param_set = EarthParameterSet()
 
-struct HeldSuarezDataConfig
-    T_ref
-    ntracers::Int
+struct HeldSuarezDataConfig{FT}
+    T_ref::FT
 end
 
 function init_heldsuarez!(bl, state, aux, coords, t)
     FT = eltype(state)
     
-    # Parameters
-    ntracers = bl.data_config.ntracers
-
     # Set initial state to reference state with random perturbation
     rnd = FT(1.0 + rand(Uniform(-1e-3, 1e-3)))
     state.ρ = aux.ref_state.ρ
@@ -39,7 +35,7 @@ function init_heldsuarez!(bl, state, aux, coords, t)
     state.ρe = rnd * aux.ref_state.ρe
     
     # Set initial tracers states to some constant value (arbitrary for testing purposes) 
-    state.tracers.ρχ = @SVector [FT(ii/1000) for ii = 1:ntracers]
+    state.tracers.ρχ = @SVector [FT(ii) for ii = 1:10]
     nothing
 end
 
@@ -52,8 +48,7 @@ function config_heldsuarez(FT, poly_order, resolution)
     ref_state = HydrostaticState(temp_profile_ref, FT(0))
 
     # Set up "heavy" tracer block
-    ntracers = 5
-    δ_χ = @SVector [FT(ii) for ii = 1:ntracers] # Arbitrary integer scaling for diffusivity
+    δ_χ = @SVector [FT(ii) for ii = 1:10] # Arbitrary integer scaling for diffusivity
     
     # Set up a Rayleigh sponge to dampen flow at the top of the domain
     domain_height::FT = 30e3               # distance between surface and top of atmosphere (m)
@@ -84,7 +79,7 @@ function config_heldsuarez(FT, poly_order, resolution)
         tracers = NTracers{length(δ_χ),FT}(δ_χ),
         source = (Gravity(), Coriolis(), held_suarez_forcing!, sponge),
         init_state = init_heldsuarez!,
-        data_config = HeldSuarezDataConfig(T_ref, ntracers),
+        data_config = HeldSuarezDataConfig{FT}(T_ref),
     )
 
     config = CLIMA.AtmosGCMConfiguration(
