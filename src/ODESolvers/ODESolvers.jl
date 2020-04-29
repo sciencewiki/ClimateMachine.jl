@@ -162,10 +162,12 @@ end
 # }}}
 
 include("MultirateInfinitesimalStepMethod.jl")
+include("ETDStepMethod.jl")
 include("LowStorageRungeKuttaMethod.jl")
 include("StrongStabilityPreservingRungeKuttaMethod.jl")
 include("AdditiveRungeKuttaMethod.jl")
 include("StormerVerletMethod.jl")
+include("StormerVerletMethodETD.jl")
 include("MultirateRungeKuttaMethod.jl")
 
 end # module
