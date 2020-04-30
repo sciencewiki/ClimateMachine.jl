@@ -2,13 +2,40 @@
 ##### Helper functions
 #####
 
-function get_z(grid, z_scale, N_poly)
+using DocStringExtensions: FIELDS
+
+"""
+    get_z(grid, z_scale, N_poly)
+
+Gauss-Lobatto points along the z-coordinate
+ - `grid` DG grid
+ - `z_scale` multiplies `z-coordinate`
+"""
+function get_z(grid::DiscontinuousSpectralElementGrid{T,dim,N}, z_scale) where {T,dim,N}
 
     return reshape(grid.vgeo[(1:(N_poly+1)^2:(N_poly+1)^3),CLIMA.Mesh.Grids.vgeoid.x3id,:],:)*z_scale
 end
 
+"""
+    DataFile
+
+Used to ensure generation and reading of
+a set of files are automatically synchronized.
+
+```julia
+julia> output_data = DataFile("my_data")
+DataFile{String}("my_data", "num")
+
+julia> output_data(1)
+"my_data_num=1"
+```
+
+$(FIELDS)
+"""
 struct DataFile{S<:AbstractString}
+    "filename"
     filename::S
+    "property name"
     prop_name::S
     DataFile(filename::S) where {S} = new{S}(filename, "num")
 end
@@ -34,11 +61,27 @@ function collect_data(output_data::DataFile, n_steps::Int)
   return all_data
 end
 
-function get_vars_from_stack(grid::DiscontinuousSpectralElementGrid{T,dim,N},
-                             Q::MPIStateArray, # dg.auxstate or state.data
-                             bl::BalanceLaw, # SoilModelHeat
-                             vars_fun::F;
-                             exclude=[]) where {T,dim,N,F<:Function}
+"""
+    get_vars_from_stack(
+        grid::DiscontinuousSpectralElementGrid{T,dim,N},
+        Q::MPIStateArray, # dg.auxstate or state.data
+        bl::BalanceLaw, # SoilModelHeat
+        vars_fun::F;
+        exclude=[]
+        ) where {T,dim,N,F<:Function}
+
+Returns a dictionary whose keys are computed
+from `vars_fun` (e.g., `vars_state`) and values
+are arrays of each variable along the z-coordinate.
+Skips variables whose keys are listed in `exclude`.
+"""
+function get_vars_from_stack(
+  grid::DiscontinuousSpectralElementGrid{T,dim,N},
+  Q::MPIStateArray, # dg.auxstate or state.data
+  bl::BalanceLaw, # SoilModelHeat
+  vars_fun::F;
+  exclude=[]
+  ) where {T,dim,N,F<:Function}
     D = Dict()
     FT = eltype(Q)
     vf = vars_fun(bl,FT)
@@ -68,7 +111,7 @@ time_discrete = FT[0, 10, 20, 30]
 
 data_continuous = TimeContinuousData(time_discrete, data_discrete)
 
-data_at_40 = data_continuous(40)
+data_at_40 = data_continuous(40) # data at t=40
 ```
 """
 struct TimeContinuousData{FT<:AbstractFloat,A<:AbstractArray}

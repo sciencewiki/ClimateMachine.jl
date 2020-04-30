@@ -25,19 +25,19 @@ using CLIMA.GenericCallbacks
 using CLIMA.ODESolvers
 using CLIMA.VariableTemplates
 
-import CLIMA.DGmethods: vars_aux,
-                        vars_state,
-                        vars_gradient,
-                        vars_diffusive,
+import CLIMA.DGmethods: vars_state_auxiliary,
+                        vars_state_conservative,
+                        vars_state_gradient,
+                        vars_state_gradient_flux,
                         source!,
-                        flux_diffusive!,
-                        flux_nondiffusive!,
-                        gradvariables!,
-                        diffusive!,
+                        flux_second_order!,
+                        flux_first_order!,
+                        compute_gradient_argument!,
+                        compute_gradient_flux!,
                         update_aux!,
                         nodal_update_aux!,
-                        init_aux!,
-                        init_state!,
+                        init_state_auxiliary!,
+                        init_state_conservative!,
                         boundary_state!
 
 FT = Float64;
@@ -60,20 +60,20 @@ end
 
 m = HeatModel{FT}();
 
-vars_aux(::HeatModel, FT) = @vars(z::FT, T::FT);
+vars_state_auxiliary(::HeatModel, FT) = @vars(z::FT, T::FT);
 
-vars_state(::HeatModel, FT) = @vars(ρcT::FT);
+vars_state_conservative(::HeatModel, FT) = @vars(ρcT::FT);
 
-vars_gradient(::HeatModel, FT) = @vars(T::FT);
+vars_state_gradient(::HeatModel, FT) = @vars(T::FT);
 
-vars_diffusive(::HeatModel, FT) = @vars(∇T::SVector{3,FT});
+vars_state_gradient_flux(::HeatModel, FT) = @vars(∇T::SVector{3,FT});
 
-function init_aux!(m::HeatModel, aux::Vars, geom::LocalGeometry)
+function init_state_auxiliary!(m::HeatModel, aux::Vars, geom::LocalGeometry)
   aux.z = geom.coord[3]
   aux.T = m.initialT
 end;
 
-function init_state!(m::HeatModel, state::Vars, aux::Vars, coords, t::Real)
+function init_state_conservative!(m::HeatModel, state::Vars, aux::Vars, coords, t::Real)
   state.ρcT = m.ρc * aux.T
 end;
 
@@ -86,18 +86,18 @@ function soil_nodal_update_aux!(m::HeatModel, state::Vars, aux::Vars, t::Real)
   aux.T = state.ρcT / m.ρc
 end;
 
-function gradvariables!(m::HeatModel, transform::Vars, state::Vars, aux::Vars, t::Real)
+function compute_gradient_argument!(m::HeatModel, transform::Vars, state::Vars, aux::Vars, t::Real)
   transform.T = state.ρcT / m.ρc
 end;
 
-function diffusive!(m::HeatModel, diffusive::Vars, ∇transform::Grad, state::Vars, aux::Vars, t::Real)
+function compute_gradient_flux!(m::HeatModel, diffusive::Vars, ∇transform::Grad, state::Vars, aux::Vars, t::Real)
   diffusive.∇T = ∇transform.T
 end;
 
 function source!(m::HeatModel, _...); end;
-function flux_nondiffusive!(m::HeatModel, _...); end;
+function flux_first_order!(m::HeatModel, _...); end;
 
-function flux_diffusive!(m::HeatModel, flux::Grad, state::Vars, diffusive::Vars, hyperdiffusive::Vars, aux::Vars, t::Real)
+function flux_second_order!(m::HeatModel, flux::Grad, state::Vars, diffusive::Vars, hyperdiffusive::Vars, aux::Vars, t::Real)
    flux.ρcT -= m.α * diffusive.∇T
 end;
 
@@ -124,9 +124,11 @@ velems = collect(0:10) / 10;
 
 N_poly = 5;
 
-topl = StackedBrickTopology(MPI.COMM_WORLD, (0.0:1,0.0:1,velems);
-    periodicity = (true,true,false),
-    boundary=((0,0),(0,0),(1,2)));
+topl = StackedBrickTopology(
+  MPI.COMM_WORLD,
+  (0.0:1,0.0:1,velems);
+  periodicity = (true,true,false),
+  boundary=((0,0),(0,0),(1,2)));
 
 grid = DiscontinuousSpectralElementGrid(
   topl,
@@ -137,8 +139,9 @@ grid = DiscontinuousSpectralElementGrid(
 dg = DGModel(
   m,
   grid,
-  CentralNumericalFluxNonDiffusive(), # penalty terms for discretizations
-  CentralNumericalFluxDiffusive(),
+
+  CentralNumericalFluxFirstOrder(),
+  CentralNumericalFluxSecondOrder(),
   CentralNumericalFluxGradient())
 
 Δ = min_node_distance(grid)
@@ -151,11 +154,12 @@ Q = init_ode_state(dg, Float64(0))
 
 lsrk = LSRK54CarpenterKennedy(dg, Q; dt = dt, t0 = 0);
 
+output_dir = joinpath(@__DIR__);
 output_dir = pwd();
 mkpath(output_dir)
 
-state_vars = get_vars_from_stack(grid, Q, m, vars_state)
-aux_vars = get_vars_from_stack(grid, dg.auxstate, m, vars_aux)
+state_vars = get_vars_from_stack(grid, Q, m, vars_state_conservative)
+aux_vars = get_vars_from_stack(grid, dg.state_auxiliary, m, vars_state_auxiliary)
 all_vars = OrderedDict(state_vars..., aux_vars...)
 export_plot_snapshot(all_vars, ("ρcT",), joinpath(output_dir, "initial_condition.png"))
 
@@ -165,14 +169,14 @@ const n_outputs = 5;
 const every_x_simulation_time = ceil(Int, timeend/n_outputs);
 
 z_scale = 100 # convert from meters to cm
-dims = OrderedDict("z" => collect(get_z(grid, z_scale, N_poly)))
+dims = OrderedDict("z" => collect(get_z(grid, z_scale)))
 
 output_data = DataFile(joinpath(output_dir, "output_data"))
 
 step = [0]
 callback = GenericCallbacks.EveryXSimulationTime(every_x_simulation_time, lsrk) do (init = false)
-  state_vars = get_vars_from_stack(grid, Q, m, vars_state; exclude=[])
-  aux_vars = get_vars_from_stack(grid, dg.auxstate, m, vars_aux; exclude=["z"])
+  state_vars = get_vars_from_stack(grid, Q, m, vars_state_conservative; exclude=[])
+  aux_vars = get_vars_from_stack(grid, dg.state_auxiliary, m, vars_state_auxiliary; exclude=["z"])
   all_vars = OrderedDict(state_vars..., aux_vars...)
   write_data(NetCDFWriter(), output_data(step[1]), dims, all_vars, gettime(lsrk))
   step[1]+=1
