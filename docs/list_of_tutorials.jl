@@ -49,19 +49,14 @@ if generate_tutorials
         # Literate.notebook(input, gen_dir, execute = true)
     end
 
-    # TODO: Should we use AutoPages.jl?
-
     # These files mirror the .jl files in `CLIMA/tutorials/`:
-    tutorials = Any[
-        "Atmos" => Any[
-            "Dry Idealized GCM" => "generated/Atmos/heldsuarez.md",
-            "Rising Bubble LES" => "ExtendingCLIMA/Atmos/Model/risingbubble.md",
-        ],
-        "Ocean" => Any[],
-        "Numerics" => Any[
-            "LinearSolvers" => Any["Conjugate Gradient" => "generated/Numerics/LinearSolvers/cg.md",],
-            "Contributing" => Any["Notes on Literate" => "generated/literate_markdown.md",],
-        ],
-    ]
+    tutorials, _ = gather_pages(;
+        filenames = relpath.(tutorials_jl, dirname(@__DIR__)),
+        extension_filter = x -> endswith(x, ".jl"),
+        transform_extension = x ->
+            replace_reverse(x, ".jl" => ".md"; count = 1),
+        remove_first_level = true,
+        transform_path = x -> replace(x, "tutorials" => "generated", count = 1),
+    )
 
 end

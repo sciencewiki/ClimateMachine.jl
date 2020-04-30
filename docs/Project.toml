@@ -1,4 +1,5 @@
 [deps]
+AutoPages = "a027c030-dba8-4562-b3fb-d6cc94360871"
 CLIMA = "777c4786-024f-11e9-21a3-85d5d4106250"
 CLIMAParameters = "6eacf6c3-8458-43b9-ae03-caf5306d3d53"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
