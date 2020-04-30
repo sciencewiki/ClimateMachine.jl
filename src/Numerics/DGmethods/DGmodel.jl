@@ -459,7 +459,13 @@ function (dg::DGModel)(dQdt, Q, ::Nothing, t; increment = false)
     wait(device, comp_stream)
 end
 
-function init_ode_state(dg::DGModel, args...; init_on_cpu = false)
+function init_ode_state(
+    dg::DGModel,
+    t,
+    args...;
+    init_on_cpu = false,
+    commtag = 888,
+)
     device = arraytype(dg.grid) <: Array ? CPU() : CUDA()
 
     bl = dg.balancelaw
@@ -485,6 +491,7 @@ function init_ode_state(dg::DGModel, args...; init_on_cpu = false)
             auxstate.data,
             grid.vgeo,
             topology.realelems,
+            t,
             args...;
             ndrange = Np * nrealelem,
             dependencies = (event,),
@@ -502,11 +509,13 @@ function init_ode_state(dg::DGModel, args...; init_on_cpu = false)
             h_auxstate.data,
             Array(grid.vgeo),
             topology.realelems,
+            t,
             args...;
             ndrange = Np * nrealelem,
         )
         wait(event) # XXX: This could be `wait(device, event)` once KA supports that.
         state .= h_state
+        auxstate .= h_auxstate
     end
 
     event = Event(device)
@@ -529,6 +538,9 @@ function restart_ode_state(dg::DGModel, state_data; init_on_cpu = false)
     event = MPIStateArrays.begin_ghost_exchange!(state; dependencies = event)
     event = MPIStateArrays.end_ghost_exchange!(state; dependencies = event)
     wait(device, event)
+
+    MPIStateArrays.start_ghost_exchange!(auxstate)
+    MPIStateArrays.finish_ghost_exchange!(auxstate)
 
     return state
 end

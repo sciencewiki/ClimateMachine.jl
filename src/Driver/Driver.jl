@@ -24,6 +24,9 @@ using ..MPIStateArrays
 using ..ODESolvers
 using ..TicToc
 using ..VariableTemplates
+using ..VTK
+
+export parse_commandline
 
 @init @require CuArrays = "3a865a2d-5b23-5a0f-bc46-62713ec82fae" begin
     using .CuArrays, .CuArrays.CUDAdrv, .CuArrays.CUDAnative
@@ -70,6 +73,7 @@ Base.@kwdef mutable struct CLIMA_Settings
     restart_from_num::Int = -1
     log_level::String = "INFO"
     output_dir::String = "output"
+    group_id::String = "site17"
     integration_testing::Bool = false
     array_type
 end
@@ -163,6 +167,10 @@ function parse_commandline(custom_settings)
         "--integration-testing"
         help = "enable integration testing"
         action = :store_true
+        "--group-id"
+        help = "Set the group for the CFSite experiment"
+        arg_type = String
+        default = "site17"
     end
 
     if custom_settings !== nothing
@@ -229,6 +237,8 @@ function init(; disable_gpu = false, arg_settings = nothing)
         delete!(parsed_args, "monitor-courant-numbers")
         Settings.log_level = uppercase(parsed_args["log-level"])
         delete!(parsed_args, "log-level")
+        Settings.groupid = parsed_args["group-id"]
+        delete!(parsed_args, "group-id")
         Settings.checkpoint = parsed_args["checkpoint"]
         delete!(parsed_args, "checkpoint")
         Settings.checkpoint_keep_one = !parsed_args["checkpoint-keep-all"]

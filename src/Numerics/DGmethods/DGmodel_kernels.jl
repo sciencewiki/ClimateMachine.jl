@@ -1086,6 +1086,7 @@ end
     auxstate,
     vgeo,
     elems,
+    t,
     args...,
 ) where {dim, polyorder}
     N = polyorder
@@ -1116,10 +1117,14 @@ end
             Vars{vars_state(bl, FT)}(l_state),
             Vars{vars_aux(bl, FT)}(l_aux),
             coords,
+            t,
             args...,
         )
         @unroll for s in 1:nstate
             state[n, s, e] = l_state[s]
+        end
+        @unroll for s in 1:nauxstate
+            auxstate[n, s, e] = l_aux[s]
         end
     end
 end
