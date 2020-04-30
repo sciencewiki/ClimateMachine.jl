@@ -58,6 +58,9 @@ if generate_tutorials
             "Rising Bubble LES" => "ExtendingCLIMA/Atmos/Model/risingbubble.md",
         ],
         "Ocean" => Any[],
+        "Land" => Any[
+            "Heat" => Any["Heat Equation" => "generated/Land/Heat/heat_equation.md"],
+        ],
         "Numerics" => Any[
             "LinearSolvers" => Any["Conjugate Gradient" => "generated/Numerics/LinearSolvers/cg.md",],
             "Contributing" => Any["Notes on Literate" => "generated/literate_markdown.md",],
