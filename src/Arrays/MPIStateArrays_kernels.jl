@@ -4,11 +4,6 @@ using Requires
 end
 using KernelAbstractions.Extras: @unroll
 
-@kernel function copy_kernel!(a, b)
-    I = @index(Global, Linear)
-    b[I] = a[I]
-end
-
 @kernel function knl_fillsendbuf!(
     ::Val{Np},
     ::Val{nvar},

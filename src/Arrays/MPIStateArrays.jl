@@ -1,6 +1,5 @@
 # TODO: 1. Create device() function for reshaped MPIStateArrays
-#       2. Modify CLIMA_copy() to dispatch on device
-#       3. Fix Casette issue on reshaped MPIStateArrays with CuArray backend
+#       2. Fix Casette issue on reshaped MPIStateArrays with CuArray backend
 
 module MPIStateArrays
 using ..TicToc
@@ -305,7 +304,10 @@ function Base.copyto!(dest::MPIStateArray, src::MPIStateArray)
     dest
 end
 
-@inline function Base.copyto!(dest::MPIStateArray, bc::Broadcasted{Nothing})
+@eval const MPIDestArray =
+     Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
+
+@inline function Base.copyto!(dest::MPIDestArray, bc::Broadcasted{Nothing})
     # check for the case a .= b, where b is an array
     if bc.f === identity && bc.args isa Tuple{AbstractArray}
         if bc.args isa Tuple{MPIStateArray}
@@ -329,49 +331,8 @@ for (W, ctor) in Adapt.wrappers
      end
 end
 
-@eval const MPIDestArray =
-     Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
-
-# TODO Write in Kernel Abstractions?
-function cuda_copy(a,b)
-    i = threadIdx().x + (blockDim().x-1)*blockDim().x
-    @inbounds b[i] = a[i]
-    return nothing
-end
-
-@inline function Base.copyto!(dest::MPIDestArray, bc::Broadcasted{Nothing})
-    axes(dest) == axes(bc) || Broadcast.throwdm(axes(dest), axes(bc))
-    bc = Broadcast.preprocess(dest, bc)
-#=
-    for i=1:length(bc)
-        dest = bc
-    end
-=#
-    CLIMA_copy!(bc, dest)
-    return dest
-end
-
 @inline Base.copyto!(dest::MPIDestArray, bc::Broadcasted{<:Broadcast.AbstractArrayStyle{0}}) =
     copyto!(dest, convert(Broadcasted{Nothing}, bc))
-#=
-function Base.reshape(a::MPIStateArray{FT}, dims::NTuple{N,Int}) where {N, FT}
-    throw_dmrsa(dims, len) = 
-        throw(DimensionMismatch("new dimensions $(dims) must be consistent with array size $len"))
-
-    if prod(dims) != length(a)
-        throw_dmrsa(dims, length(a))
-    end
-
-#=
-    if N == M && dims == size(a)
-        return a
-    end 
-=#
-
-    # TODO: modify for MPIStateArrays, specifically
-    ccall(:jl_reshape_array, Array{FT,N}, (Any, Any, Any), Array{FT,N}, Array(a), dims)
-end
-=#
 
 """
     post_Irecvs!(Q::MPIStateArray)
@@ -473,16 +434,6 @@ function finish_ghost_send!(Q::MPIStateArray)
     @tic mpi_sendwait
     MPI.Waitall!(Q.sendreq)
     @toc mpi_sendwait
-end
-
-function CLIMA_copy!(a, b)
-    if size(a) != size(b)
-        println("Matrix sizes are not equal for copy!")
-        error()
-    end
-    kernel! = copy_kernel!(CUDA(), 256)
-
-    kernel!(a,b, ndrange = size(a))
 end
 
 # {{{ MPI Buffer handling
