@@ -279,6 +279,10 @@ find_mpisa(x) = x
 find_mpisa(a::MPIStateArray, rest) = a
 find_mpisa(::Any, rest) = find_mpisa(rest)
 
+# MPIDestArray is a union of MPIStateArray and all possible wrappers
+@eval const MPIDestArray =
+     Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
+
 Base.BroadcastStyle(::Type{<:MPIStateArray}) = ArrayStyle{MPIStateArray}()
 function Base.similar(
     bc::Broadcasted{ArrayStyle{MPIStateArray}},
@@ -288,13 +292,13 @@ function Base.similar(
 end
 
 # transform all arguments of `bc` from MPIStateArrays to Arrays
-function transform_broadcasted(bc::Broadcasted, ::Array)
+function transform_broadcasted(bc::Broadcasted, ::ArrayType)
     transform_array(bc)
 end
 function transform_array(bc::Broadcasted)
     Broadcasted(bc.f, transform_array.(bc.args), bc.axes)
 end
-transform_array(mpisa::MPIStateArray) = mpisa.realdata
+transform_array(mpisa::MPIDestArray) = mpisa.realdata
 transform_array(x) = x
 
 Base.copyto!(dest::Array, src::MPIStateArray) = copyto!(dest, src.data)
@@ -303,9 +307,6 @@ function Base.copyto!(dest::MPIStateArray, src::MPIStateArray)
     copyto!(dest.realdata, src.realdata)
     dest
 end
-
-@eval const MPIDestArray =
-     Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
 
 @inline function Base.copyto!(dest::MPIDestArray, bc::Broadcasted{Nothing})
     # check for the case a .= b, where b is an array
