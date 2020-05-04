@@ -1,3 +1,4 @@
+#!/usr/bin/env julia --project
 #=
 # This experiment file establishes the initial conditions, boundary conditions,
 # source terms and simulation parameters (domain size + resolution) for the
@@ -48,14 +49,9 @@ URL = {https://journals.ametsoc.org/doi/abs/10.1175/1520-0469%282003%2960%3C1201
 eprint = {https://journals.ametsoc.org/doi/pdf/10.1175/1520-0469%282003%2960%3C1201%3AALESIS%3E2.0.CO%3B2}
 =#
 
-using Distributions
-using Random
-using StaticArrays
-using Test
-using DocStringExtensions
-using LinearAlgebra
-
 using CLIMA
+CLIMA.init()
+
 using CLIMA.Atmos
 using CLIMA.ConfigTypes
 using CLIMA.DGmethods.NumericalFluxes
@@ -65,6 +61,13 @@ using CLIMA.Mesh.Filters
 using CLIMA.ODESolvers
 using CLIMA.MoistThermodynamics
 using CLIMA.VariableTemplates
+
+using Distributions
+using Random
+using StaticArrays
+using Test
+using DocStringExtensions
+using LinearAlgebra
 
 using CLIMAParameters
 using CLIMAParameters.Planet: e_int_v0, grav, day
@@ -465,14 +468,12 @@ end
 
 function config_diagnostics(driver_config)
     default_dgngrp =
-        setup_atmos_default_diagnostics("10000steps", driver_config.name)
-    core_dgngrp = setup_atmos_core_diagnostics("10000steps", driver_config.name)
+        setup_atmos_default_diagnostics("2500steps", driver_config.name)
+    core_dgngrp = setup_atmos_core_diagnostics("2500steps", driver_config.name)
     return CLIMA.DiagnosticsConfiguration([default_dgngrp, core_dgngrp])
 end
 
 function main()
-    CLIMA.init()
-
     FT = Float32
 
     # DG polynomial order
