@@ -1,18 +1,22 @@
 using MPI
+using Test
 using CLIMA
 using CLIMA.MPIStateArrays
 
-#CLIMA.init(disable_gpu = true)
-CLIMA.init()
-const ArrayType = CLIMA.array_type()
-const mpicomm = MPI.COMM_WORLD
-FT = Float32
-Q = MPIStateArray{FT}(mpicomm, ArrayType, 4, 4, 4)
-println(size(Array(Q)))
-Qb = reshape(Q, (16, 4, 1))
+let
+    CLIMA.init()
+    ArrayType = CLIMA.array_type()
+    mpicomm = MPI.COMM_WORLD
+    FT = Float32
+    Q = MPIStateArray{FT}(mpicomm, ArrayType, 4, 4, 4)
+    Qb = reshape(Q, (16, 4, 1));
 
-# this works
-Q .= Q
+    Q .= 1
+    Qb .= 1
 
-# this provides an error
-Qb .= Qb
+    @testset "MPIStateArray Reshape" begin
+        @test maximum(Q[:] .== 1)
+        @test maximum(Array(Qb)[:] .== 1)
+    end
+
+end

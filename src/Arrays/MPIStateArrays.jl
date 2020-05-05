@@ -271,6 +271,18 @@ Base.Array(Q::MPIStateArray) = Array(Q.data)
 
 # broadcasting stuff
 
+struct Adaptor end
+Adapt.adapt_storage(to::Adaptor, arr::MPIStateArray) = arr.realdata
+
+# MPIDestArray is a union of MPIStateArray and all possible wrappers
+@eval const MPIDestArray =
+     Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
+
+for (W, ctor) in Adapt.wrappers
+     @eval begin
+          BroadcastStyle(::Type{<:$W}) where {AT<:MPIDestArray} = BroadcastStyle(AT)
+     end
+end
 # find the first MPIStateArray among `bc` arguments
 # based on https://docs.julialang.org/en/v1/manual/interfaces/#Selecting-an-appropriate-output-array-1
 find_mpisa(bc::Broadcasted) = find_mpisa(bc.args)
@@ -279,11 +291,6 @@ find_mpisa(x) = x
 find_mpisa(a::MPIStateArray, rest) = a
 find_mpisa(::Any, rest) = find_mpisa(rest)
 
-# MPIDestArray is a union of MPIStateArray and all possible wrappers
-@eval const MPIDestArray =
-     Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
-
-Base.BroadcastStyle(::Type{<:MPIStateArray}) = ArrayStyle{MPIStateArray}()
 function Base.similar(
     bc::Broadcasted{ArrayStyle{MPIStateArray}},
     ::Type{FT},
@@ -291,46 +298,48 @@ function Base.similar(
     similar(find_mpisa(bc), FT)
 end
 
+function transform_broadcasted(bc::Broadcasted, dest::MPIDestArray)
+    transform_broadcasted(bc, parent(dest))
+end
+function transform_broadcasted(bc::Broadcasted, dest::MPIStateArray)
+    transform_broadcasted(bc, dest.data)
+end
+
 # transform all arguments of `bc` from MPIStateArrays to Arrays
-function transform_broadcasted(bc::Broadcasted, ::ArrayType)
+function transform_broadcasted(bc::Broadcasted, ::Array)
     transform_array(bc)
 end
 function transform_array(bc::Broadcasted)
     Broadcasted(bc.f, transform_array.(bc.args), bc.axes)
 end
-transform_array(mpisa::MPIDestArray) = mpisa.realdata
-transform_array(x) = x
+transform_array(x) = adapt(Adaptor(), x)
 
 Base.copyto!(dest::Array, src::MPIStateArray) = copyto!(dest, src.data)
 
-function Base.copyto!(dest::MPIStateArray, src::MPIStateArray)
-    copyto!(dest.realdata, src.realdata)
+function Base.copyto!(dest::MPIDestArray, src::MPIDestArray)
+    copyto!(adapt(Adaptor(), dest),
+            adapt(Adaptor(), src))
     dest
 end
 
 @inline function Base.copyto!(dest::MPIDestArray, bc::Broadcasted{Nothing})
     # check for the case a .= b, where b is an array
-    if bc.f === identity && bc.args isa Tuple{AbstractArray}
-        if bc.args isa Tuple{MPIStateArray}
-            realindices = CartesianIndices((
-                axes(dest.data)[1:(end - 1)]...,
-                dest.realelems,
-            ))
-            copyto!(dest.data, realindices, bc.args[1].data, realindices)
-        else
-            copyto!(dest.data, bc.args[1])
-        end
-    else
-        copyto!(dest.realdata, transform_broadcasted(bc, dest.data))
-    end
+    # if bc.f === identity && bc.args isa Tuple{AbstractArray}
+    #     if bc.args isa Tuple{MPIStateArray}
+    #         realindices = CartesianIndices((
+    #             axes(dest.data)[1:(end - 1)]...,
+    #             dest.realelems,
+    #         ))
+    #         copyto!(dest.data, realindices, bc.args[1].data, realindices)
+    #     else
+    #         copyto!(dest.data, bc.args[1])
+    #     end
+    # else
+        copyto!(adapt(Adaptor(), dest), transform_broadcasted(bc, dest))
+    # end
     dest
 end
 
-for (W, ctor) in Adapt.wrappers
-     @eval begin
-          BroadcastStyle(::Type{<:$W}) where {AT<:MPIStateArray} = BroadcastStyle(AT)
-     end
-end
 
 @inline Base.copyto!(dest::MPIDestArray, bc::Broadcasted{<:Broadcast.AbstractArrayStyle{0}}) =
     copyto!(dest, convert(Broadcasted{Nothing}, bc))
@@ -734,8 +743,7 @@ realview(Q::MPIStateArray) = Q.realdata
     function transform_cuarray(bc::Broadcasted)
         Broadcasted(CuArrays.cufunc(bc.f), transform_cuarray.(bc.args), bc.axes)
     end
-    transform_cuarray(mpisa::MPIStateArray) = mpisa.realdata
-    transform_cuarray(x) = x
+    transform_cuarray(x) = adapt(Adaptor(), x)
 end
 
 @init tictoc()
