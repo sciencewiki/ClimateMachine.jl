@@ -147,7 +147,7 @@ mask_dry = q_tot .≈ 0;
 ρ_dry = ρ[mask_dry];
 T_dry = T[mask_dry];
 
-scatter(ρ_dry, T_dry, xlabel="Density [kg/m^3]", ylabel="T [K]", title="Tested states for dry thermodynamic phase", legend=false);
+scatter(ρ_dry, T_dry, xlabel="Density [kg/m^3]", ylabel="T [K]", title="Tested states for\ndry thermodynamic phase", legend=false);
 savefig("tested_profiles_dry.svg");
 ```
 ![](tested_profiles_dry.svg)
@@ -169,7 +169,7 @@ z, e_int, ρ, q_tot, q_pt, T, p, θ_liq_ice = MT.tested_profiles(param_set, 50, 
 
 p1 = scatter(ρ, z./10^3, xlabel="Density [kg/m^3]", ylabel="z [km]", title="Density");
 p2 = scatter(T, z./10^3, xlabel="Temperature [K]", ylabel="z [km]", title="Temperature");
-p3 = scatter(q_tot, z./10^3, xlabel="Total specific humidity", ylabel="z [km]", title="Total specific humidity");
+p3 = scatter(q_tot*1000, z./10^3, xlabel="Total specific\nhumidity [g/kg]", ylabel="z [km]", title="Total specific\nhumidity");
 plot(p1, p2, p3, layout=(1,3))
 savefig("tested_profiles_virt_temp.svg")
 ```

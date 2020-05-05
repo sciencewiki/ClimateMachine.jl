@@ -89,23 +89,31 @@ function tested_profiles(
     ::Type{FT}
     ) where {FT}
     test_profile = VirtualTemperature{FT}(290, 60, 8*10^3)
+
+    # TODO: Refactor this (might be able to use broadcast/permutedims):
     z_range = range(FT(0), stop = FT(2.5e4), length = n)
-    args =
-        test_profile.(
-            Ref(param_set),
-            z_range,
-        )
-    T, p, ρ = getindex.(args, 1), getindex.(args, 2), getindex.(args, 3)
-
     n_RH = 40
-    RH = range(FT(0), FT(1.0), length=n_RH)
-
-    # Expand for multiple relative humidities:
-    z = collect(Iterators.flatten([z_range for RS in 1:n_RH]))
-    p = collect(Iterators.flatten([p for RS in 1:n_RH]))
-    ρ = collect(Iterators.flatten([ρ for RS in 1:n_RH]))
-    T = collect(Iterators.flatten([T for RS in 1:n_RH]))
-    RH = collect(Iterators.flatten([RH for RS in 1:n]))
+    relative_humidity = range(FT(0), stop = FT(1.2), length=n_RH)
+    T = zeros(FT, n, n_RH)
+    p = zeros(FT, n, n_RH)
+    ρ = zeros(FT, n, n_RH)
+    RH = zeros(FT, n, n_RH)
+    z_all = zeros(FT, n, n_RH)
+    for i in eachindex(z_range)
+        for j in eachindex(relative_humidity)
+            args = test_profile(param_set, z_range[i])
+            k = CartesianIndex(i,j)
+            z_all[k] = z_range[i]
+            T[k] = args[1]
+            p[k] = args[2]
+            ρ[k] = args[3]
+            RH[k] = relative_humidity[j]
+        end
+    end
+    T = reshape(T, n*n_RH)
+    p = reshape(p, n*n_RH)
+    ρ = reshape(ρ, n*n_RH)
+    RH = reshape(RH, n*n_RH)
 
     # Total specific humidity
     q_tot = RH .* q_vap_saturation.(Ref(param_set), T, ρ)
@@ -120,10 +128,10 @@ function tested_profiles(
     # https://github.com/JuliaLang/julia/pull/33515 merges
     q_liq = getproperty.(q_pt,:liq)
     q_ice = getproperty.(q_pt,:ice)
-    args = [z, e_int, ρ, q_tot, q_liq, q_ice, T, p, θ_liq_ice]
+    args = [z_all, e_int, ρ, q_tot, q_liq, q_ice, T, p, θ_liq_ice]
     args = collect(zip(args...))
     sort!(args)
-    z         = getindex.(args, 1)
+    z_all     = getindex.(args, 1)
     e_int     = getindex.(args, 2)
     ρ         = getindex.(args, 3)
     q_tot     = getindex.(args, 4)
@@ -133,6 +141,6 @@ function tested_profiles(
     p         = getindex.(args, 8)
     θ_liq_ice = getindex.(args, 9)
     q_pt = PhasePartition.(q_tot, q_liq, q_ice)
-    args = [z, e_int, ρ, q_tot, q_pt, T, p, θ_liq_ice]
+    args = [z_all, e_int, ρ, q_tot, q_pt, T, p, θ_liq_ice]
     return args
 end

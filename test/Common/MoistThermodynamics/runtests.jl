@@ -504,7 +504,7 @@ end
         @test all(isapprox.(
             internal_energy.(ts),
             internal_energy.(ts_exact),
-            rtol = rtol,
+            rtol = rtol*2,
         ))
         @test all(isapprox.(
             liquid_ice_pottemp.(ts),
