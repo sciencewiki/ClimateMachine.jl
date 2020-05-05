@@ -6,6 +6,7 @@ using LazyArrays
 using LinearAlgebra
 using MPI
 using StaticArrays
+using Adapt
 
 using ..TicToc
 using ..VariableTemplates: @vars, varsindex
@@ -236,6 +237,10 @@ function MPIStateArray{FT, V}(
     )
 end
 
+# MPIDestArray is a union of MPIStateArray and all possible wrappers
+@eval const MPIDestArray =
+    Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
+
 # FIXME: should general cases be handled?
 function Base.similar(
     Q::MPIStateArray{OLDFT, V},
@@ -271,16 +276,32 @@ end
 
 Base.size(Q::MPIStateArray, x...; kw...) = size(Q.realdata, x...; kw...)
 
+Base.getindex(Q::MPIDestArray, x...; kw...) = getindex(parent(Q), x...; kw...)
 Base.getindex(Q::MPIStateArray, x...; kw...) = getindex(Q.realdata, x...; kw...)
 
+Base.setindex!(Q::MPIDestArray, x...; kw...) =
+    setindex!(parent(Q), x...; kw...)
 Base.setindex!(Q::MPIStateArray, x...; kw...) =
     setindex!(Q.realdata, x...; kw...)
 
+Base.eltype(Q::MPIDestArray, x...; kw...) = eltype(parent(Q), x...; kw...)
 Base.eltype(Q::MPIStateArray, x...; kw...) = eltype(Q.data, x...; kw...)
 
+Base.Array(Q::MPIDestArray) = Array(parent(Q))
 Base.Array(Q::MPIStateArray) = Array(Q.data)
 
 # broadcasting stuff
+struct Adaptor end
+Adapt.adapt_storage(to::Adaptor, arr::MPIStateArray) = arr.realdata
+
+Base.fill!(Q::MPIDestArray, x) = fill!(parent(Q), x)
+
+for (W, ctor) in Adapt.wrappers
+     @eval begin
+          BroadcastStyle(::Type{<:$W}) where {AT<:MPIDestArray} = BroadcastStyle(AT)
+     end
+end
+
 
 # find the first MPIStateArray among `bc` arguments
 # based on https://docs.julialang.org/en/v1/manual/interfaces/#Selecting-an-appropriate-output-array-1
@@ -299,6 +320,13 @@ function Base.similar(
 end
 
 # transform all arguments of `bc` from MPIStateArrays to Arrays
+function transform_broadcasted(bc::Broadcasted, dest::MPIDestArray)
+    transform_broadcasted(bc, parent(dest))
+end
+function transform_broadcasted(bc::Broadcasted, dest::MPIStateArray)
+    transform_broadcasted(bc, dest.data)
+end
+
 function transform_broadcasted(bc::Broadcasted, ::Array)
     transform_array(bc)
 end
@@ -306,33 +334,37 @@ function transform_array(bc::Broadcasted)
     Broadcasted(bc.f, transform_array.(bc.args), bc.axes)
 end
 transform_array(mpisa::MPIStateArray) = mpisa.realdata
-transform_array(x) = x
+transform_array(x) = adapt(Adaptor(), x)
 
 Base.copyto!(dest::Array, src::MPIStateArray) = copyto!(dest, src.data)
 
-function Base.copyto!(dest::MPIStateArray, src::MPIStateArray)
-    copyto!(dest.realdata, src.realdata)
+function Base.copyto!(dest::MPIDestArray, src::MPIDestArray)
+    copyto!(adapt(Adaptor(), dest),
+            adapt(Adaptor(), src))
     dest
 end
 
-@inline function Base.copyto!(dest::MPIStateArray, bc::Broadcasted{Nothing})
+@inline function Base.copyto!(dest::MPIDestArray, bc::Broadcasted{Nothing})
     # check for the case a .= b, where b is an array
-    if bc.f === identity && bc.args isa Tuple{AbstractArray}
-        if bc.args isa Tuple{MPIStateArray}
-            realindices = CartesianIndices((
-                axes(dest.data)[1:(end - 1)]...,
-                dest.realelems,
-            ))
-            copyto!(dest.data, realindices, bc.args[1].data, realindices)
-        else
-            copyto!(dest.data, bc.args[1])
-        end
-    else
-        copyto!(dest.realdata, transform_broadcasted(bc, dest.data))
-    end
+    #if bc.f === identity && bc.args isa Tuple{AbstractArray}
+    #    if bc.args isa Tuple{MPIStateArray}
+    #        realindices = CartesianIndices((
+    #            axes(dest.data)[1:(end - 1)]...,
+    #            dest.realelems,
+    #        ))
+    #        copyto!(dest.data, realindices, bc.args[1].data, realindices)
+    #    else
+    #        copyto!(dest.data, bc.args[1])
+    #    end
+    #else
+        copyto!(adapt(Adaptor(), dest), transform_broadcasted(bc, dest))
+
+    #end
     dest
 end
 
+@inline Base.copyto!(dest::MPIDestArray, bc::Broadcasted{<:Broadcast.AbstractArrayStyle{0}}) =
+    copyto!(dest, convert(Broadcasted{Nothing}, bc))
 
 # The following `__no_overlap_*` functions exist to support the old DG balance
 # law where we still use GPUifyLoops.  They should NOT be used in new code.
@@ -756,9 +788,11 @@ end
 # better names, for example `device` is also defined in CUDAdrv
 
 device(::Union{Array, SArray, MArray}) = CPU()
+device(Q::MPIDestArray) = device(parent(Q))
 device(Q::MPIStateArray) = device(Q.data)
 
 realview(Q::Union{Array, SArray, MArray}) = Q
+realview(Q::MPIDestArray) = realview(parent(Q))
 realview(Q::MPIStateArray) = Q.realdata
 
 
