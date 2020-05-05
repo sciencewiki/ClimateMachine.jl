@@ -15,8 +15,8 @@ let
     Qb .= 1
 
     @testset "MPIStateArray Reshape" begin
-        @test maximum(Q[:] .== 1)
-        @test maximum(Array(Qb)[:] .== 1)
+        @test minimum(Q[:] .== 1)
+        @test minimum(Qb[:] .== 1)
     end
 
 end

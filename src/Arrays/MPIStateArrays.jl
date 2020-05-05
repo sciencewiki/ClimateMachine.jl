@@ -1,6 +1,3 @@
-# TODO: 1. Create device() function for reshaped MPIStateArrays
-#       2. Fix Casette issue on reshaped MPIStateArrays with CuArray backend
-
 module MPIStateArrays
 using ..TicToc
 using LinearAlgebra
@@ -31,7 +28,7 @@ using .CMBuffers
 cpuify(x::AbstractArray) = convert(Array, x)
 cpuify(x::Real) = x
 
-export MPIStateArray, euclidean_distance, weightedsum, device
+export MPIStateArray, euclidean_distance, weightedsum, device, transform_array
 
 """
     MPIStateArray{FT, DATN<:AbstractArray{FT,3}, DAI1, DAV,
@@ -218,6 +215,10 @@ function MPIStateArray{FT}(
     )
 end
 
+# MPIDestArray is a union of MPIStateArray and all possible wrappers
+@eval const MPIDestArray =
+     Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
+
 # FIXME: should general cases be handled?
 function Base.similar(
     Q::MPIStateArray,
@@ -260,13 +261,18 @@ end
 
 Base.size(Q::MPIStateArray, x...; kw...) = size(Q.realdata, x...; kw...)
 
+Base.getindex(Q::MPIDestArray, x...; kw...) = getindex(parent(Q), x...; kw...)
 Base.getindex(Q::MPIStateArray, x...; kw...) = getindex(Q.realdata, x...; kw...)
 
+Base.setindex!(Q::MPIDestArray, x...; kw...) =
+    setindex!(parent(Q), x...; kw...)
 Base.setindex!(Q::MPIStateArray, x...; kw...) =
     setindex!(Q.realdata, x...; kw...)
 
+Base.eltype(Q::MPIDestArray, x...; kw...) = eltype(parent(Q), x...; kw...)
 Base.eltype(Q::MPIStateArray, x...; kw...) = eltype(Q.data, x...; kw...)
 
+Base.Array(Q::MPIDestArray) = Array(parent(Q))
 Base.Array(Q::MPIStateArray) = Array(Q.data)
 
 # broadcasting stuff
@@ -274,9 +280,7 @@ Base.Array(Q::MPIStateArray) = Array(Q.data)
 struct Adaptor end
 Adapt.adapt_storage(to::Adaptor, arr::MPIStateArray) = arr.realdata
 
-# MPIDestArray is a union of MPIStateArray and all possible wrappers
-@eval const MPIDestArray =
-     Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
+Base.fill!(Q::MPIDestArray, x) = fill!(parent(Q), x)
 
 for (W, ctor) in Adapt.wrappers
      @eval begin
@@ -724,9 +728,11 @@ end
 # better names, for example `device` is also defined in CUDAdrv
 
 device(::Union{Array, SArray, MArray}) = CPU()
+device(Q::MPIDestArray) = device(parent(Q))
 device(Q::MPIStateArray) = device(Q.data)
 
 realview(Q::Union{Array, SArray, MArray}) = Q
+realview(Q::MPIDestArray) = realview(parent(Q))
 realview(Q::MPIStateArray) = Q.realdata
 
 @init @require CuArrays = "3a865a2d-5b23-5a0f-bc46-62713ec82fae" begin
