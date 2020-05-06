@@ -28,7 +28,7 @@ using .CMBuffers
 cpuify(x::AbstractArray) = convert(Array, x)
 cpuify(x::Real) = x
 
-export MPIStateArray, euclidean_distance, weightedsum
+export MPIStateArray, euclidean_distance, weightedsum, Adaptor
 
 """
     MPIStateArray{FT, DATN<:AbstractArray{FT,3}, DAI1, DAV,
@@ -276,18 +276,15 @@ end
 
 Base.size(Q::MPIStateArray, x...; kw...) = size(Q.realdata, x...; kw...)
 
-Base.getindex(Q::MPIDestArray, x...; kw...) = getindex(parent(Q), x...; kw...)
 Base.getindex(Q::MPIStateArray, x...; kw...) = getindex(Q.realdata, x...; kw...)
 
-Base.setindex!(Q::MPIDestArray, x...; kw...) =
-    setindex!(parent(Q), x...; kw...)
 Base.setindex!(Q::MPIStateArray, x...; kw...) =
     setindex!(Q.realdata, x...; kw...)
 
 Base.eltype(Q::MPIDestArray, x...; kw...) = eltype(parent(Q), x...; kw...)
 Base.eltype(Q::MPIStateArray, x...; kw...) = eltype(Q.data, x...; kw...)
 
-Base.Array(Q::MPIDestArray) = Array(parent(Q))
+Base.Array(Q::MPIDestArray) = Array(adapt(Adaptor(),Q))
 Base.Array(Q::MPIStateArray) = Array(Q.data)
 
 # broadcasting stuff
@@ -358,7 +355,6 @@ end
     #    end
     #else
         copyto!(adapt(Adaptor(), dest), transform_broadcasted(bc, dest))
-
     #end
     dest
 end
