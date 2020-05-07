@@ -18,16 +18,6 @@ using CLIMAParameters
 using CLIMAParameters.Planet: ρ_cloud_liq, R_v, grav
 using CLIMAParameters.Atmos.Microphysics
 
-#abstract type AbstractMicrophysicsParameterSet end
-#abstract type AbstractFallingWaterParameterSet   <: AbstractMicrophysicsParameterSet end
-#abstract type AbstractSuspendedWaterParameterSet <: AbstractMicrophysicsParameterSet end
-#
-#abstract type AbstractCloudParameterSet <: AbstractSuspendedWaterParameterSet end
-#abstract type AbstractIceParameterSet   <: AbstractSuspendedWaterParameterSet end
-#
-#abstract type AbstractRainParameterSet  <: AbstractFallingWaterParameterSet end
-#abstract type AbstractSnowParameterSet  <: AbstractFallingWaterParameterSet end
-
 const APS = AbstractParameterSet
 const ASuspPS = AbstractSuspendedWaterParameterSet
 const AFallPS = AbstractFallingWaterParameterSet
