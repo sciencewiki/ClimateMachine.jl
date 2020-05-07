@@ -12,7 +12,7 @@ module Microphysics
 
 using SpecialFunctions
 
-using CLIMA.MoistThermodynamics
+using ClimateMachine.MoistThermodynamics
 
 using CLIMAParameters
 using CLIMAParameters.Planet: ρ_cloud_liq, R_v, grav
