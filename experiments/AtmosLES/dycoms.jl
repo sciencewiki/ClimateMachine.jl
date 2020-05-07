@@ -1,4 +1,3 @@
-#!/usr/bin/env julia --project
 using CLIMA
 CLIMA.init()
 
@@ -134,7 +133,6 @@ function reverse_integral_load_auxiliary_state!(
     aux::Vars,
 )
     FT = eltype(state)
-    #integrand.radiation.attenuation_coeff = state.ρ * m.κ * aux.moisture.q_liq
     integrand.radiation.attenuation_coeff = aux.∫dz.radiation.attenuation_coeff
 end
 function reverse_integral_set_auxiliary_state!(
@@ -164,7 +162,7 @@ function flux_radiation!(
         FT(cp_d(atmos.param_set)) *
         m.D_subsidence *
         m.α_z *
-        cbrt(Δz_i) *
+        (Δz_i^FT(1/3)) *
         (Δz_i / 4 + m.z_i)
     F_rad =
         upward_flux_from_sfc + upward_flux_from_cloud + free_troposphere_flux
@@ -201,7 +199,7 @@ function init_dycoms!(bl, state, aux, (x, y, z), t)
     # These constants are those used by Stevens et al. (2005)
     qref = FT(9.0e-3)
     q_pt_sfc = PhasePartition(qref)
-    Rm_sfc = gas_constant_air(bl.param_set, q_pt_sfc)
+    Rm_sfc = FT(gas_constant_air(bl.param_set, q_pt_sfc))
     T_sfc = FT(290.4)
     _MSLP = FT(MSLP(bl.param_set))
     _grav = FT(grav(bl.param_set))
@@ -216,7 +214,7 @@ function init_dycoms!(bl, state, aux, (x, y, z), t)
         θ_liq = FT(289.0)
         q_tot = qref
     else
-        θ_liq = FT(297.0) + (z - zi)^(FT(1 / 3))
+        θ_liq = FT(297.0) + (z - zi) .^ (FT(1 / 3))
         q_tot = FT(1.5e-3)
     end
 
@@ -225,8 +223,8 @@ function init_dycoms!(bl, state, aux, (x, y, z), t)
     u, v, w = ugeo, vgeo, FT(0)
 
     # Perturb initial state to break symmetry and trigger turbulent convection
-    r1 = FT(rand(Uniform(-0.001, 0.001)))
-    if z <= 200.0
+    r1 = FT(rand(Uniform(FT(-0.001), FT(0.001))))
+    if z <= FT(200)
         θ_liq += r1 * θ_liq
     end
 
@@ -281,7 +279,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     w_ref = FT(0)
     u_relaxation = SVector(u_geostrophic, v_geostrophic, w_ref)
     # Sponge
-    c_sponge = 1
+    c_sponge = FT(1)
     # Rayleigh damping
     zsponge = FT(1500.0)
     rayleigh_sponge =
@@ -292,7 +290,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
 
     # Boundary conditions
     # SGS Filter constants
-    C_smag = FT(0.21) # 0.21 for stable testing, 0.18 in practice
+    _C_smag = FT(0.21) # 0.21 for stable testing, 0.18 in practice
     C_drag = FT(0.0011)
     LHF = FT(115)
     SHF = FT(15)
@@ -310,8 +308,8 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
         AtmosLESConfigType,
         param_set;
         ref_state = ref_state,
-        turbulence = SmagorinskyLilly{FT}(C_smag),
-        moisture = EquilMoist{FT}(maxiter = 1, tolerance = FT(100)),
+        turbulence = SmagorinskyLilly{FT}(_C_smag),
+        moisture = EquilMoist{FT}(;maxiter = 5, tolerance = FT(2)),
         radiation = radiation,
         source = source,
         boundarycondition = (
@@ -329,8 +327,15 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
         init_state_conservative = ics,
     )
 
-    ode_solver =
-        CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
+    #ode_solver =
+    #    CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
+    
+    ode_solver = CLIMA.MultirateSolverType(
+        linear_model = AtmosAcousticGravityLinearModel,
+        slow_method = LSRK144NiegemannDiehlBusch,
+        fast_method = LSRK144NiegemannDiehlBusch,
+        timestep_ratio = 10,
+    )
 
     config = CLIMA.AtmosLESConfiguration(
         "DYCOMS",
@@ -348,7 +353,7 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
 end
 
 function config_diagnostics(driver_config)
-    interval = "10000steps"
+    interval = "5smins"
     dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
     return CLIMA.DiagnosticsConfiguration([dgngrp])
 end
@@ -356,28 +361,24 @@ end
 function main()
 
     FT = Float64
-
     # DG polynomial order
     N = 4
-
     # Domain resolution and size
     Δh = FT(40)
     Δv = FT(20)
     resolution = (Δh, Δh, Δv)
-
     xmax = FT(1000)
     ymax = FT(1000)
     zmax = FT(2500)
-
     t0 = FT(0)
-    timeend = FT(100)
-
+    timeend = FT(14000)
     driver_config = config_dycoms(FT, N, resolution, xmax, ymax, zmax)
     solver_config = CLIMA.SolverConfiguration(
         t0,
         timeend,
         driver_config,
         init_on_cpu = true,
+        Courant_number = FT(10),
     )
     dgn_config = config_diagnostics(driver_config)
 
