@@ -1492,7 +1492,7 @@ This function projects the velocity field along unit vectors in radial, lat and 
  - `intrp_cs`: Initialized cubed sphere structure
  - `v`: Array consisting of x1, x2 and x3 components of the vector field
  - `uvwi`:  Tuple providing the column numbers for x1, x2 and x3 components of vector field in the array.
-            These columns will be replaced with projected vector fields along unit vectors in rad, lat and long directions.
+            These columns will be replaced with projected vector fields along unit vectors in long, lat and rad directions.
 """
 function project_cubed_sphere!(
     intrp_cs::InterpolationCubedSphere{FT},
@@ -1528,9 +1528,9 @@ function project_cubed_sphere!(
                 -v[i, _ρu] * sind(long_grd[longi[i]]) +
                 v[i, _ρv] * cosd(long_grd[longi[i]])
 
-            @inbounds v[i, _ρu] = vrad
+            @inbounds v[i, _ρu] = vlon
             @inbounds v[i, _ρv] = vlat
-            @inbounds v[i, _ρw] = vlon
+            @inbounds v[i, _ρw] = vrad
         end
     elseif device == CUDA()
         n_threads = 256
@@ -1569,7 +1569,7 @@ function project_cubed_sphere_CUDA!(
     bs = blockDim().x  # block dim
     idx = ti + (bi - 1) * bs
     np_tot = size(v, 1)
-    # projecting velocity onto unit vectors in rad, lat and long directions
+    # projecting velocity onto unit vectors in long, lat and rad directions
     # assumed u, v and w are located in columns 2, 3 and 4
     if idx ≤ np_tot
         vrad =
@@ -1594,9 +1594,9 @@ function project_cubed_sphere_CUDA!(
             -v[idx, _ρu] * CUDAnative.sin(long_grd[longi[idx]] * pi / 180.0) +
             v[idx, _ρv] * CUDAnative.cos(long_grd[longi[idx]] * pi / 180.0)
 
-        v[idx, _ρu] = vrad
+        v[idx, _ρu] = vlon
         v[idx, _ρv] = vlat
-        v[idx, _ρw] = vlon
+        v[idx, _ρw] = vrad
     end # TODO: cosd / sind having issues on GPU. Unable to isolate the issue at this point. Needs to be revisited.
     return nothing
 end

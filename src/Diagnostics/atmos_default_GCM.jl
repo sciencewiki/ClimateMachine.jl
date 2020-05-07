@@ -135,11 +135,11 @@ function compute_diagnosticsums_GCM!(
     # set up empty variable structs with interpolated arrays as templates
     #state_i = statei_vars(Array{Float32,1}(all_state_data[le,la,lo,:]))
     #th_i = thermoi_vars(Array{Float32,1}(all_thermo_data[le,la,lo,:]))
-    #dyn_i = dyni_vars(Array{Float32,1}(all_thermo_data[le,la,lo,:]))
+    #dyn_i = dyni_vars(Array{Float32,1}(all_dyn_data[le,la,lo,:]))
 
     state_i = statei_vars(all_state_data[lo,la,le,:])
     th_i = thermoi_vars(all_thermo_data[lo,la,le,:])
-    dyn_i = dyni_vars(all_thermo_data[lo,la,le,:])
+    dyn_i = dyni_vars(all_dyn_data[lo,la,le,:])
 
     # calculate ds. vars that will be saved (these need to be selected from the diagnostic_vars(_GCM) file)
     """ds = diagnostic_vars(dsumsi[lo,la,le,:])

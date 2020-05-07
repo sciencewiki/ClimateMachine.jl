@@ -113,7 +113,7 @@ function parse_commandline(custom_settings)
         help = "interval at which to collect diagnostics"
         metavar = "<interval>"
         arg_type = String
-        default = "never"
+        default = "1000steps"
         "--vtk"
         help = "interval at which to output VTK"
         metavar = "<interval>"
