@@ -960,7 +960,8 @@ function saturation_adjustment(
             maxiter,
         )
         if !sol.converged
-            error("saturation_adjustment did not converge")
+            @print("maxiter reached in saturation_adjustment. Please open an issue with gist of these values:\n")
+            @print("    e_int=",e_int, ", ρ=",ρ, ", q_tot=",q_tot, ", maxiter=",maxiter, ", tol=",tol,"\n")
         end
         return sol.root
     end
@@ -1039,7 +1040,8 @@ function saturation_adjustment_SecantMethod(
             maxiter,
         )
         if !sol.converged
-            error("saturation_adjustment_SecantMethod did not converge")
+            @print("maxiter reached in saturation_adjustment_SecantMethod. Please open an issue with gist of these values:\n")
+            @print("    e_int=",e_int, ", ρ=",ρ, ", q_tot=",q_tot, ", maxiter=",maxiter, ", tol=",tol,"\n")
         end
         return sol.root
     end
@@ -1103,7 +1105,8 @@ function saturation_adjustment_q_tot_θ_liq_ice(
             maxiter,
         )
         if !sol.converged
-            error("saturation_adjustment_q_tot_θ_liq_ice did not converge")
+            @print("maxiter reached in saturation_adjustment_q_tot_θ_liq_ice. Please open an issue with gist of these values:\n")
+            @print("    θ_liq_ice=",θ_liq_ice, ", ρ=",ρ, ", q_tot=",q_tot, ", maxiter=",maxiter, ", tol=",tol,"\n")
         end
         return sol.root
     end
@@ -1171,7 +1174,8 @@ function saturation_adjustment_q_tot_θ_liq_ice_given_pressure(
             maxiter,
         )
         if !sol.converged
-            error("saturation_adjustment_q_tot_θ_liq_ice_given_pressure did not converge")
+            @print("maxiter reached in saturation_adjustment_q_tot_θ_liq_ice_given_pressure. Please open an issue with gist of these values:\n")
+            @print("    θ_liq_ice=",θ_liq_ice, ", p=",p, ", q_tot=",q_tot, ", maxiter=",maxiter, ", tol=",tol,"\n")
         end
         return sol.root
     end
@@ -1377,7 +1381,8 @@ function air_temperature_from_liquid_ice_pottemp_non_linear(
         maxiter,
     )
     if !sol.converged
-        error("air_temperature_from_liquid_ice_pottemp_non_linear did not converge")
+        @print("maxiter reached in air_temperature_from_liquid_ice_pottemp_non_linear. Please open an issue with gist of these values:\n")
+        @print("    θ_liq_ice=",θ_liq_ice, ", ρ=",ρ, ", q_tot=",q.tot, ", q_liq=",q.liq, ", q_ice=",q.ice, ", maxiter=",maxiter, ", tol=",tol,"\n")
     end
     return sol.root
 end

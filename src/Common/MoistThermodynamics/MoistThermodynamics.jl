@@ -26,6 +26,7 @@ Because these parameters are widely used throughout this module,
 module MoistThermodynamics
 
 using DocStringExtensions
+using KernelAbstractions: @print
 using RootSolvers
 
 using CLIMAParameters: AbstractParameterSet
