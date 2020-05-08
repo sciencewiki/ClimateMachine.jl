@@ -3,7 +3,6 @@
 ####
 
 how_to_guides = Any[
-    "Home" => "HowToGuides/Contributing/CONTRIBUTING.md",
     "Arrays" => Any[
     # "Home" => "HowToGuides/Arrays/index.md"
     ],
@@ -24,7 +23,6 @@ how_to_guides = Any[
     "Land" => Any[
     # "Home" => "HowToGuides/Land/index.md"
     ],
-    "Diagnostics" => Any["Variables" => "HowToGuides/Diagnostics/DiagnosticVariables.md"],
     "Numerics" => Any[
         "Meshes" => Any[
         # "Home" => "HowToGuides/Numerics/Meshes/index.md",

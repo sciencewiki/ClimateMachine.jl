@@ -1,32 +1,31 @@
 Base.HOME_PROJECT[] = abspath(Base.HOME_PROJECT[]) # JuliaLang/julia/pull/28625
 
 using ClimateMachine, Documenter, Literate
+
 ENV["GKSwstype"] = "100" # https://github.com/jheinen/GR.jl/issues/278#issuecomment-587090846
 
 generated_dir = joinpath(@__DIR__, "src", "generated") # generated files directory
 rm(generated_dir, force = true, recursive = true)
 mkpath(generated_dir)
 
-include("list_of_experiments.jl")        # defines a nested array `experiments`
-include("list_of_tutorials.jl")          # defines a nested array `tutorials`
-include("list_of_how_to_guides.jl")      # defines a nested array `how_to_guides`
-include("list_of_discussions.jl")        # defines a nested array `apis`
-include("list_of_apis.jl")               # defines a nested array `discussions`
+include("list_of_tutorials.jl")         # defines a nested array `tutorials`
+include("list_of_how_to_guides.jl")     # defines a nested array `how_to_guides`
+include("list_of_apis.jl")              # defines a nested array `apis`
+include("list_of_discussions.jl")       # defines a nested array `discussions`
+include("list_of_devdocs.jl")           # defines a nested array `devdocs`
 
 pages = Any[
     "Home" => "index.md",
-    "Installation" => "Installation.md",
-    "Experiments" => experiments,
+    "Getting started" => Any[
+        "Installation" => "Installation.md",
+        "Running" => "RunningClimateMachine.md",
+    ],
     "Tutorials" => tutorials,
     "How-to-guides" => how_to_guides,
     "APIs" => apis,
     "Theory & design philosophy" => discussions,
-    # TODO: Move everything below here into one of the above sections
-    "Developer docs" => Any[
-        "CodingConventions.md",
-        "AcceptableUnicode.md",
-        "VariableList.md",
-    ],
+    "Contribution guide" => "Contributing.md",
+    "Developer docs" => devdocs,
 ]
 
 mathengine = MathJax(Dict(
