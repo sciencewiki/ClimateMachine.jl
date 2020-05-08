@@ -104,9 +104,7 @@ nothing # hide
 FT = Float32
 nothing # hide
 
-T_surface = FT(290) ## surface temperature (K)
-ΔT = FT(60)  ## temperature drop between surface and top of atmosphere (K)
-temp_profile_ref = DecayingTemperatureProfile(param_set, T_surface, ΔT)
+temp_profile_ref = DecayingTemperatureProfile{FT}(param_set)
 ref_state = HydrostaticState(temp_profile_ref)
 nothing # hide
 
