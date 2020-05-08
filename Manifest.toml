@@ -64,7 +64,9 @@ version = "0.1.0"
 
 [[CLIMAParameters]]
 deps = ["Test"]
-path = "../CLIMAParameters.jl"
+git-tree-sha1 = "1b29ffb7622f329df80cb7a6b278ce3ad90f53d1"
+repo-rev = "aj/more_micro"
+repo-url = "https://github.com/CliMA/CLIMAParameters.jl.git"
 uuid = "6eacf6c3-8458-43b9-ae03-caf5306d3d53"
 version = "0.1.3"
 
