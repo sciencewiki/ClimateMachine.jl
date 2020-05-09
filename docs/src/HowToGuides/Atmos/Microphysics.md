@@ -210,7 +210,7 @@ The ``E_{ls}`` is taken from
 
 ### Ventilation factor
 
-Ventilation factor parametrizes the increase in the mass and heat exchange for falling particles.
+The ventilation factor parametrizes the increase in the mass and heat exchange for falling particles.
 Following [Seifert\_and\_Beheng\_2006](https://link.springer.com/article/10.1007/s00703-005-0112-4) eq. 24
 the ventilation factor is defined as:
 ```math
