@@ -171,7 +171,16 @@ end;
 function source!(m::HeatModel, _...); end;
 # function flux_first_order!(m::HeatModel, _...); end;
 function flux_first_order!(m::HeatModel,flux::Grad,state::Vars,aux::Vars,t::Real)
-   flux.ρcT += m.α * state.ρcT
+    ρ = state.ρ
+    ρinv = 1 / ρ
+    ρu = state.ρu
+    u = ρinv * ρu
+
+    # advective terms
+    flux.ρu = ρ * u .* u'
+    flux.ρT = u * state.ρT
+
+   flux.ρcT += state.ρcT
 end;
 
 # Compute diffusive flux (``F(T,t) = -α ∇T`` in the original PDE). Note that:

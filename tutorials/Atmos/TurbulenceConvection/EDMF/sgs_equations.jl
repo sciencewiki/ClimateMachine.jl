@@ -173,24 +173,26 @@ end;
 #  - `∇transform.T` is available here because we've specified `T`  in `vars_state_gradient`
 function compute_gradient_flux!(m::TurbulenceConvectionModel, diffusive::Vars, ∇transform::Grad, state::Vars, aux::Vars, t::Real)
   diffusive.∇T = ∇transform.T
-  diffusive.∇u = ∇transform.w
+  diffusive.∇w = ∇transform.w
 end;
 
 # We do no have sources, nor non-diffusive fluxes.
-# function source!(m::TurbulenceConvectionModel, _...); end;
+function source!(m::TurbulenceConvectionModel, _...); end;
+# function source!(m::TurbulenceConvectionModel, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real, direction)
+#     source.ρT += 0.01 * state.ρT
+# end;
+
 # function flux_first_order!(m::TurbulenceConvectionModel, _...); end;
-function source!(m::TurbulenceConvectionModel, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real, direction)
-    source.ρT += 0.01 * state.ρT
+function flux_first_order!(m::TurbulenceConvectionModel,flux::Grad,state::Vars,aux::Vars,t::Real)
+   ρ = m.ρ
+   ρinv = 1 / ρ
+   ρw = state.ρw
+   w = ρinv * ρw
+   # advective terms
+   flux.ρw = ρ * w .* w'
+   flux.ρT = w * state.ρT
 end;
 
-function flux_first_order!(m::TurbulenceConvectionModel,flux::Grad,state::Vars,aux::Vars,t::Real)
-   flux.ρT += 0.01 * state.ρT
-   flux.ρw += 0.01 * state.ρT
-end;
-
-function flux_first_order!(m::TurbulenceConvectionModel,flux::Grad,state::Vars,aux::Vars,t::Real)
-   flux.ρT += 0.01 * state.ρT
-end;
 # Compute diffusive flux (``F(T,t) = -α ∇T`` in the original PDE). Note that:
 # - `diffusive.∇T` is available here because we've specified `∇T` in `vars_state_gradient_flux`
 function flux_second_order!(m::TurbulenceConvectionModel, flux::Grad, state::Vars, diffusive::Vars, hyperdiffusive::Vars, aux::Vars, t::Real)
