@@ -73,7 +73,7 @@ end
  - `q_sno` -  snow specific humidity
  - `ρ` - air density
 
-Returns the intercept parameter of the assumed Marshal Palmer distribution of
+Returns the intercept parameter of the assumed Marshall Palmer distribution of
 snow particles.
 """
 function n0_sno(snow_param_set::ASPS, q_sno::FT, ρ::FT) where {FT<:Real}
