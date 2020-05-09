@@ -7,9 +7,13 @@ using LinearAlgebra
 using MPI
 using StaticArrays
 using Adapt
+using CuArrays
 
 using ..TicToc
 using ..VariableTemplates: @vars, varsindex
+
+include("CMBuffers.jl")
+using .CMBuffers
 
 using Base.Broadcast: Broadcasted, BroadcastStyle, ArrayStyle
 
@@ -18,17 +22,14 @@ using Base.Broadcast: Broadcasted, BroadcastStyle, ArrayStyle
 Base.similar(::Type{A}, ::Type{FT}, dims...) where {A <: Array, FT} =
     similar(Array{FT}, dims...)
 
-using CuArrays
 Base.similar(::Type{A}, ::Type{FT}, dims...) where {A <: CuArray, FT} =
     similar(CuArray{FT}, dims...)
 
-include("CMBuffers.jl")
-using .CMBuffers
 
 cpuify(x::AbstractArray) = convert(Array, x)
 cpuify(x::Real) = x
 
-export MPIStateArray, euclidean_distance, weightedsum, Adaptor
+export MPIStateArray, euclidean_distance, weightedsum
 
 """
     MPIStateArray{FT, DATN<:AbstractArray{FT,3}, DAI1, DAV,
@@ -102,9 +103,9 @@ mutable struct MPIStateArray{
         sendreq = fill(MPI.REQUEST_NULL, nnabr)
         recvreq = fill(MPI.REQUEST_NULL, nnabr)
 
-        # If vmap is not on the device we need to copy it up (we also do not want to
-        # put it up everytime, so if it's already on the device then we do not do
-        # anything).
+        # If vmap is not on the device we need to copy it up (we also do not
+        # want to put it up everytime, so if it's already on the device then we
+        # do not do anything).
         #
         # Better way than checking the type names?
         # XXX: Use Adapt.jl vmaprecv = adapt(DA, vmaprecv)
@@ -241,6 +242,10 @@ end
 @eval const MPIDestArray =
     Union{MPIStateArray, $((:($W where {AT <: MPIStateArray}) for (W, _) in Adapt.wrappers)...)}
 
+# broadcasting stuff
+struct Adaptor end
+Adapt.adapt_storage(to::Adaptor, arr::MPIStateArray) = arr.realdata
+
 # FIXME: should general cases be handled?
 function Base.similar(
     Q::MPIStateArray{OLDFT, V},
@@ -274,6 +279,12 @@ function Base.similar(Q::MPIStateArray{FT}) where {FT}
     similar(Q, FT)
 end
 
+#=
+function Base.similar(Q::MPIDestArray, args...)
+    error("Similar(...) disallowed for Adapted MPIStateArray")
+end
+=#
+
 Base.size(Q::MPIStateArray, x...; kw...) = size(Q.realdata, x...; kw...)
 
 Base.getindex(Q::MPIStateArray, x...; kw...) = getindex(Q.realdata, x...; kw...)
@@ -286,10 +297,6 @@ Base.eltype(Q::MPIStateArray, x...; kw...) = eltype(Q.data, x...; kw...)
 
 Base.Array(Q::MPIDestArray) = Array(adapt(Adaptor(),Q))
 Base.Array(Q::MPIStateArray) = Array(Q.data)
-
-# broadcasting stuff
-struct Adaptor end
-Adapt.adapt_storage(to::Adaptor, arr::MPIStateArray) = arr.realdata
 
 Base.fill!(Q::MPIDestArray, x) = fill!(parent(Q), x)
 

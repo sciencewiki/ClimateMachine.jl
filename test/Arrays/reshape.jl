@@ -33,29 +33,4 @@ Qb .= 1
     Qb[8, 1, 1] = 2fillval
     @test Qb[8,1,1] != fillval
     CLIMA.gpu_allowscalar(false)
-
-    # TODO: get copy, copyto, similar to work with reshaped arrays
-    # Note: copy seems to call a copyto! somewhere in the stack
-    Qp = copy(Qb)
-
-    @test typeof(Qp) == typeof(Qb)
-    @test eltype(Qp) == eltype(Qb)
-    @test size(Qp) == size(Qb)
-    @test Array(Qp) == Array(Qb)
-
-    Qp = similar(Qb)
-
-    @test typeof(Qp) == typeof(Qb)
-    @test eltype(Qp) == eltype(Qb)
-    @test size(Qp) == size(Qb)
-
-    copyto!(Qp, Qb)
-    @test Array(Qp) == Array(Qb)
 end
-
-#=
-@testset "MPIStateArray Reshape broadcasting" begin
-    let
-    end
-end 
-=#
