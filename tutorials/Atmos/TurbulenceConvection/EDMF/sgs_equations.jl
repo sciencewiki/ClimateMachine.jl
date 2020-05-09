@@ -17,7 +17,7 @@
 # ``
 
 # where
-#  - `F(T,t) = -α ∇T` is the diffusive flux
+#  - `F(T,t) = -α ∇T + uT` is the diffusive flux
 
 # with boundary conditions
 #  - Fixed temperature `T_surface` at z_{min} (non-zero Dirichlet)
@@ -95,113 +95,134 @@ include(joinpath("..","plotting_funcs.jl"))
 
 # # Define the set of Partial Differential Equations (PDEs)
 
-# Model parameters can be stored in the particular [`BalanceLaw`](@ref CLIMA.DGMethods.BalanceLaw), in this case, a `HeatModel`:
+# Model parameters can be stored in the particular [`BalanceLaw`](@ref CLIMA.DGMethods.BalanceLaw), in this case, a `TurbulenceConvectionModel`:
 
-Base.@kwdef struct HeatModel{FT} <: BalanceLaw
-  "Heat capacity"
-  ρc::FT = 1
-  "Thermal diffusivity"
+Base.@kwdef struct TurbulenceConvectionModel{FT} <: BalanceLaw
+  "density"
+  ρ::FT = 1
+  "eddy diffusivity"
   α::FT = 0.01
   "Initial conditions for temperature"
   initialT::FT = 295.15
   "Surface boundary value for temperature (Dirichlet boundary conditions)"
   surfaceT::FT = 300.0
+  "Initial conditions for velocity"
+  initialw::FT = 0.0
+  "Surface boundary value for velocity (zero)"
+  surfacew::FT = 0.0
 end
 
-# Create an instance of the `HeatModel`:
-m = HeatModel{FT}();
+# Create an instance of the `TurbulenceConvectionModel`:
+m = TurbulenceConvectionModel{FT}();
 
 # All of the methods defined below, in this section, were `import`ed in [Loading code](@ref), and we must provide our own implementation as these methods are called inside `solve!`. Each of these methods have a fall-back of "do nothing" if we don't, or fail to, implement these methods after `import`ing.
 
-# Specify auxiliary variables for `HeatModel` (stored in `aux`)
-vars_state_auxiliary(::HeatModel, FT) = @vars(z::FT, T::FT);
+# Specify auxiliary variables for `TurbulenceConvectionModel` (stored in `aux`)
+vars_state_auxiliary(::TurbulenceConvectionModel, FT) = @vars(z::FT, T::FT, w::FT);
 
-# Specify state variables, the variables solved for in the PDEs, for `HeatModel` (stored in `Q`)
-vars_state_conservative(::HeatModel, FT) = @vars(ρcT::FT);
+# Specify state variables, the variables solved for in the PDEs, for `TurbulenceConvectionModel` (stored in `Q`)
+vars_state_conservative(::TurbulenceConvectionModel, FT) = @vars(ρT::FT, ρw::FT);
 
-# Specify state variables whose gradients are needed for `HeatModel`
-vars_state_gradient(::HeatModel, FT) = @vars(T::FT);
+# Specify state variables whose gradients are needed for `TurbulenceConvectionModel`
+vars_state_gradient(::TurbulenceConvectionModel, FT) = @vars(T::FT, w::FT);
 
-# Specify gradient variables for `HeatModel`
-vars_state_gradient_flux(::HeatModel, FT) = @vars(∇T::SVector{3,FT});
+# Specify gradient variables for `TurbulenceConvectionModel`
+vars_state_gradient_flux(::TurbulenceConvectionModel, FT) = @vars(∇T::SVector{3,FT}, ∇w::SVector{3,FT});
 
 # Specify the initial values in `aux::Vars`, which are available in `init_state_conservative!`. Note that
 # - this method is only called at `t=0`
 # - `aux.z` and `aux.T` are available here because we've specified `z` and `T` in `vars_state_auxiliary`
-function init_state_auxiliary!(m::HeatModel, aux::Vars, geom::LocalGeometry)
+function init_state_auxiliary!(m::TurbulenceConvectionModel, aux::Vars, geom::LocalGeometry)
   aux.z = geom.coord[3]
   aux.T = m.initialT
+  aux.w = m.initialw
 end;
 
 # Specify the initial values in `state::Vars`. Note that
 # - this method is only called at `t=0`
-# - `state.ρcT` is available here because we've specified `ρcT` in `vars_state_conservative`
-function init_state_conservative!(m::HeatModel, state::Vars, aux::Vars, coords, t::Real)
-  state.ρcT = m.ρc * aux.T
+# - `state.ρT` is available here because we've specified `ρT` in `vars_state_conservative`
+function init_state_conservative!(m::TurbulenceConvectionModel, state::Vars, aux::Vars, coords, t::Real)
+  state.ρT = m.ρ * aux.T
+  state.ρw = m.ρ * aux.w
 end;
 
 # The remaining methods, defined in this section, are called at every time-step in the solver by the [`BalanceLaw`](@ref CLIMA.DGMethods.BalanceLaw) framework.
 
 # Overload `update_aux!` to call `soil_nodal_update_aux!`, or any other auxiliary methods
-function update_aux!(dg::DGModel, m::HeatModel, Q::MPIStateArray, t::Real, elems::UnitRange)
+function update_aux!(dg::DGModel, m::TurbulenceConvectionModel, Q::MPIStateArray, t::Real, elems::UnitRange)
   nodal_update_aux!(soil_nodal_update_aux!, dg, m, Q, t, elems)
   return true # TODO: remove return true
 end;
 
 # Compute/update all auxiliary variables at each node. Note that
 # - `aux.T` is available here because we've specified `T` in `vars_state_auxiliary`
-function soil_nodal_update_aux!(m::HeatModel, state::Vars, aux::Vars, t::Real)
-  aux.T = state.ρcT / m.ρc
+function soil_nodal_update_aux!(m::TurbulenceConvectionModel, state::Vars, aux::Vars, t::Real)
+  aux.T = state.ρT / m.ρ
+  aux.w = state.ρw / m.ρ
 end;
 
 # Since we have diffusive fluxes, we must tell CLIMA to compute the gradient of `T`. Here, we specify how `T` is computed. Note that
 #  - `transform.T` is available here because we've specified `T` in `vars_state_gradient`
-function compute_gradient_argument!(m::HeatModel, transform::Vars, state::Vars, aux::Vars, t::Real)
-  transform.T = state.ρcT / m.ρc
+function compute_gradient_argument!(m::TurbulenceConvectionModel, transform::Vars, state::Vars, aux::Vars, t::Real)
+  transform.T = state.ρT / m.ρ
+  transform.w = state.ρw / m.ρ
 end;
 
 # Specify where in `diffusive::Vars` to store the computed gradient in `compute_gradient_argument!`. Note that:
 #  - `diffusive.∇T` is available here because we've specified `∇T` in `vars_state_gradient_flux`
 #  - `∇transform.T` is available here because we've specified `T`  in `vars_state_gradient`
-function compute_gradient_flux!(m::HeatModel, diffusive::Vars, ∇transform::Grad, state::Vars, aux::Vars, t::Real)
+function compute_gradient_flux!(m::TurbulenceConvectionModel, diffusive::Vars, ∇transform::Grad, state::Vars, aux::Vars, t::Real)
   diffusive.∇T = ∇transform.T
+  diffusive.∇u = ∇transform.w
 end;
 
 # We do no have sources, nor non-diffusive fluxes.
-function source!(m::HeatModel, _...); end;
-# function flux_first_order!(m::HeatModel, _...); end;
-function flux_first_order!(m::HeatModel,flux::Grad,state::Vars,aux::Vars,t::Real)
-   flux.ρcT += m.α * state.ρcT
+# function source!(m::TurbulenceConvectionModel, _...); end;
+# function flux_first_order!(m::TurbulenceConvectionModel, _...); end;
+function source!(m::TurbulenceConvectionModel, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real, direction)
+    source.ρT += 0.01 * state.ρT
 end;
 
+function flux_first_order!(m::TurbulenceConvectionModel,flux::Grad,state::Vars,aux::Vars,t::Real)
+   flux.ρT += 0.01 * state.ρT
+   flux.ρw += 0.01 * state.ρT
+end;
+
+function flux_first_order!(m::TurbulenceConvectionModel,flux::Grad,state::Vars,aux::Vars,t::Real)
+   flux.ρT += 0.01 * state.ρT
+end;
 # Compute diffusive flux (``F(T,t) = -α ∇T`` in the original PDE). Note that:
 # - `diffusive.∇T` is available here because we've specified `∇T` in `vars_state_gradient_flux`
-function flux_second_order!(m::HeatModel, flux::Grad, state::Vars, diffusive::Vars, hyperdiffusive::Vars, aux::Vars, t::Real)
-   flux.ρcT -= m.α * diffusive.∇T
+function flux_second_order!(m::TurbulenceConvectionModel, flux::Grad, state::Vars, diffusive::Vars, hyperdiffusive::Vars, aux::Vars, t::Real)
+   flux.ρT -= m.α * diffusive.∇T
+   flux.ρw -= m.α * diffusive.∇w
 end;
 
 # ### Boundary conditions
 
 # Boundary conditions are specified for diffusive and non-diffusive terms
 
-# The boundary conditions for `ρcT` are specified here for non-diffusive terms
-function boundary_state!(nf, m::HeatModel, state⁺::Vars, aux⁺::Vars,
+# The boundary conditions for `ρT` are specified here for non-diffusive terms
+function boundary_state!(nf, m::TurbulenceConvectionModel, state⁺::Vars, aux⁺::Vars,
                          nM, state⁻::Vars, aux⁻::Vars, bctype, t, _...)
   if bctype == 1 # surface
-    state⁺.ρcT = m.ρc * m.surfaceT
+    state⁺.ρT = m.ρ * m.surfaceT
+    state⁺.ρw = m.ρ * m.surfacew
   elseif bctype == 2 # bottom
-    nothing
+    state⁺.ρw = m.ρ * m.surfacew
   end
 end;
 
-# The boundary conditions for `ρcT` are specified here for diffusive terms
-function boundary_state!(nf, m::HeatModel, state⁺::Vars, diff⁺::Vars,
+# The boundary conditions for `ρT` are specified here for diffusive terms
+function boundary_state!(nf, m::TurbulenceConvectionModel, state⁺::Vars, diff⁺::Vars,
                          aux⁺::Vars, nM, state⁻::Vars, diff⁻::Vars, aux⁻::Vars,
                          bctype, t, _...)
   if bctype == 1 # surface
-    state⁺.ρcT = m.ρc * m.surfaceT
+    state⁺.ρT = m.ρ * m.surfaceT
+    state⁺.ρw = m.ρ * m.surfacew
   elseif bctype == 2 # bottom
     diff⁺.∇T = -diff⁻.∇T
+    state⁺.ρw = m.ρ * m.surfacew
   end
 end;
 
@@ -264,10 +285,10 @@ mkpath(output_dir)
 state_vars = get_vars_from_stack(grid, Q, m, vars_state_conservative)
 aux_vars = get_vars_from_stack(grid, dg.state_auxiliary, m, vars_state_auxiliary)
 all_vars = OrderedDict(state_vars..., aux_vars...)
-export_plot_snapshot(all_vars, ("ρcT",), joinpath(output_dir, "initial_condition.png"))
+export_plot_snapshot(all_vars, ("ρT",), joinpath(output_dir, "initial_condition.png"))
 # ![](initial_condition.png)
 
-# It matches what we have in `init_state_conservative!(m::HeatModel, ...)`, so let's continue.
+# It matches what we have in `init_state_conservative!(m::TurbulenceConvectionModel, ...)`, so let's continue.
 
 # # Solver hooks / callbacks
 
@@ -311,7 +332,7 @@ all_data = collect_data(output_data, step[1])
 
 # Let's plot the solution:
 
-export_plot(all_data, ("ρcT",), joinpath(output_dir, "solution_vs_time.png"))
+export_plot(all_data, ("ρT",), joinpath(output_dir, "solution_vs_time.png"))
 # ![](solution_vs_time.png)
 
 # The results look as we would expect: a fixed temperature at the bottom is resulting in heat flux that propagates up the domain. To run this file, and inspect the solution in `all_data`, include this tutorial in the Julia REPL with:
