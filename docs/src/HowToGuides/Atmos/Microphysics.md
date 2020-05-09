@@ -378,7 +378,7 @@ Finally the snow autoconversion rate is computed as
 \end{equation}
 ```
 !!! note
-    We should include ventialtion effects.
+    We should include ventilation effects.
 
     For non-spherical particles the mass rate of growth
     should be multiplied by a function depending on the particle aspect ratio.
