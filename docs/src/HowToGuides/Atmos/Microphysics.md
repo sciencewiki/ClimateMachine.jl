@@ -420,7 +420,7 @@ are converted to rain.
 In this case eq. (\ref{eq:accrfin}) describes the sink of cloud water.
 The sink of snow is proportional to the sink of cloud water with the coefficient ``\frac{c_w}{L_f}(T - T_{freeze})``.
 
-The collisions between cloud ice - rain create snow.
+The collisions between cloud ice and rain create snow.
 The source of snow in this case is a sum of sinks from cloud ice and rain.
 The sink of cloud ice is defined by eq. (\ref{eq:accrfin}).
 The sink of rain is defined as:
