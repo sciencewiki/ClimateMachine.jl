@@ -415,7 +415,7 @@ For the case of cloud water/rain and cloud ice/snow collisions, the sink of susp
 becomes simply the source for falling water.
 For the case of cloud water and snow collisions for temperatures below freezing,
 the sink of cloud water is a source for snow.
-For temperatures above freezing the accreted cloud droplets along with some melted snow
+For temperatures above freezing, the accreted cloud droplets along with some melted snow
 are converted to rain.
 In this case eq. (\ref{eq:accrfin}) describes the sink of cloud water.
 The sink of snow is proportional to the sink of cloud water with the coefficient ``\frac{c_w}{L_f}(T - T_{freeze})``.
