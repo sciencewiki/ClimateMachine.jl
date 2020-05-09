@@ -20,7 +20,7 @@ Particles are assumed to follow mass(radius), cross section(radius), terminal ve
 relationships defined as power laws.
 The coefficients are defined in `MicrophysicsParameters` module and are shown in the Table below.
 For rain and ice they correspond to spherical liquid water drops and ice particles, respectively.
-There is no assumed particle shape for snow and the relationships are based on empirical values
+There is no assumed particle shape for snow, and the relationships are based on empirical values
 from [Grabowski\_1998](https://journals.ametsoc.org/doi/full/10.1175/1520-0469%281998%29055%3C3283%3ATCRMOL%3E2.0.CO%3B2 ).
 
 ```math
