@@ -383,7 +383,7 @@ Finally the snow autoconversion rate is computed as
     For non-spherical particles the mass rate of growth
     should be multiplied by a function depending on the particle aspect ratio.
     For functions proposed for different crystal habitats see
-    [Harrington_1995](https://journals.ametsoc.org/doi/pdf/10.1175/1520-0469%281995%29052%3C4344%3APOICCP%3E2.0.CO%3B2) Appentix B.
+    [Harrington_1995](https://journals.ametsoc.org/doi/pdf/10.1175/1520-0469%281995%29052%3C4344%3APOICCP%3E2.0.CO%3B2) Appendix B.
 
 ### Accretion
 
