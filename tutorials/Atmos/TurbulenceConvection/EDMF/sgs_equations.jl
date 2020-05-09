@@ -32,6 +32,15 @@
 # - 6) Solve
 # - 7) Post-processing
 
+# YAIR 
+# think about the overarching code structure 
+# add the source functions calls
+# think about how to define an arbitrary number of subdomains and their variables , BC etc 
+# is the current solver indeed explicit ?
+# how do I use the thermynamics for buoyancy and such 
+
+
+
 # # Preliminary configuration
 
 # ## Loading code
@@ -177,10 +186,11 @@ function compute_gradient_flux!(m::TurbulenceConvectionModel, diffusive::Vars, �
 end;
 
 # We do no have sources, nor non-diffusive fluxes.
-function source!(m::TurbulenceConvectionModel, _...); end;
-# function source!(m::TurbulenceConvectionModel, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real, direction)
-#     source.ρT += 0.01 * state.ρT
-# end;
+# function source!(m::TurbulenceConvectionModel, _...); end;
+function source!(m::TurbulenceConvectionModel, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real, direction)
+    source.ρT += 0.01 * state.ρT
+    # add here the source functions calls
+end;
 
 # function flux_first_order!(m::TurbulenceConvectionModel, _...); end;
 function flux_first_order!(m::TurbulenceConvectionModel,flux::Grad,state::Vars,aux::Vars,t::Real)
