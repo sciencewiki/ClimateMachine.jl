@@ -16,7 +16,7 @@ The cloud microphysics variables are expressed as specific humidities:
 
 ## Assumed particle size relationships
 
-Particles are assumed to follow the mass(radius), cross section(radius), terminal velocity(radius)
+Particles are assumed to follow mass(radius), cross section(radius), terminal velocity(radius)
 relationships defined as power laws.
 The coefficients are defined in `MicrophysicsParameters` module and are shown in the Table below.
 For rain and ice they correspond to spherical liquid water drops and ice particles, respectively.
