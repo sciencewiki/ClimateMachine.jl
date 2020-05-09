@@ -413,7 +413,7 @@ Integrating over the distribution yeilds:
 ```
 For the case of cloud water/rain and cloud ice/snow collisions, the sink of suspended water
 becomes simply the source for falling water.
-For the case of cloud water and snow collisions for temperatures below freezing
+For the case of cloud water and snow collisions for temperatures below freezing,
 the sink of cloud water is a source for snow.
 For temperatures above freezing the accreted cloud droplets along with some melted snow
 are converted to rain.
