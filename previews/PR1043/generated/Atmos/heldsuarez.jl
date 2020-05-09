@@ -2,15 +2,15 @@ using Distributions
 using Random
 using StaticArrays
 
-using CLIMA
-using CLIMA.Atmos
-using CLIMA.ConfigTypes
-using CLIMA.Diagnostics
-using CLIMA.GenericCallbacks
-using CLIMA.Mesh.Grids
-using CLIMA.Mesh.Filters
-using CLIMA.MoistThermodynamics
-using CLIMA.VariableTemplates
+using ClimateMachine
+using ClimateMachine.Atmos
+using ClimateMachine.ConfigTypes
+using ClimateMachine.Diagnostics
+using ClimateMachine.GenericCallbacks
+using ClimateMachine.Mesh.Grids
+using ClimateMachine.Mesh.Filters
+using ClimateMachine.MoistThermodynamics
+using ClimateMachine.VariableTemplates
 
 using CLIMAParameters
 using CLIMAParameters.Planet: R_d, day, grav, cp_d, cv_d, planet_radius
@@ -98,7 +98,7 @@ function init_heldsuarez!(balance_law, state, aux, coordinates, time)
 end
 nothing # hide
 
-CLIMA.init()
+ClimateMachine.init()
 nothing # hide
 
 FT = Float32
@@ -146,7 +146,7 @@ timestart = FT(0)                     ## start time (s)
 timeend = FT(n_days * day(param_set)) ## end time (s)
 nothing # hide
 
-driver_config = CLIMA.AtmosGCMConfiguration(
+driver_config = ClimateMachine.AtmosGCMConfiguration(
     "HeldSuarez",
     poly_order,
     resolution,
@@ -156,7 +156,7 @@ driver_config = CLIMA.AtmosGCMConfiguration(
     model = model,
 );
 
-solver_config = CLIMA.SolverConfiguration(
+solver_config = ClimateMachine.SolverConfiguration(
     timestart,
     timeend,
     driver_config,
@@ -186,8 +186,11 @@ boundaries = [
     FT(90.0) FT(180.0) FT(_planet_radius + info.domain_height)
 ]
 resolution = (FT(10), FT(10), FT(1000)) # in (deg, deg, m)
-interpol =
-    CLIMA.InterpolationConfiguration(driver_config, boundaries, resolution)
+interpol = ClimateMachine.InterpolationConfiguration(
+    driver_config,
+    boundaries,
+    resolution,
+)
 
 dgn_config = setup_dump_state_and_aux_diagnostics(
     interval,
@@ -197,7 +200,7 @@ dgn_config = setup_dump_state_and_aux_diagnostics(
 )
 nothing # hide
 
-result = CLIMA.invoke!(
+result = ClimateMachine.invoke!(
     solver_config;
     diagnostics_config = dgn_config,
     user_callbacks = (cbfilter,),
