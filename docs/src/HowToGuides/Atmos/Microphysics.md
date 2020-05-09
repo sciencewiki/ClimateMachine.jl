@@ -439,7 +439,7 @@ where:
  - ``m_r``, ``a_r`` and ``v_{term}`` are the mass(radius), cross section(radius) and terminal velocity(radius) relations for rain
  - ``r_i`` and ``r_r`` mark integration over cloud ice and rain size distributions
 
-Integrating eq.(\ref{eq:accr_ir}) yelds:
+Integrating eq.(\ref{eq:accr_ir}) yields:
 ```math
 \begin{equation}
 \left. \frac{d \, q_{rai}}{dt} \right|_{accr\_ri} =
