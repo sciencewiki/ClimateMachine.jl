@@ -411,7 +411,7 @@ Integrating over the distribution yeilds:
 \label{eq:accrfin}
 \end{equation}
 ```
-For the case of cloud water - rain, cloud ice  - snow collisions the sink of suspended water
+For the case of cloud water/rain and cloud ice/snow collisions, the sink of suspended water
 becomes simply the source for falling water.
 For the case of cloud water and snow collisions for temperatures below freezing
 the sink of cloud water is a source for snow.
