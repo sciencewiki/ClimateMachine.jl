@@ -297,7 +297,7 @@ package](https://CliMA.github.io/CLIMAParameters.jl/latest/)
 A reference state for the linearisation step is also defined.
 
 ```@example risingbubble
-    T_profile = DryAdiabaticProfile(FT(290))
+    T_profile = DryAdiabaticProfile(param_set, FT(300))
     ref_state = HydrostaticState(T_profile)
 ```
 

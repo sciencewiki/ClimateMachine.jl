@@ -122,11 +122,20 @@ $(DocStringExtensions.FIELDS)
 struct DryAdiabaticProfile{FT} <: TemperatureProfile{FT}
     "Surface temperature (K)"
     T_surface::FT
+    "minimum temperature (K)"
+    T_min::FT
+    function DryAdiabaticProfile(
+        param_set::AbstractParameterSet,
+        T_surface::FT,
+        T_min::FT=FT(T_min(param_set))
+        ) where {FT<:AbstractFloat}
+    return new{FT}(T_surface, T_min)
+    end
 end
 
 function (profile::DryAdiabaticProfile)(
     orientation::Orientation,
-    param_set,
+    param_set::AbstractParameterSet,
     aux::Vars,
 )
     FT = eltype(aux)
@@ -138,11 +147,10 @@ function (profile::DryAdiabaticProfile)(
     z = altitude(orientation, param_set, aux)
 
     # Temperature
-    T = profile.T_surface - _grav * z / _cp_d
+    T = max(profile.T_surface - _grav * z / _cp_d, profile.T_min)
 
     # Pressure
     p = _MSLP * (1 - _grav * z / (_cp_d * profile.T_surface))^(_cp_d / _R_d)
-
     return (T, p)
 end
 
@@ -166,16 +174,14 @@ struct DecayingTemperatureProfile{FT} <: TemperatureProfile{FT}
     ΔTv::FT
     "Height scale over which virtual temperature drops (m)"
     H_t::FT
-end
-function DecayingTemperatureProfile{FT}(
-    param_set::AbstractParameterSet,
-    T_virt_surf::FT = FT(290),
-    ΔTv::FT = FT(60),
-) where {FT <: AbstractFloat}
-    _R_d::FT = R_d(param_set)
-    _grav::FT = grav(param_set)
-    H_t = _R_d * T_virt_surf / _grav
-    return DecayingTemperatureProfile{FT}(T_virt_surf, ΔTv, H_t)
+    function DecayingTemperatureProfile{FT}(
+        param_set::AbstractParameterSet,
+        T_virt_surf::FT = FT(290),
+        ΔTv::FT = FT(60),
+        H_t::FT = FT(R_d(param_set)) * T_virt_surf / FT(grav(param_set)),
+    ) where {FT <: AbstractFloat}
+        return new{FT}(T_virt_surf, ΔTv, H_t)
+    end
 end
 
 

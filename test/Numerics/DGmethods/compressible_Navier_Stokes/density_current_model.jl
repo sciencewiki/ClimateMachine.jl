@@ -127,7 +127,7 @@ function run(
     )
     # -------------- Define model ---------------------------------- #
     source = Gravity()
-    T_profile = DryAdiabaticProfile(FT(290))
+    T_profile = DryAdiabaticProfile(param_set, FT(290))
     model = AtmosModel{FT}(
         AtmosLESConfigType,
         param_set;
