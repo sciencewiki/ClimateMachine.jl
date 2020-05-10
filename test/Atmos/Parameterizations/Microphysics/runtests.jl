@@ -6,13 +6,13 @@ using CLIMAParameters
 using CLIMAParameters.Planet: ρ_cloud_liq, R_v, grav, R_d, molmass_ratio
 using CLIMAParameters.Atmos.Microphysics
 
-struct CloudParameterSet <: AbstractCloudParameterSet end
-struct IceParameterSet   <: AbstractIceParameterSet end
-struct RainParameterSet  <: AbstractRainParameterSet end
-struct SnowParameterSet  <: AbstractSnowParameterSet end
+struct LiquidParameterSet <: AbstractLiquidParameterSet end
+struct IceParameterSet    <: AbstractIceParameterSet end
+struct RainParameterSet   <: AbstractRainParameterSet end
+struct SnowParameterSet   <: AbstractSnowParameterSet end
 
-struct MicropysicsParameterSet{C,I,R,S} <: AbstractMicrophysicsParameterSet
-    cloud ::C
+struct MicropysicsParameterSet{L,I,R,S} <: AbstractMicrophysicsParameterSet
+    liquid ::L
     ice ::I
     rain ::R
     snow ::S
@@ -23,18 +23,17 @@ struct EarthParameterSet{M} <: AbstractEarthParameterSet
 end
 
 microphys_param_set = MicropysicsParameterSet(
-    CloudParameterSet(),
+    LiquidParameterSet(),
     IceParameterSet(),
     RainParameterSet(),
     SnowParameterSet(),
 )
 
 param_set = EarthParameterSet(microphys_param_set)
-
-cloud_param_set  = param_set.microphys_param_set.cloud
-ice_param_set    = param_set.microphys_param_set.ice
-rain_param_set   = param_set.microphys_param_set.rain
-snow_param_set   = param_set.microphys_param_set.snow
+liquid_param_set = param_set.microphys_param_set.liquid
+ice_param_set = param_set.microphys_param_set.ice
+rain_param_set = param_set.microphys_param_set.rain
+snow_param_set = param_set.microphys_param_set.snow
 
 @testset "RainFallSpeed" begin
     # eq. 5d in Smolarkiewicz and Grabowski 1996
@@ -68,14 +67,14 @@ end
     q_liq_sat = 5e-3
     frac = [0.0, 0.5, 1.0, 1.5]
 
-    _τ_cond_evap = τ_cond_evap(cloud_param_set)
+    _τ_cond_evap = τ_relax(liquid_param_set)
 
     for fr in frac
 
         q_liq = q_liq_sat * fr
 
         @test conv_q_vap_to_q_liq_ice(
-            cloud_param_set,
+            liquid_param_set,
             PhasePartition(0.0, q_liq_sat, 0.0),
             PhasePartition(0.0, q_liq, 0.0),
         ) ≈ (1 - fr) * q_liq_sat / _τ_cond_evap
@@ -111,7 +110,7 @@ end
 
     for q_rai in q_rain_range
 
-        @test accretion(param_set, cloud_param_set, rain_param_set, q_liq,
+        @test accretion(param_set, liquid_param_set, rain_param_set, q_liq,
                 q_rai, ρ_air) ≈ accretion_empir(q_rai, q_liq,
                 q_tot) atol = (0.1 * accretion_empir(q_rai, q_liq, q_tot))
     end

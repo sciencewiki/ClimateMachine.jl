@@ -19,15 +19,16 @@ using CLIMAParameters.Planet: ρ_cloud_liq, R_v, grav
 using CLIMAParameters.Atmos.Microphysics
 
 const APS = AbstractParameterSet
-const ASuspPS = AbstractSuspendedWaterParameterSet
-const AFallPS = AbstractFallingWaterParameterSet
-const ACPS = AbstractCloudParameterSet
+const ACloudPS  = AbstractCloudParameterSet
+const APrecipPS = AbstractPrecipParameterSet
+const ALPS = AbstractLiquidParameterSet
 const AIPS = AbstractIceParameterSet
 const ARPS = AbstractRainParameterSet
 const ASPS = AbstractSnowParameterSet
 
 export ζ_rai
 export n0_sno
+export τ_relax
 export lambda
 export unpack_parameters
 
@@ -69,7 +70,7 @@ end
 """
     n0_sno(snow_param_set, q_sno, ρ)
 
- - `snow_param_set` - abstract set with snow microphysics parameters
+ - `snow_param_set` - abstract set with snow parameters
  - `q_sno` -  snow specific humidity
  - `ρ` - air density
 
@@ -85,11 +86,32 @@ function n0_sno(snow_param_set::ASPS, q_sno::FT, ρ::FT) where {FT<:Real}
 end
 
 """
-    lambda(q, ρ)
+    τ_relax(cloud_param_set)
+
+ - `cloud_param_set` - abstract set with cloud liquid water or cloud ice
+    microphysics parameters
+
+Returnts the relaxation timescale for condensation and evaporation of
+cloud liquid water or the relaxation timescale for sublimation and
+resublimation of cloud ice.
+"""
+function τ_relax(liquid_param_set::ALPS)
+
+    _τ_relax = τ_cond_evap(liquid_param_set)
+    return _τ_relax
+end
+function τ_relax(ice_param_set::AIPS)
+
+    _τ_relax = τ_sub_resub(ice_param_set)
+    return _τ_relax
+end
+
+"""
+    lambda(q, ρ, n0, α, β)
 
  - `q` - specific humidity of rain, ice or snow
  - `ρ` - air density
- - `n0` - size disyribution parameter
+ - `n0` - size distribution parameter
  - `α`, `β` - mass(radius) parameters
 
 Returns the rate parameter of the assumed size distribution of
@@ -220,22 +242,22 @@ function G_func(param_set::APS, T::FT, ::Ice) where {FT<:Real}
 end
 
 """
-    terminal_velocity(param_set, microphysics_param_set, ρ, q_)
+    terminal_velocity(param_set, precip_param_set, ρ, q_)
 
  - `param_set` - abstract set with earth parameters
- - `microphysics_param_set` - abstract set with rain or snow microphysics parameters
+ - `precip_param_set` - abstract set with rain or snow parameters
  - `ρ` - air density
  - `q_` - rain or snow specific humidity
 
 Returns the mass weighted average terminal velocity assuming
 Marshall Palmer 1948 distribution of rain drops and snow crystals.
 """
-function terminal_velocity(param_set::APS, fall_param_set::AFallPS,
+function terminal_velocity(param_set::APS, precip_param_set::APrecipPS,
                            ρ::FT, q_::FT) where {FT <: Real}
     fall_w = FT(0)
     if q_ > FT(0)
 
-        (_n0, _α, _β, _γ, _δ, _ζ, _η) = unpack_params(param_set, fall_param_set, ρ, q_)
+        (_n0, _α, _β, _γ, _δ, _ζ, _η) = unpack_params(param_set, precip_param_set, ρ, q_)
         _λ::FT = lambda(q_, ρ, _n0, _α, _β)
 
         fall_w = _ζ * _λ^(-_η) * gamma(_η + _β + FT(1)) / gamma(_β + FT(1))
@@ -245,24 +267,24 @@ function terminal_velocity(param_set::APS, fall_param_set::AFallPS,
 end
 
 """
-    conv_q_vap_to_q_liq_ice(cloud_param_set::ACPS, q_sat, q)
+    conv_q_vap_to_q_liq_ice(liquid_param_set::ALPS, q_sat, q)
     conv_q_vap_to_q_liq_ice(ice_param_set::AIPS, q_sat, q)
 
- - `cloud_param_set` - abstract set with cloud microphysics parameters
- - `ice_param_set` - abstract set with ice microphysics parameters
+ - `liquid_param_set` - abstract set with cloud water parameters
+ - `ice_param_set` - abstract set with cloud ice parameters
  - `q_sat` - PhasePartition at equilibrium
  - `q` - current PhasePartition
 
-Returns the cloud water tendency due to condensation/evaporation
-or cloud ice tendency due to sublimation/resublimation.
+Returns the cloud water tendency due to condensation evaporation
+or cloud ice tendency due to sublimation resublimation.
 The tendency is obtained assuming a relaxation to equilibrium with
-constant timescale.
+a constant timescale.
 """
-function conv_q_vap_to_q_liq_ice(cloud_param_set::ACPS,
+function conv_q_vap_to_q_liq_ice(liquid_param_set::ALPS,
                                  q_sat::PhasePartition{FT},
                                  q::PhasePartition{FT}) where {FT<:Real}
 
-    _τ_cond_evap::FT = τ_cond_evap(cloud_param_set)
+    _τ_cond_evap::FT = τ_relax(liquid_param_set)
 
     return (q_sat.liq - q.liq) / _τ_cond_evap
 end
@@ -270,7 +292,7 @@ function conv_q_vap_to_q_liq_ice(ice_param_set::AIPS,
                                  q_sat::PhasePartition{FT},
                                  q::PhasePartition{FT}) where {FT<:Real}
 
-    _τ_sub_resub::FT = τ_sub_resub(ice_param_set)
+    _τ_sub_resub::FT = τ_relax(ice_param_set)
 
     return (q_sat.ice - q.ice) / _τ_sub_resub
 end
@@ -327,32 +349,32 @@ function conv_q_ice_to_q_sno(param_set::APS, ice_param_set::AIPS,
 end
 
 """
-    accretion(param_set, suspended_param_set, falling_param_set, q_susp, q_fall, ρ)
+    accretion(param_set, cloud_param_set, precip_param_set, q_clo, q_pre, ρ)
 
  - `param_set` - abstract set with earth parameters
- - `suspended_param_set` - abstract set with cloud microphysics or cloud ice parameters
- - `falling_param_set` - abstract set with rain or snow microphysics parameters
- - `q_susp` - cloud water or cloud ice specific humidity
- - `q_fall` - rain water or snow specific humidity
+ - `cloud_param_set` - abstract set with cloud water or cloud ice parameters
+ - `precip_param_set` - abstract set with rain or snow parameters
+ - `q_clo` - cloud water or cloud ice specific humidity
+ - `q_pre` - rain water or snow specific humidity
  - `ρ` - rain water or snow specific humidity
 
-Returns the sink to suspended water (cloud water or cloud ice) due to collisions
-with falling water (rain or snow).
+Returns the sink to cloud water (liquid or ice) due to collisions
+with precipitating water (rain or snow).
 """
 function accretion(param_set::APS,
-                   suspended_param_set::ASuspPS,
-                   falling_param_set::AFallPS,
-                   q_susp::FT, q_fall::FT, ρ::FT) where {FT<:Real}
+                   cloud_param_set::ACloudPS,
+                   precip_param_set::APrecipPS,
+                   q_clo::FT, q_pre::FT, ρ::FT) where {FT<:Real}
 
-    #TODO - have another subtype for suspended and falling parameter types?
     accr_rate = FT(0)
-    if (q_susp > FT(0) && q_fall > FT(0))
+    if (q_clo > FT(0) && q_pre > FT(0))
 
-        (_n0, _α, _β, _γ, _δ, _ζ, _η) = unpack_params(param_set, falling_param_set, ρ, q_fall)
-        _λ::FT = lambda(q_fall, ρ, _n0, _α, _β)
-        _E::FT  = E(suspended_param_set, falling_param_set)
+        (_n0, _α, _β, _γ, _δ, _ζ, _η) =
+            unpack_params(param_set, precip_param_set, ρ, q_pre)
+        _λ::FT = lambda(q_pre, ρ, _n0, _α, _β)
+        _E::FT  = E(cloud_param_set, precip_param_set)
 
-        accr_rate = q_susp * _E * _n0 * _γ * _ζ * gamma(_δ + _η + FT(1)) /
+        accr_rate = q_clo * _E * _n0 * _γ * _ζ * gamma(_δ + _η + FT(1)) /
                     _λ^(_δ + _η + FT(1))
     end
     return accr_rate
@@ -362,9 +384,9 @@ end
     accretion_rain_sink(param_set, ice_param_set, rain_param_set, q_ice, q_rai, ρ)
 
  - `param_set` - abstract set with earth parameters
- - `ice_param_set` - abstract set with ice microphysics parameters
- - `rain_param_set` - abstract set with rain microphysics parameters
- - `q_ice` - ice water specific humidity
+ - `ice_param_set` - abstract set with cloud ice parameters
+ - `rain_param_set` - abstract set with rain parameters
+ - `q_ice` - cloud ice specific humidity
  - `q_rai` - rain water specific humidity
  - `ρ` - air density
 
@@ -406,9 +428,10 @@ end
 
 Returns the accretion rate between rain and snow.
 Collisions between rain and snow result in
-snow in temperatures below freezing andin rain in temperatures above freezing.
+snow in temperatures below freezing and in rain in temperatures above freezing.
 """
-function accretion_snow_rain(param_set::APS, i_param_set::AFallPS, j_param_set::AFallPS,
+function accretion_snow_rain(param_set::APS,
+                             i_param_set::APrecipPS, j_param_set::APrecipPS,
                              q_i::FT, q_j::FT, ρ::FT) where {FT<:Real}
 
     accr_rate = FT(0)

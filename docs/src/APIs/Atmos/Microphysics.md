@@ -9,8 +9,9 @@ CurrentModule = ClimateMachine.Microphysics
 ```@docs
 ζ_rai
 n0_sno
+τ_relax
 lambda
-unpack_parameters
+unpack_params
 supersaturation
 G_func
 terminal_velocity
