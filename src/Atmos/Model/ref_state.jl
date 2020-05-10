@@ -6,7 +6,7 @@ export NoReferenceState,
     DecayingTemperatureProfile,
     DryAdiabaticProfile
 
-using CLIMAParameters.Planet: R_d, MSLP, cp_d, grav
+using CLIMAParameters.Planet: R_d, MSLP, cp_d, grav, T_min
 
 """
     ReferenceState
