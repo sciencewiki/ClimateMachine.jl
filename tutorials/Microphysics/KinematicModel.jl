@@ -50,8 +50,34 @@ using ClimateMachine.VTK
 
 using CLIMAParameters
 using CLIMAParameters.Planet: R_d, cp_d, cv_d, cv_v, T_0, e_int_v0, grav
-struct EarthParameterSet <: AbstractEarthParameterSet end
-const param_set = EarthParameterSet()
+
+using CLIMAParameters.Atmos.Microphysics
+
+struct LiquidParameterSet <: AbstractLiquidParameterSet end
+struct IceParameterSet    <: AbstractIceParameterSet end
+struct RainParameterSet   <: AbstractRainParameterSet end
+struct SnowParameterSet   <: AbstractSnowParameterSet end
+struct MicropysicsParameterSet{L,I,R,S} <: AbstractMicrophysicsParameterSet
+    liquid ::L
+    ice ::I
+    rain ::R
+    snow ::S
+end
+struct EarthParameterSet{M} <: AbstractEarthParameterSet
+    microphys_param_set::M
+end
+
+const microphys_param_set = MicropysicsParameterSet(
+    LiquidParameterSet(),
+    IceParameterSet(),
+    RainParameterSet(),
+    SnowParameterSet(),
+)
+const param_set = EarthParameterSet(microphys_param_set)
+const liquid_param_set = param_set.microphys_param_set.liquid
+const ice_param_set = param_set.microphys_param_set.ice
+const rain_param_set = param_set.microphys_param_set.rain
+const snow_param_set = param_set.microphys_param_set.snow
 
 import ClimateMachine.DGmethods:
     BalanceLaw,
