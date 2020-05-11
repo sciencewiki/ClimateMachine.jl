@@ -4,8 +4,11 @@ export NoReferenceState,
     HydrostaticState,
     IsothermalProfile,
     LinearTemperatureProfile,
+    DecayingTemperatureProfile,
     DryAdiabaticProfile,
     StableTemperatureProfile
+
+using CLIMAParameters.Planet: R_d, MSLP, cp_d, grav
 
 """
     ReferenceState
@@ -15,10 +18,10 @@ condition or for linearization.
 """
 abstract type ReferenceState end
 
-vars_state(m::ReferenceState, FT) = @vars()
-vars_gradient(m::ReferenceState, FT) = @vars()
-vars_diffusive(m::ReferenceState, FT) = @vars()
-vars_aux(m::ReferenceState, FT) = @vars()
+vars_state_conservative(m::ReferenceState, FT) = @vars()
+vars_state_gradient(m::ReferenceState, FT) = @vars()
+vars_state_gradient_flux(m::ReferenceState, FT) = @vars()
+vars_state_auxiliary(m::ReferenceState, FT) = @vars()
 atmos_init_aux!(
     ::ReferenceState,
     ::AtmosModel,
@@ -45,7 +48,7 @@ struct HydrostaticState{P, F} <: ReferenceState
     relativehumidity::F
 end
 
-vars_aux(m::HydrostaticState, FT) =
+vars_state_auxiliary(m::HydrostaticState, FT) =
     @vars(ρ::FT, p::FT, T::FT, ρe::FT, ρq_tot::FT)
 
 
@@ -56,18 +59,21 @@ function atmos_init_aux!(
     geom::LocalGeometry,
 ) where {P, F}
     T, p = m.temperatureprofile(atmos.orientation, atmos.param_set, aux)
+    FT = eltype(aux)
+    _R_d::FT = R_d(atmos.param_set)
+
     aux.ref_state.T = T
     aux.ref_state.p = p
-    aux.ref_state.ρ = ρ = p / (R_d * T)
-    q_vap_sat = q_vap_saturation(T, ρ, atmos.param_set)
+    aux.ref_state.ρ = ρ = p / (_R_d * T)
+    q_vap_sat = q_vap_saturation(atmos.param_set, T, ρ)
     aux.ref_state.ρq_tot = ρq_tot = ρ * m.relativehumidity * q_vap_sat
 
     q_pt = PhasePartition(ρq_tot)
-    aux.ref_state.ρe = ρ * internal_energy(T, q_pt, atmos.param_set)
+    aux.ref_state.ρe = ρ * internal_energy(atmos.param_set, T, q_pt)
 
     e_kin = F(0.5*10*10) #F(0)
     e_pot = gravitational_potential(atmos.orientation, aux)
-    aux.ref_state.ρe = ρ * total_energy(e_kin, e_pot, T, q_pt, atmos.param_set)
+    aux.ref_state.ρe = ρ * total_energy(atmos.param_set, e_kin, e_pot, T, q_pt)
 end
 
 
@@ -105,9 +111,12 @@ function (profile::IsothermalProfile)(
     param_set,
     aux::Vars,
 )
+    FT = eltype(aux)
+    _R_d::FT = R_d(param_set)
+    _MSLP::FT = MSLP(param_set)
     p =
-        MSLP *
-        exp(-gravitational_potential(orientation, aux) / (R_d * profile.T))
+        _MSLP *
+        exp(-gravitational_potential(orientation, aux) / (_R_d * profile.T))
     return (profile.T, p)
 end
 
@@ -135,7 +144,9 @@ function (profile::DryAdiabaticProfile)(
     aux::Vars,
 )
     FT = eltype(aux)
-    LinearTemperatureProfile(profile.T_min, profile.θ, FT(grav / cp_d))(
+    _cp_d::FT = cp_d(param_set)
+    _grav::FT = grav(param_set)
+    LinearTemperatureProfile(profile.T_min, profile.θ, FT(_grav / _cp_d))(
         orientation,
         param_set,
         aux,
@@ -170,20 +181,67 @@ function (profile::LinearTemperatureProfile)(
     aux::Vars,
 ) where {PS}
 
+    FT = eltype(aux)
+    _R_d::FT = R_d(param_set)
+    _grav::FT = grav(param_set)
+    _MSLP::FT = MSLP(param_set)
+
     z = altitude(orientation, param_set, aux)
     T = max(profile.T_surface - profile.Γ * z, profile.T_min)
 
-    p = MSLP * (T / profile.T_surface)^(grav / (R_d * profile.Γ))
+    p = _MSLP * (T / profile.T_surface)^(_grav / (_R_d * profile.Γ))
     if T == profile.T_min
         z_top = (profile.T_surface - profile.T_min) / profile.Γ
-        H_min = R_d * profile.T_min / grav
+        H_min = _R_d * profile.T_min / _grav
         p *= exp(-(z - z_top) / H_min)
     end
     return (T, p)
 end
 
 """
-    StableTemperatureProfile{F} <: TemperatureProfile
+    DecayingTemperatureProfile{F} <: TemperatureProfile
+
+A virtual temperature profile that decays smoothly with height `z`, dropping by a specified temperature difference `ΔTv` over a height scale `H_t`.
+
+```math
+Tv(z) = \\max(Tv{\\text{surface}} − ΔTv \\tanh(z/H_{\\text{t}})
+```
+
+# Fields
+
+$(DocStringExtensions.FIELDS)
+"""
+struct DecayingTemperatureProfile{FT} <: TemperatureProfile
+    "virtual temperature at surface (K)"
+    Tv_surface::FT
+    "virtual temperature drop from surface to top of the atmosphere (K)"
+    ΔTv::FT
+    "height scale over which virtual temperature drops (m)"
+    H_t::FT
+end
+
+function (profile::DecayingTemperatureProfile)(
+    orientation::Orientation,
+    param_set::AbstractParameterSet,
+    aux::Vars,
+)
+    z = altitude(orientation, param_set, aux)
+    Tv = profile.Tv_surface - profile.ΔTv * tanh(z / profile.H_t)
+    FT = typeof(z)
+    _R_d::FT = R_d(param_set)
+    _grav::FT = grav(param_set)
+    _MSLP::FT = MSLP(param_set)
+
+    ΔTv_p = profile.ΔTv / profile.Tv_surface
+    H_surface = _R_d * profile.Tv_surface / _grav
+    p = -z - profile.H_t * ΔTv_p * log(cosh(z / profile.H_t) - atanh(ΔTv_p))
+    p /= H_surface * (1 - ΔTv_p^2)
+    p = _MSLP * exp(p)
+    return (Tv, p)
+end
+
+"""
+StableTemperatureProfile{F} <: TemperatureProfile
 
 A potential temperature profile which increases exponentially with height `z` where the increas is determined by Brunt–Väisälä frequency `N2/g`
 
@@ -209,9 +267,15 @@ function (profile::StableTemperatureProfile)(
 ) where {PS}
 
     z = altitude(orientation, param_set, aux)
-    S=profile.N*profile.N/grav
-    θ=profile.θ_surface*exp(S*z)
-    p=MSLP*(1.0-grav/(cp_d*profile.θ_surface*S)*(1.0-exp(-S*z)))^(cp_d/R_d)
-    T=(p/MSLP)^(R_d/cp_d)*θ
+    FT = typeof(z)
+    _R_d::FT = R_d(param_set)
+    _cp_d::FT = cp_d(param_set)
+    _grav::FT = grav(param_set)
+    _MSLP::FT = MSLP(param_set)
+
+    S = profile.N * profile.N / _grav
+    θ = profile.θ_surface * exp(S * z)
+    p = _MSLP * (1.0 - _grav / (_cp_d * profile.θ_surface * S) * (1.0 - exp(-S * z))) ^ (_cp_d / _R_d)
+    T = (p / _MSLP) ^ (_R_d / _cp_d) * θ
     return (T, p)
 end

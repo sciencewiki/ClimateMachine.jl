@@ -7,7 +7,7 @@ No energy flux across the boundary.
 """
 struct Insulating <: EnergyBC end
 function atmos_energy_boundary_state!(nf, bc_energy::Insulating, atmos, args...) end
-function atmos_energy_normal_boundary_flux_diffusive!(
+function atmos_energy_normal_boundary_flux_second_order!(
     nf,
     bc_energy::Insulating,
     atmos,
@@ -37,12 +37,16 @@ function atmos_energy_boundary_state!(
     t,
     args...,
 )
+    FT = eltype(aux⁻)
+    _T_0::FT = T_0(atmos.param_set)
+    _cv_d::FT = cv_d(atmos.param_set)
+
     T = bc_energy.fn(state⁻, aux⁻, t)
-    E_int⁺ = state⁺.ρ * cv_d * (T - T_0)
+    E_int⁺ = state⁺.ρ * _cv_d * (T - _T_0)
     state⁺.ρe =
         E_int⁺ + state⁺.ρ * gravitational_potential(atmos.orientation, aux⁻)
 end
-function atmos_energy_normal_boundary_flux_diffusive!(
+function atmos_energy_normal_boundary_flux_second_order!(
     nf,
     bc_energy::PrescribedTemperature,
     atmos,
@@ -62,7 +66,7 @@ function atmos_energy_normal_boundary_flux_diffusive!(
 )
 
     # TODO: figure out a better way...
-    ν, D_t, _ = turbulence_tensors(atmos.turbulence, state⁻, diff⁻, aux⁻, t)
+    ν, D_t, _ = turbulence_tensors(atmos, state⁻, diff⁻, aux⁻, t)
     d_h_tot = -D_t .* diff⁻.∇h_tot
     nd_h_tot = dot(n⁻, d_h_tot)
     # both sides involve projections of normals, so signs are consistent
@@ -85,7 +89,7 @@ function atmos_energy_boundary_state!(
     atmos,
     args...,
 ) end
-function atmos_energy_normal_boundary_flux_diffusive!(
+function atmos_energy_normal_boundary_flux_second_order!(
     nf,
     bc_energy::PrescribedEnergyFlux,
     atmos,
