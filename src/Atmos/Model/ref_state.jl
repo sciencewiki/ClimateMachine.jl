@@ -147,10 +147,16 @@ function (profile::DryAdiabaticProfile)(
     z = altitude(orientation, param_set, aux)
 
     # Temperature
-    T = max(profile.T_surface - _grav * z / _cp_d, profile.T_min)
+    Γ = _grav / _cp_d
+    T = max(profile.T_surface - Γ*z, profile.T_min)
 
     # Pressure
-    p = _MSLP * (1 - _grav * z / (_cp_d * profile.T_surface))^(_cp_d / _R_d)
+    p = _MSLP * (T / profile.T_surface)^(_grav / (_R_d * Γ))
+    if T == profile.T_min
+        z_top = (profile.T_surface - profile.T_min) / Γ
+        H_min = _R_d * profile.T_min / _grav
+        p *= exp(-(z - z_top) / H_min)
+    end
     return (T, p)
 end
 
