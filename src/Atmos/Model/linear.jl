@@ -246,20 +246,27 @@ struct AtmosAcousticLinearModelMomentum{M} <: AtmosLinearModel
   end
 end
 
-function flux_nondiffusive!(lm::AtmosAcousticLinearModelMomentum, flux::Grad, state::Vars, aux::Vars, t::Real)
-  FT = eltype(state)
-  ref = aux.ref_state
-  #e_pot = gravitational_potential(lm.atmos.orientation, aux)
+function flux_first_order!(
+    lm::AtmosAcousticLinearModelMomentum,
+    flux::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    FT = eltype(state)
+    ref = aux.ref_state
 
-  #flux.ρ = state.ρu
-  pL = linearized_pressure(lm.atmos.moisture, lm.atmos.orientation, state, aux)
-  flux.ρu += pL*I
-  #flux.ρe = ((ref.ρe + ref.p)/ref.ρ - e_pot)*state.ρu
-  nothing
+    pL = linearized_pressure(
+        lm.atmos.moisture,
+        lm.atmos.param_set,
+        lm.atmos.orientation,
+        state,
+        aux,
+    )
+    flux.ρu += pL * I
+    nothing
 end
-function source!(lm::AtmosAcousticLinearModelMomentum, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real)
-  nothing
-end
+source!(::AtmosAcousticLinearModelMomentum, _...) = nothing
 
 struct AtmosAcousticLinearModelThermo{M} <: AtmosLinearModel
   atmos::M
@@ -271,20 +278,22 @@ struct AtmosAcousticLinearModelThermo{M} <: AtmosLinearModel
   end
 end
 
-function flux_nondiffusive!(lm::AtmosAcousticLinearModelThermo, flux::Grad, state::Vars, aux::Vars, t::Real)
-  FT = eltype(state)
-  ref = aux.ref_state
-  e_pot = gravitational_potential(lm.atmos.orientation, aux)
+function flux_first_order!(
+    lm::AtmosAcousticLinearModelThermo,
+    flux::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    FT = eltype(state)
+    ref = aux.ref_state
+    e_pot = gravitational_potential(lm.atmos.orientation, aux)
 
-  flux.ρ = state.ρu
-  #pL = linearized_pressure(lm.atmos.moisture, lm.atmos.orientation, state, aux)
-  #flux.ρu += pL*I
-  flux.ρe = ((ref.ρe + ref.p)/ref.ρ - e_pot)*state.ρu
-  nothing
+    flux.ρ = state.ρu
+    flux.ρe = ((ref.ρe + ref.p) / ref.ρ - e_pot) * state.ρu
+    nothing
 end
-function source!(lm::AtmosAcousticLinearModelThermo, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real)
-  nothing
-end
+source!(::AtmosAcousticLinearModelThermo, _...) = nothing
 
 
 
@@ -297,23 +306,40 @@ struct AtmosAcousticGravityLinearModelMomentum{M} <: AtmosLinearModel
     new{M}(atmos)
   end
 end
-function flux_nondiffusive!(lm::AtmosAcousticGravityLinearModelMomentum, flux::Grad, state::Vars, aux::Vars, t::Real)
-  FT = eltype(state)
-  ref = aux.ref_state
-  #e_pot = gravitational_potential(lm.atmos.orientation, aux)
+function flux_first_order!(
+    lm::AtmosAcousticGravityLinearModelMomentum,
+    flux::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    FT = eltype(state)
+    ref = aux.ref_state
 
-  #flux.ρ = state.ρu
-  pL = linearized_pressure(lm.atmos.moisture, lm.atmos.orientation, state, aux)
-  flux.ρu += pL*I
-  #flux.ρe = ((ref.ρe + ref.p)/ref.ρ)*state.ρu
-  nothing
+    pL = linearized_pressure(
+        lm.atmos.moisture,
+        lm.atmos.param_set,
+        lm.atmos.orientation,
+        state,
+        aux,
+    )
+    flux.ρu += pL * I
+    nothing
 end
-function source!(lm::AtmosAcousticGravityLinearModelMomentum, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real, direction)
-  if direction isa VerticalDirection || direction isa EveryDirection
-      ∇Φ = ∇gravitational_potential(lm.atmos.orientation, aux)
-      source.ρu -= state.ρ * ∇Φ
-  end
-  nothing
+function source!(
+    lm::AtmosAcousticGravityLinearModelMomentum,
+    source::Vars,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+    direction,
+)
+    if direction isa VerticalDirection || direction isa EveryDirection
+        ∇Φ = ∇gravitational_potential(lm.atmos.orientation, aux)
+        source.ρu -= state.ρ * ∇Φ
+    end
+    nothing
 end
 
 struct AtmosAcousticGravityLinearModelThermo{M} <: AtmosLinearModel
@@ -325,24 +351,22 @@ struct AtmosAcousticGravityLinearModelThermo{M} <: AtmosLinearModel
     new{M}(atmos)
   end
 end
-function flux_nondiffusive!(lm::AtmosAcousticGravityLinearModelThermo, flux::Grad, state::Vars, aux::Vars, t::Real)
-  FT = eltype(state)
-  ref = aux.ref_state
-  e_pot = gravitational_potential(lm.atmos.orientation, aux)
+function flux_first_order!(
+    lm::AtmosAcousticGravityLinearModelThermo,
+    flux::Grad,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
+    FT = eltype(state)
+    ref = aux.ref_state
+    e_pot = gravitational_potential(lm.atmos.orientation, aux)
 
-  flux.ρ = state.ρu
-  #pL = linearized_pressure(lm.atmos.moisture, lm.atmos.orientation, state, aux)
-  #flux.ρu += pL*I
-  flux.ρe = ((ref.ρe + ref.p)/ref.ρ)*state.ρu
-  nothing
+    flux.ρ = state.ρu
+    flux.ρe = ((ref.ρe + ref.p) / ref.ρ) * state.ρu
+    nothing
 end
-function source!(lm::AtmosAcousticGravityLinearModelThermo, source::Vars, state::Vars, diffusive::Vars, aux::Vars, t::Real, direction)
-    #if direction isa VerticalDirection || direction isa EveryDirection
-    #    ∇Φ = ∇gravitational_potential(lm.atmos.orientation, aux)
-    #    source.ρu -= state.ρ * ∇Φ
-    #end
-  nothing
-end
+source!(::AtmosAcousticGravityLinearModelThermo, _...) = nothing
 
 
 
