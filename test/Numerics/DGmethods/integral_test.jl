@@ -1,18 +1,18 @@
 using MPI
 using StaticArrays
-using CLIMA
-using CLIMA.VariableTemplates
-using CLIMA.Mesh.Topologies
-using CLIMA.Mesh.Grids
-using CLIMA.MPIStateArrays
-using CLIMA.DGmethods
-using CLIMA.DGmethods.NumericalFluxes
+using ClimateMachine
+using ClimateMachine.VariableTemplates
+using ClimateMachine.Mesh.Topologies
+using ClimateMachine.Mesh.Grids
+using ClimateMachine.MPIStateArrays
+using ClimateMachine.DGmethods
+using ClimateMachine.DGmethods.NumericalFluxes
 using Printf
 using LinearAlgebra
 using Logging
 using GPUifyLoops
 
-import CLIMA.DGmethods:
+import ClimateMachine.DGmethods:
     BalanceLaw,
     vars_state_auxiliary,
     vars_state_conservative,
@@ -171,15 +171,19 @@ function run(mpicomm, dim, Ne, N, FT, ArrayType)
     dg(dQdt, Q, nothing, 0.0)
 
     # Wrapping in Array ensure both GPU and CPU code use same approx
-    @test Array(dg.state_auxiliary.data[:, 1, :]) ≈ Array(dg.state_auxiliary.data[:, 8, :])
-    @test Array(dg.state_auxiliary.data[:, 2, :]) ≈ Array(dg.state_auxiliary.data[:, 9, :])
-    @test Array(dg.state_auxiliary.data[:, 3, :]) ≈ Array(dg.state_auxiliary.data[:, 10, :])
-    @test Array(dg.state_auxiliary.data[:, 4, :]) ≈ Array(dg.state_auxiliary.data[:, 11, :])
+    @test Array(dg.state_auxiliary.data[:, 1, :]) ≈
+          Array(dg.state_auxiliary.data[:, 8, :])
+    @test Array(dg.state_auxiliary.data[:, 2, :]) ≈
+          Array(dg.state_auxiliary.data[:, 9, :])
+    @test Array(dg.state_auxiliary.data[:, 3, :]) ≈
+          Array(dg.state_auxiliary.data[:, 10, :])
+    @test Array(dg.state_auxiliary.data[:, 4, :]) ≈
+          Array(dg.state_auxiliary.data[:, 11, :])
 end
 
 let
-    CLIMA.init()
-    ArrayType = CLIMA.array_type()
+    ClimateMachine.init()
+    ArrayType = ClimateMachine.array_type()
 
     mpicomm = MPI.COMM_WORLD
 

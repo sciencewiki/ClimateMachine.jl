@@ -1,3 +1,17 @@
+#!/usr/bin/env julia --project
+using ClimateMachine
+ClimateMachine.init()
+
+using ClimateMachine.Atmos
+using ClimateMachine.ConfigTypes
+using ClimateMachine.Diagnostics
+using ClimateMachine.DGmethods.NumericalFluxes
+using ClimateMachine.GenericCallbacks
+using ClimateMachine.ODESolvers
+using ClimateMachine.Mesh.Filters
+using ClimateMachine.MoistThermodynamics
+using ClimateMachine.VariableTemplates
+
 using Distributions
 using Random
 using StaticArrays
@@ -5,23 +19,12 @@ using Test
 using DocStringExtensions
 using LinearAlgebra
 
-using CLIMA
-using CLIMA.Atmos
-using CLIMA.ConfigTypes
-using CLIMA.Diagnostics
-using CLIMA.DGmethods.NumericalFluxes
-using CLIMA.GenericCallbacks
-using CLIMA.ODESolvers
-using CLIMA.Mesh.Filters
-using CLIMA.MoistThermodynamics
-using CLIMA.VariableTemplates
-
 using CLIMAParameters
 using CLIMAParameters.Planet: cp_d, MSLP, grav, LH_v0
 struct EarthParameterSet <: AbstractEarthParameterSet end
 const param_set = EarthParameterSet()
 
-import CLIMA.DGmethods:
+import ClimateMachine.DGmethods:
     vars_state_conservative,
     vars_state_auxiliary,
     vars_integrals,
@@ -33,8 +36,8 @@ import CLIMA.DGmethods:
     reverse_integral_load_auxiliary_state!,
     reverse_integral_set_auxiliary_state!
 
-import CLIMA.DGmethods: boundary_state!
-import CLIMA.Atmos: flux_second_order!
+import ClimateMachine.DGmethods: boundary_state!
+import ClimateMachine.Atmos: flux_second_order!
 
 # -------------------- Radiation Model -------------------------- #
 vars_state_conservative(::RadiationModel, FT) = @vars()
@@ -63,7 +66,11 @@ function reverse_integral_load_auxiliary_state!(
     state::Vars,
     aux::Vars,
 ) end
-function reverse_integral_set_auxiliary_state!(::RadiationModel, aux::Vars, integ::Vars) end
+function reverse_integral_set_auxiliary_state!(
+    ::RadiationModel,
+    aux::Vars,
+    integ::Vars,
+) end
 function flux_radiation!(
     ::RadiationModel,
     flux::Grad,
@@ -110,7 +117,11 @@ function integral_load_auxiliary_state!(
     FT = eltype(state)
     integrand.radiation.attenuation_coeff = state.ρ * m.κ * aux.moisture.q_liq
 end
-function integral_set_auxiliary_state!(m::DYCOMSRadiation, aux::Vars, integral::Vars)
+function integral_set_auxiliary_state!(
+    m::DYCOMSRadiation,
+    aux::Vars,
+    integral::Vars,
+)
     integral = integral.radiation.attenuation_coeff
     aux.∫dz.radiation.attenuation_coeff = integral
 end
@@ -318,10 +329,11 @@ function config_dycoms(FT, N, resolution, xmax, ymax, zmax)
         init_state_conservative = ics,
     )
 
-    ode_solver =
-        CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
+    ode_solver = ClimateMachine.ExplicitSolverType(
+        solver_method = LSRK144NiegemannDiehlBusch,
+    )
 
-    config = CLIMA.AtmosLESConfiguration(
+    config = ClimateMachine.AtmosLESConfiguration(
         "DYCOMS",
         N,
         resolution,
@@ -339,11 +351,10 @@ end
 function config_diagnostics(driver_config)
     interval = "10000steps"
     dgngrp = setup_atmos_default_diagnostics(interval, driver_config.name)
-    return CLIMA.DiagnosticsConfiguration([dgngrp])
+    return ClimateMachine.DiagnosticsConfiguration([dgngrp])
 end
 
 function main()
-    CLIMA.init()
 
     FT = Float64
 
@@ -363,7 +374,7 @@ function main()
     timeend = FT(100)
 
     driver_config = config_dycoms(FT, N, resolution, xmax, ymax, zmax)
-    solver_config = CLIMA.SolverConfiguration(
+    solver_config = ClimateMachine.SolverConfiguration(
         t0,
         timeend,
         driver_config,
@@ -376,7 +387,7 @@ function main()
         nothing
     end
 
-    result = CLIMA.invoke!(
+    result = ClimateMachine.invoke!(
         solver_config;
         diagnostics_config = dgn_config,
         user_callbacks = (cbtmarfilter,),

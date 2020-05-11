@@ -153,17 +153,13 @@ helper variables for computation
 first half is because there is no dedicated integral kernels
 these variables are used to compute vertical integrals
 w = vertical velocity
-w_reverse = w but integrated in the opposite direction
 wz0 = w at z = 0
 pkin = bulk hydrostatic pressure contribution
-pkin_reverse = pkin but integrated in the opposite direction
+
 
 second half of these are fields that are used for computation
-θʳ = relaxation value of the sea surface temperature
-f = coriolis force
-τ = wind stress
-ν = vector of viscosities (zonal, meridional, vertical)
-κ = vector of diffusivities (zonal, meridional, vertical)
+y = north-south coordinate
+
 """
 # If this order is changed check update_auxiliary_state!
 function vars_state_auxiliary(m::HBModel, T)
@@ -246,7 +242,14 @@ this computation is done pointwise at each nodal point
 - `A`: array of aux variables
 - `t`: time, not used
 """
-@inline function compute_gradient_flux!(m::HBModel, D::Vars, G::Grad, Q::Vars, A::Vars, t)
+@inline function compute_gradient_flux!(
+    m::HBModel,
+    D::Vars,
+    G::Grad,
+    Q::Vars,
+    A::Vars,
+    t,
+)
     ν = viscosity_tensor(m)
     D.ν∇u = ν * G.∇u
 
@@ -308,7 +311,12 @@ I -> array of integrand variables
 Q -> array of state variables
 A -> array of aux variables
 """
-@inline function integral_load_auxiliary_state!(m::HBModel, I::Vars, Q::Vars, A::Vars)
+@inline function integral_load_auxiliary_state!(
+    m::HBModel,
+    I::Vars,
+    Q::Vars,
+    A::Vars,
+)
     I.∇hu = A.w # borrow the w value from A...
     I.αᵀθ = -m.αᵀ * Q.θ # integral will be reversed below
 
@@ -378,7 +386,11 @@ m -> model in this case HBModel
 A -> array of aux variables
 I -> array of integrand variables
 """
-@inline function reverse_integral_set_auxiliary_state!(m::HBModel, A::Vars, I::Vars)
+@inline function reverse_integral_set_auxiliary_state!(
+    m::HBModel,
+    A::Vars,
+    I::Vars,
+)
     A.pkin = I.αᵀθ
 
     return nothing

@@ -3,17 +3,17 @@ using Test
 using StaticArrays
 using Logging, Printf
 
-using CLIMA
-using CLIMA.LinearSolvers
-using CLIMA.GeneralizedConjugateResidualSolver
-using CLIMA.GeneralizedMinimalResidualSolver
-using CLIMA.Mesh.Topologies
-using CLIMA.Mesh.Grids
-using CLIMA.DGmethods.NumericalFluxes
-using CLIMA.MPIStateArrays
-using CLIMA.VariableTemplates
-using CLIMA.DGmethods
-import CLIMA.DGmethods:
+using ClimateMachine
+using ClimateMachine.LinearSolvers
+using ClimateMachine.GeneralizedConjugateResidualSolver
+using ClimateMachine.GeneralizedMinimalResidualSolver
+using ClimateMachine.Mesh.Topologies
+using ClimateMachine.Mesh.Grids
+using ClimateMachine.DGmethods.NumericalFluxes
+using ClimateMachine.MPIStateArrays
+using ClimateMachine.VariableTemplates
+using ClimateMachine.DGmethods
+import ClimateMachine.DGmethods:
     BalanceLaw,
     vars_state_auxiliary,
     vars_state_conservative,
@@ -30,7 +30,7 @@ import CLIMA.DGmethods:
     init_state_conservative!,
     LocalGeometry
 
-import CLIMA.DGmethods.NumericalFluxes:
+import ClimateMachine.DGmethods.NumericalFluxes:
     NumericalFluxSecondOrder, numerical_flux_second_order!
 
 if !@isdefined integration_testing
@@ -74,7 +74,8 @@ end
 struct PenaltyNumFluxDiffusive <: NumericalFluxSecondOrder end
 
 # There is no boundary since we are periodic
-numerical_boundary_flux_second_order!(nf::PenaltyNumFluxDiffusive, _...) = nothing
+numerical_boundary_flux_second_order!(nf::PenaltyNumFluxDiffusive, _...) =
+    nothing
 
 function numerical_flux_second_order!(
     ::PenaltyNumFluxDiffusive,
@@ -142,7 +143,11 @@ sol1d(x) = sin(2pi * x)^4 - 3 / 8
 dxx_sol1d(x) =
     -16 * pi^2 * sin(2pi * x)^2 * (sin(2pi * x)^2 - 3 * cos(2pi * x)^2)
 
-function init_state_auxiliary!(::PoissonModel{dim}, aux::Vars, g::LocalGeometry) where {dim}
+function init_state_auxiliary!(
+    ::PoissonModel{dim},
+    aux::Vars,
+    g::LocalGeometry,
+) where {dim}
     aux.rhs_ϕ = 0
     @inbounds for d in 1:dim
         x1 = g.coord[d]
@@ -210,8 +215,8 @@ function run(
 end
 
 let
-    CLIMA.init()
-    ArrayType = CLIMA.array_type()
+    ClimateMachine.init()
+    ArrayType = ClimateMachine.array_type()
 
     mpicomm = MPI.COMM_WORLD
 

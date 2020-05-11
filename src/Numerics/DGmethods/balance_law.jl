@@ -45,11 +45,13 @@ vars_hyperdiffusive(::BalanceLaw, FT) = @vars()
 vars_integrals(::BalanceLaw, FT) = @vars()
 vars_reverse_integrals(::BalanceLaw, FT) = @vars()
 
-number_state_conservative(m::BalanceLaw, FT) = varsize(vars_state_conservative(m, FT))
+number_state_conservative(m::BalanceLaw, FT) =
+    varsize(vars_state_conservative(m, FT))
 number_state_auxiliary(m::BalanceLaw, FT) = varsize(vars_state_auxiliary(m, FT))
 
 number_state_gradient(m::BalanceLaw, FT) = varsize(vars_state_gradient(m, FT))
-number_state_gradient_flux(m::BalanceLaw, FT) = varsize(vars_state_gradient_flux(m, FT))
+number_state_gradient_flux(m::BalanceLaw, FT) =
+    varsize(vars_state_gradient_flux(m, FT))
 
 num_gradient_laplacian(m::BalanceLaw, FT) =
     varsize(vars_gradient_laplacian(m, FT))
@@ -67,8 +69,8 @@ function flux_first_order! end
 function flux_second_order! end
 function source! end
 
-function compute_gradient_argument! end
-function compute_gradient_flux! end
+compute_gradient_argument!(::BalanceLaw, args...) = nothing
+compute_gradient_flux!(::BalanceLaw, args...) = nothing
 function transform_post_gradient_laplacian! end
 
 function wavespeed end
@@ -161,7 +163,7 @@ function create_auxiliary_state(balance_law, grid)
     device = typeof(state_auxiliary.data) <: Array ? CPU() : CUDA()
     nrealelem = length(topology.realelems)
     event = Event(device)
-    event = kernel_init_state_auxiliary!(device, Np, Np * nrealelem)(
+    event = kernel_init_state_auxiliary!(device, min(Np, 1024), Np * nrealelem)(
         balance_law,
         Val(dim),
         Val(polyorder),
@@ -170,8 +172,14 @@ function create_auxiliary_state(balance_law, grid)
         topology.realelems,
         dependencies = (event,),
     )
-    event = MPIStateArrays.begin_ghost_exchange!(state_auxiliary; dependencies = event)
-    event = MPIStateArrays.end_ghost_exchange!(state_auxiliary; dependencies = event)
+    event = MPIStateArrays.begin_ghost_exchange!(
+        state_auxiliary;
+        dependencies = event,
+    )
+    event = MPIStateArrays.end_ghost_exchange!(
+        state_auxiliary;
+        dependencies = event,
+    )
     wait(device, event)
 
     return state_auxiliary

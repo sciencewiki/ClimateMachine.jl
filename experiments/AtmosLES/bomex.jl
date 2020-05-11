@@ -1,3 +1,4 @@
+#!/usr/bin/env julia --project
 #=
 # This experiment file establishes the initial conditions, boundary conditions,
 # source terms and simulation parameters (domain size + resolution) for the
@@ -48,6 +49,19 @@ URL = {https://journals.ametsoc.org/doi/abs/10.1175/1520-0469%282003%2960%3C1201
 eprint = {https://journals.ametsoc.org/doi/pdf/10.1175/1520-0469%282003%2960%3C1201%3AALESIS%3E2.0.CO%3B2}
 =#
 
+using ClimateMachine
+ClimateMachine.init()
+
+using ClimateMachine.Atmos
+using ClimateMachine.ConfigTypes
+using ClimateMachine.DGmethods.NumericalFluxes
+using ClimateMachine.Diagnostics
+using ClimateMachine.GenericCallbacks
+using ClimateMachine.Mesh.Filters
+using ClimateMachine.ODESolvers
+using ClimateMachine.MoistThermodynamics
+using ClimateMachine.VariableTemplates
+
 using Distributions
 using Random
 using StaticArrays
@@ -55,25 +69,14 @@ using Test
 using DocStringExtensions
 using LinearAlgebra
 
-using CLIMA
-using CLIMA.Atmos
-using CLIMA.ConfigTypes
-using CLIMA.DGmethods.NumericalFluxes
-using CLIMA.Diagnostics
-using CLIMA.GenericCallbacks
-using CLIMA.Mesh.Filters
-using CLIMA.ODESolvers
-using CLIMA.MoistThermodynamics
-using CLIMA.VariableTemplates
-
 using CLIMAParameters
 using CLIMAParameters.Planet: e_int_v0, grav, day
 struct EarthParameterSet <: AbstractEarthParameterSet end
 const param_set = EarthParameterSet()
 
-import CLIMA.DGmethods: vars_state_conservative, vars_state_auxiliary
-import CLIMA.Atmos: source!, atmos_source!, altitude
-import CLIMA.Atmos: flux_second_order!, thermo_state
+import ClimateMachine.DGmethods: vars_state_conservative, vars_state_auxiliary
+import ClimateMachine.Atmos: source!, atmos_source!, altitude
+import ClimateMachine.Atmos: flux_second_order!, thermo_state
 
 """
   Bomex Geostrophic Forcing (Source)
@@ -416,7 +419,7 @@ function config_bomex(FT, N, resolution, xmax, ymax, zmax)
     )
 
     # Choose multi-rate explicit solver
-    ode_solver_type = CLIMA.MultirateSolverType(
+    ode_solver_type = ClimateMachine.MultirateSolverType(
         linear_model = AtmosAcousticGravityLinearModel,
         slow_method = LSRK144NiegemannDiehlBusch,
         fast_method = LSRK144NiegemannDiehlBusch,
@@ -448,7 +451,7 @@ function config_bomex(FT, N, resolution, xmax, ymax, zmax)
     )
 
     # Assemble configuration
-    config = CLIMA.AtmosLESConfiguration(
+    config = ClimateMachine.AtmosLESConfiguration(
         "BOMEX",
         N,
         resolution,
@@ -465,14 +468,15 @@ end
 
 function config_diagnostics(driver_config)
     default_dgngrp =
-        setup_atmos_default_diagnostics("10000steps", driver_config.name)
-    core_dgngrp = setup_atmos_core_diagnostics("10000steps", driver_config.name)
-    return CLIMA.DiagnosticsConfiguration([default_dgngrp, core_dgngrp])
+        setup_atmos_default_diagnostics("2500steps", driver_config.name)
+    core_dgngrp = setup_atmos_core_diagnostics("2500steps", driver_config.name)
+    return ClimateMachine.DiagnosticsConfiguration([
+        default_dgngrp,
+        core_dgngrp,
+    ])
 end
 
 function main()
-    CLIMA.init()
-
     FT = Float32
 
     # DG polynomial order
@@ -497,7 +501,7 @@ function main()
     CFLmax = FT(8)
 
     driver_config = config_bomex(FT, N, resolution, xmax, ymax, zmax)
-    solver_config = CLIMA.SolverConfiguration(
+    solver_config = ClimateMachine.SolverConfiguration(
         t0,
         timeend,
         driver_config,
@@ -511,7 +515,7 @@ function main()
         nothing
     end
 
-    result = CLIMA.invoke!(
+    result = ClimateMachine.invoke!(
         solver_config;
         diagnostics_config = dgn_config,
         user_callbacks = (cbtmarfilter,),

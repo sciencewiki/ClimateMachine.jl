@@ -25,15 +25,16 @@ using Printf
 using StaticArrays
 using Test
 
-using CLIMA
-using CLIMA.Atmos
-using CLIMA.ConfigTypes
-using CLIMA.DGmethods.NumericalFluxes
-using CLIMA.Grids
-using CLIMA.GenericCallbacks
-using CLIMA.Mesh.Filters
-using CLIMA.Mesh.Topologies
-using CLIMA.MoistThermodynamics:
+using ClimateMachine
+ClimateMachine.init()
+using ClimateMachine.Atmos
+using ClimateMachine.ConfigTypes
+using ClimateMachine.DGmethods.NumericalFluxes
+using ClimateMachine.Grids
+using ClimateMachine.GenericCallbacks
+using ClimateMachine.Mesh.Filters
+using ClimateMachine.Mesh.Topologies
+using ClimateMachine.MoistThermodynamics:
     gas_constants,
     PhaseEquil,
     PhasePartition_equil,
@@ -41,18 +42,18 @@ using CLIMA.MoistThermodynamics:
     internal_energy,
     q_vap_saturation,
     air_temperature
-using CLIMA.Microphysics
-using CLIMA.MPIStateArrays
-using CLIMA.ODESolvers
-using CLIMA.VariableTemplates
-using CLIMA.VTK
+using ClimateMachine.Microphysics
+using ClimateMachine.MPIStateArrays
+using ClimateMachine.ODESolvers
+using ClimateMachine.VariableTemplates
+using ClimateMachine.VTK
 
 using CLIMAParameters
 using CLIMAParameters.Planet: R_d, cp_d, cv_d, cv_v, T_0, e_int_v0, grav
 struct EarthParameterSet <: AbstractEarthParameterSet end
 const param_set = EarthParameterSet()
 
-import CLIMA.DGmethods:
+import ClimateMachine.DGmethods:
     BalanceLaw,
     DGModel,
     LocalGeometry,
@@ -126,7 +127,11 @@ vars_state_gradient(m::KinematicModel, FT) = @vars()
 
 vars_state_gradient_flux(m::KinematicModel, FT) = @vars()
 
-function init_state_auxiliary!(m::KinematicModel, aux::Vars, geom::LocalGeometry)
+function init_state_auxiliary!(
+    m::KinematicModel,
+    aux::Vars,
+    geom::LocalGeometry,
+)
 
     FT = eltype(aux)
     x, y, z = geom.coord
@@ -170,7 +175,14 @@ function update_auxiliary_state!(
     t::Real,
     elems::UnitRange,
 )
-    nodal_update_auxiliary_state!(kinematic_model_nodal_update_auxiliary_state!, dg, m, Q, t, elems)
+    nodal_update_auxiliary_state!(
+        kinematic_model_nodal_update_auxiliary_state!,
+        dg,
+        m,
+        Q,
+        t,
+        elems,
+    )
     return true
 end
 
@@ -220,8 +232,9 @@ function config_kinematic_eddy(
     z_0,
 )
     # Choose explicit solver
-    ode_solver =
-        CLIMA.ExplicitSolverType(solver_method = LSRK144NiegemannDiehlBusch)
+    ode_solver = ClimateMachine.ExplicitSolverType(
+        solver_method = LSRK144NiegemannDiehlBusch,
+    )
 
     kmc = KinematicModelConfig(
         FT(xmax),
@@ -244,7 +257,7 @@ function config_kinematic_eddy(
         data_config = kmc,
     )
 
-    config = CLIMA.AtmosLESConfiguration(
+    config = ClimateMachine.AtmosLESConfiguration(
         "KinematicModel",
         N,
         resolution,

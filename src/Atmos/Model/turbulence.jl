@@ -266,7 +266,7 @@ end
 
 # ### [Smagorinsky-Lilly](@id smagorinsky-lilly)
 # The Smagorinsky turbulence model, with Lilly's correction to
-# stratified atmospheric flows, is included in CLIMA.
+# stratified atmospheric flows, is included in ClimateMachine.
 # The input parameter to this model is the Smagorinsky coefficient.
 # For atmospheric flows, the coefficient `C_smag` typically takes values between
 # 0.15 and 0.23. Flow dependent `C_smag` are currently not supported (e.g. Germano's
@@ -570,7 +570,8 @@ struct AnisoMinDiss{FT} <: TurbulenceClosure
 end
 vars_state_auxiliary(::AnisoMinDiss, FT) = @vars(Δ::FT)
 vars_state_gradient(::AnisoMinDiss, FT) = @vars(θ_v::FT)
-vars_state_gradient_flux(::AnisoMinDiss, FT) = @vars(∇u::SMatrix{3, 3, FT, 9}, N²::FT)
+vars_state_gradient_flux(::AnisoMinDiss, FT) =
+    @vars(∇u::SMatrix{3, 3, FT, 9}, N²::FT)
 function atmos_init_aux!(
     ::AnisoMinDiss,
     ::AtmosModel,

@@ -3,12 +3,13 @@
 # In this tutorial, we'll be solving the [heat equation](https://en.wikipedia.org/wiki/Heat_equation):
 
 # ``
-# \frac{∂ T}{∂ t} + ∇ ⋅ (-α ∇T) = 0
+# \frac{∂ T}{∂ t} +  ∇ ⋅(wT) + ∇ ⋅ (-α ∇T) = 0
 # ``
 
 # where
-#  - `α` is the thermal diffusivity
-#  - `T` is the temperature (the unknown we're solving for)
+#  - `α` is the eddy diffusivity
+#  - `T` is the temperature (unknown we're solving for)
+#  - `w` is the vertical velocity (unknown we're solving for)
 
 # To put this in the form of CLIMA's [`BalanceLaw`](@ref CLIMA.DGMethods.BalanceLaw), we'll re-write the equation as:
 
@@ -33,7 +34,7 @@
 # - 7) Post-processing
 
 # YAIR 
-# think about the overarching code structure 
+# think about the code structure 
 # add the source functions calls
 # think about how to define an arbitrary number of subdomains and their variables , BC etc 
 # is the current solver indeed explicit ?
@@ -90,6 +91,18 @@ import CLIMA.DGmethods: vars_state_auxiliary,
                         init_state_auxiliary!,
                         init_state_conservative!,
                         boundary_state!
+
+
+include(joinpath("Closures","entr_detr.jl"))
+include(joinpath("Closures","buoyancy.jl"))
+include(joinpath("Closures","mixing_length.jl"))
+include(joinpath("Closures","microphysics.jl"))
+include(joinpath("Closures","subdomain_statistics.jl"))
+include(joinpath("Closures","surface.jl"))
+include(joinpath("Closures","pressure.jl"))
+include(joinpath("Closures","eddy_diffusivity.jl"))
+
+
 
 # ## Initialization
 
@@ -157,15 +170,15 @@ end;
 
 # The remaining methods, defined in this section, are called at every time-step in the solver by the [`BalanceLaw`](@ref CLIMA.DGMethods.BalanceLaw) framework.
 
-# Overload `update_aux!` to call `soil_nodal_update_aux!`, or any other auxiliary methods
+# Overload `update_aux!` to call `nodal_update_aux!`, or any other auxiliary methods
 function update_aux!(dg::DGModel, m::TurbulenceConvectionModel, Q::MPIStateArray, t::Real, elems::UnitRange)
-  nodal_update_aux!(soil_nodal_update_aux!, dg, m, Q, t, elems)
+  nodal_update_aux!(nodal_update_aux!, dg, m, Q, t, elems)
   return true # TODO: remove return true
 end;
 
 # Compute/update all auxiliary variables at each node. Note that
 # - `aux.T` is available here because we've specified `T` in `vars_state_auxiliary`
-function soil_nodal_update_aux!(m::TurbulenceConvectionModel, state::Vars, aux::Vars, t::Real)
+function nodal_update_aux!(m::TurbulenceConvectionModel, state::Vars, aux::Vars, t::Real)
   aux.T = state.ρT / m.ρ
   aux.w = state.ρw / m.ρ
 end;

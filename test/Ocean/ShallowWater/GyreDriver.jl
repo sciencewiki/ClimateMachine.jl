@@ -139,7 +139,8 @@ function run(mpicomm, topl, ArrayType, N, dt, FT, model, test)
                 step[1]
             )
             @debug "doing VTK output" outprefix
-            statenames = flattenednames(vars_state_conservative(model, eltype(Q)))
+            statenames =
+                flattenednames(vars_state_conservative(model, eltype(Q)))
             auxnames = flattenednames(vars_state_auxiliary(model, eltype(Q)))
             writevtk(outprefix, Q, dg, statenames, dg.state_auxiliary, auxnames)
             step[1] += 1
@@ -167,8 +168,8 @@ end
 ################
 
 let
-    CLIMA.init()
-    ArrayType = CLIMA.array_type()
+    ClimateMachine.init()
+    ArrayType = ClimateMachine.array_type()
     mpicomm = MPI.COMM_WORLD
 
     model = setup_model(FT, stommel, linear, τₒ, fₒ, β, λ, ν, Lˣ, Lʸ, H)

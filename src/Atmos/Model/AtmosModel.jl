@@ -16,7 +16,7 @@ using ..MPIStateArrays: MPIStateArray
 using ..Mesh.Grids:
     VerticalDirection, HorizontalDirection, min_node_distance, EveryDirection
 
-import CLIMA.DGmethods:
+import ClimateMachine.DGmethods:
     BalanceLaw,
     vars_state_auxiliary,
     vars_state_conservative,
@@ -92,7 +92,7 @@ struct AtmosModel{FT, PS, O, RS, T, HD, M, P, R, S, TR, BC, IS, DC} <:
        BalanceLaw
     "Parameter Set (type to dispatch on, e.g., planet parameters. See CLIMAParameters.jl package)"
     param_set::PS
-    "Orientation ([`CLIMA.FlatOrientation`](@ref)(LES in a box) or [`CLIMA.SphericalOrientation`](GCM))"
+    "Orientation ([`ClimateMachine.FlatOrientation`](@ref)(LES in a box) or [`ClimateMachine.SphericalOrientation`](GCM))"
     orientation::O
     "Reference State (For initial conditions, or for linearisation when using implicit solvers)"
     ref_state::RS
@@ -506,19 +506,36 @@ function update_auxiliary_state!(
         reverse_indefinite_stack_integral!(dg, m, Q, state_auxiliary, t, elems)
     end
 
-    nodal_update_auxiliary_state!(atmos_nodal_update_auxiliary_state!, dg, m, Q, t, elems)
+    nodal_update_auxiliary_state!(
+        atmos_nodal_update_auxiliary_state!,
+        dg,
+        m,
+        Q,
+        t,
+        elems,
+    )
 
     return true
 end
 
-function atmos_nodal_update_auxiliary_state!(m::AtmosModel, state::Vars, aux::Vars, t::Real)
+function atmos_nodal_update_auxiliary_state!(
+    m::AtmosModel,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
     atmos_nodal_update_auxiliary_state!(m.moisture, m, state, aux, t)
     atmos_nodal_update_auxiliary_state!(m.radiation, m, state, aux, t)
     atmos_nodal_update_auxiliary_state!(m.turbulence, m, state, aux, t)
     atmos_nodal_update_auxiliary_state!(m.tracers, m, state, aux, t)
 end
 
-function integral_load_auxiliary_state!(m::AtmosModel, integ::Vars, state::Vars, aux::Vars)
+function integral_load_auxiliary_state!(
+    m::AtmosModel,
+    integ::Vars,
+    state::Vars,
+    aux::Vars,
+)
     integral_load_auxiliary_state!(m.radiation, integ, state, aux)
 end
 
@@ -535,7 +552,11 @@ function reverse_integral_load_auxiliary_state!(
     reverse_integral_load_auxiliary_state!(m.radiation, integ, state, aux)
 end
 
-function reverse_integral_set_auxiliary_state!(m::AtmosModel, aux::Vars, integ::Vars)
+function reverse_integral_set_auxiliary_state!(
+    m::AtmosModel,
+    aux::Vars,
+    integ::Vars,
+)
     reverse_integral_set_auxiliary_state!(m.radiation, aux, integ)
 end
 
@@ -599,7 +620,14 @@ Initialise state variables.
 `args...` provides an option to include configuration data
 (current use cases include problem constants, spline-interpolants)
 """ init_state_conservative!
-function init_state_conservative!(m::AtmosModel, state::Vars, aux::Vars, coords, t, args...)
+function init_state_conservative!(
+    m::AtmosModel,
+    state::Vars,
+    aux::Vars,
+    coords,
+    t,
+    args...,
+)
     m.init_state_conservative(m, state, aux, coords, t, args...)
 end
 end # module
