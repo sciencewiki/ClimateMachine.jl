@@ -206,18 +206,22 @@ function SolverConfiguration(
             fast_dg_momentum = DGModel(
                 linmodel.momentum,
                 grid,
-                numfluxnondiff,
-                numfluxdiff,
-                gradnumflux,
-                auxstate = dg.auxstate,
+                numerical_flux_first_order,
+                numerical_flux_second_order,
+                numerical_flux_gradient,
+                state_auxiliary = dg.state_auxiliary,
+                state_gradient_flux = dg.state_gradient_flux,
+                states_higher_order = dg.states_higher_order,
             )
             fast_dg_thermo = DGModel(
                 linmodel.thermo,
                 grid,
-                numfluxnondiff,
-                numfluxdiff,
-                gradnumflux,
-                auxstate = dg.auxstate,
+                numerical_flux_first_order,
+                numerical_flux_second_order,
+                numerical_flux_gradient,
+                state_auxiliary = dg.state_auxiliary,
+                state_gradient_flux = dg.state_gradient_flux,
+                states_higher_order = dg.states_higher_order,
             )
             fast_dg = (fast_dg_momentum, fast_dg_thermo)
             slow_model = RemainderModel(bl, (linmodel.linear,))
@@ -227,20 +231,24 @@ function SolverConfiguration(
                 fast_dg_h = DGModel(
                     linmodel,
                     grid,
-                    numfluxnondiff,
-                    numfluxdiff,
-                    gradnumflux;
+                    numerical_flux_first_order,
+                    numerical_flux_second_order,
+                    numerical_flux_gradient,
                     direction=HorizontalDirection(),
-                    auxstate=dg.auxstate,
+                    state_auxiliary = dg.state_auxiliary,
+                    state_gradient_flux = dg.state_gradient_flux,
+                    states_higher_order = dg.states_higher_order,
                 )
                 fast_dg_v = DGModel(
                     linmodel,
                     grid,
-                    numfluxnondiff,
-                    numfluxdiff,
-                    gradnumflux;
+                    numerical_flux_first_order,
+                    numerical_flux_second_order,
+                    numerical_flux_gradient,
                     direction=VerticalDirection(),
-                    auxstate=dg.auxstate
+                    state_auxiliary = dg.state_auxiliary,
+                    state_gradient_flux = dg.state_gradient_flux,
+                    states_higher_order = dg.states_higher_order,
                 )
                 fast_dg = (fast_dg_h, fast_dg_v)
                 if length(ode_solver_type.number_of_steps)==1
@@ -257,10 +265,12 @@ function SolverConfiguration(
                 fast_dg = DGModel(
                     linmodel,
                     grid,
-                    numfluxnondiff,
-                    numfluxdiff,
-                    gradnumflux,
-                    auxstate = dg.auxstate,
+                    numerical_flux_first_order,
+                    numerical_flux_second_order,
+                    numerical_flux_gradient,
+                    state_auxiliary = dg.state_auxiliary,
+                    state_gradient_flux = dg.state_gradient_flux,
+                    states_higher_order = dg.states_higher_order,
                 )
                 fast_method = ode_solver_type.fast_method
             end
@@ -269,10 +279,12 @@ function SolverConfiguration(
             slow_dg = DGModel(
                 slow_model,
                 grid,
-                numfluxnondiff,
-                numfluxdiff,
-                gradnumflux,
-                auxstate = dg.auxstate,
+                numerical_flux_first_order,
+                numerical_flux_second_order,
+                numerical_flux_gradient,
+                state_auxiliary = dg.state_auxiliary,
+                state_gradient_flux = dg.state_gradient_flux,
+                states_higher_order = dg.states_higher_order,
             )
             solver = ode_solver_type.slow_method(
                 slow_dg,
