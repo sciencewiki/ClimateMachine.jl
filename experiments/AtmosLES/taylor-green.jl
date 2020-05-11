@@ -67,7 +67,6 @@ year = {2014},
 }
 
 """
-
 function init_greenvortex!(bl, state, aux, (x, y, z), t)
     # Problem float-type
     FT = eltype(state)
