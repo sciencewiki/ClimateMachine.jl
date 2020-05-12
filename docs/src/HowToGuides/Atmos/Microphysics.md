@@ -39,7 +39,7 @@ where:
  - ``\alpha, \, \beta, \, \gamma, \, \delta, \, \zeta, \, \eta \,`` are the coefficients.
 
 These coefficients,
-smiliarliy to all other microphysics parameters,
+similarly to all other microphysics parameters,
 are not hardcoded in the final microphysics parameterizations.
 The goal is to allow easy flexibility when calibrating the microphysics parameters.
 With that said, the assumption about the shape of the particles is used twice
