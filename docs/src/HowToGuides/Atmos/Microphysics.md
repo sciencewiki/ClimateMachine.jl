@@ -391,36 +391,37 @@ Finally the snow autoconversion rate is computed as
 
 Accretion defines the rates of conversion between different categories due to collisions between particles.
 
-For the case of collisions bewteen suspended water (cloud water or cloud ice)
-and falling water (rain or snow) the sink of suspended water is defined as:
+For the case of collisions bewteen cloud water (liquid water or ice)
+and precipitation (rain or snow) the sink of cloud water is defined as:
 
 ```math
 \begin{equation}
-\left. \frac{d \, q_{s}}{dt} \right|_{accr} =  - \int_0^\infty n_f(r) \, a_f(r) \, v_{term}(r) E_{sf} q_{s} dr
+\left. \frac{d \, q_{c}}{dt} \right|_{accr} =  - \int_0^\infty n_p(r) \, a_p(r) \, v_{term}(r) E_{cp} q_{c} dr
 \label{eq:accr_1}
 \end{equation}
 ```
 where:
- - ``s`` subscript indicates suspended water category (cloud water or cloud ice)
- - ``f`` subscript indicates falling water category (rain or snow)
- - ``E_{sf}`` is the collision efficiency.
+ - ``c`` subscript indicates cloud water category (cloud liquid water or ice)
+ - ``p`` subscript indicates precipitation category (rain or snow)
+ - ``E_{cp}`` is the collision efficiency.
 
 Integrating over the distribution yeilds:
 ```math
 \begin{equation}
-\left. \frac{d \, q_s}{dt} \right|_{accr} =
-  - n_{0f} \, \zeta_f \, \gamma_f \, q_s \, E_{sf} \, \frac{\Gamma(\eta_f + \delta_f + 1)}{\lambda_f^{\eta_f + \delta_f +1}}
+\left. \frac{d \, q_c}{dt} \right|_{accr} =
+  - n_{0p} \, \zeta_p \, \gamma_p \, q_c \, E_{cp} \, \frac{\Gamma(\eta_p + \delta_p + 1)}{\lambda_p^{\eta_p + \delta_p +1}}
 \label{eq:accrfin}
 \end{equation}
 ```
-For the case of cloud water/rain and cloud ice/snow collisions, the sink of suspended water
-becomes simply the source for falling water.
-For the case of cloud water and snow collisions for temperatures below freezing,
-the sink of cloud water is a source for snow.
+For the case of cloud liquid water and rain and cloud ice and snow collisions,
+the sink of cloud water becomes simply the source for precipitation.
+For the case of cloud liquid water and snow collisions for temperatures below freezing,
+the sink of cloud liquid water is a source for snow.
 For temperatures above freezing, the accreted cloud droplets along with some melted snow
 are converted to rain.
-In this case eq. (\ref{eq:accrfin}) describes the sink of cloud water.
-The sink of snow is proportional to the sink of cloud water with the coefficient ``\frac{c_w}{L_f}(T - T_{freeze})``.
+In this case eq. (\ref{eq:accrfin}) describes the sink of cloud liquid water.
+The sink of snow is proportional to the sink of cloud liquid water with
+the coefficient ``\frac{c_w}{L_f}(T - T_{freeze})``.
 
 The collisions between cloud ice and rain create snow.
 The source of snow in this case is a sum of sinks from cloud ice and rain.
@@ -554,6 +555,9 @@ The final integral is:
     \right)
 \end{align}
 ```
+For the case of rain we only consider evaporation (``S - 1 < 0``).
+For the case of snow we consider both the source term due to vapor deposition
+ on snow (``S - 1 > 0``) and the sink due to vapor sublimation (``S - 1 < 0``).
 
 !!! note
     We should take into account the non-spherical snow shape. - Modify the Reynolds number and growth equation.

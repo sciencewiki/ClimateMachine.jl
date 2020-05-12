@@ -117,17 +117,19 @@ function kinematic_model_nodal_update_auxiliary_state!(
     aux.RH =
         aux.q_vap / q_vap_saturation(param_set, aux.T, state.ρ, q) * FT(100)
 
-    aux.rain_w = terminal_velocity(param_set, rain_param_set, state.ρ, aux.q_rai)
+    aux.rain_w = terminal_velocity(
+        param_set, rain_param_set, state.ρ, aux.q_rai)
 
     # more diagnostics
     q_eq = PhasePartition_equil(param_set, aux.T, state.ρ, aux.q_tot)
     aux.src_cloud_liq = conv_q_vap_to_q_liq_ice(liquid_param_set, q_eq, q)
     aux.src_cloud_ice = conv_q_vap_to_q_liq_ice(ice_param_set, q_eq, q)
     aux.src_acnv = conv_q_liq_to_q_rai(rain_param_set, aux.q_liq)
-    aux.src_accr = accretion(param_set, liquid_param_set, rain_param_set,
-                             aux.q_liq, aux.q_rai, state.ρ)
-    aux.src_rain_evap = evaporation_sublimation(param_set, rain_param_set,
-                                                q, aux.q_rai, state.ρ, aux.T)
+    aux.src_accr = accretion(
+        param_set, liquid_param_set, rain_param_set, aux.q_liq, aux.q_rai,
+        state.ρ)
+    aux.src_rain_evap = evaporation_sublimation(
+        param_set, rain_param_set, q, aux.q_rai, state.ρ, aux.T)
     aux.flag_cloud_liq = FT(0)
     aux.flag_cloud_ice = FT(0)
     aux.flag_rain = FT(0)
@@ -255,15 +257,16 @@ function source!(
     source.ρe = FT(0)
 
     # cloud water and ice condensation/evaporation
-    source.ρq_liq += state.ρ * conv_q_vap_to_q_liq_ice(liquid_param_set, q_eq, q)
+    source.ρq_liq += state.ρ * conv_q_vap_to_q_liq_ice(
+        liquid_param_set, q_eq, q)
     source.ρq_ice += state.ρ * conv_q_vap_to_q_liq_ice(ice_param_set, q_eq, q)
 
     # tendencies from rain
-    src_q_rai_acnv = conv_q_liq_to_q_rai(rain_param_set, aux.q_liq)
-    src_q_rai_accr = accretion(param_set, liquid_param_set, rain_param_set,
-                               aux.q_liq, aux.q_rai, state.ρ)
-    src_q_rai_evap = evaporation_sublimation(param_set, rain_param_set,
-                                             q, aux.q_rai, state.ρ, aux.T)
+    src_q_rai_acnv = conv_q_liq_to_q_rai(rain_param_set, q_liq)
+    src_q_rai_accr = accretion(
+        param_set, liquid_param_set, rain_param_set, q_liq, q_rai, state.ρ)
+    src_q_rai_evap = evaporation_sublimation(
+        param_set, rain_param_set, q, q_rai, state.ρ, T)
 
     src_q_rai_tot = src_q_rai_acnv + src_q_rai_accr + src_q_rai_evap
 

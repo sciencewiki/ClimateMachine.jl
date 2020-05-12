@@ -30,7 +30,7 @@ export ζ_rai
 export n0_sno
 export τ_relax
 export lambda
-export unpack_parameters
+export unpack_params
 
 export supersaturation
 export G_func
@@ -64,8 +64,6 @@ function ζ_rai(param_set::APS, ρ::FT) where {FT<:Real}
     _C_drag::FT      = Microphysics.C_drag(param_set)
     _grav::FT        = grav(param_set)
 
-    #@info(ρ)
-
     return sqrt(_grav * FT(8/3) / _C_drag * (_ρ_cloud_liq / ρ - FT(1)))
 end
 
@@ -88,10 +86,11 @@ function n0_sno(snow_param_set::ASPS, q_sno::FT, ρ::FT) where {FT<:Real}
 end
 
 """
-    τ_relax(cloud_param_set)
+    τ_relax(liquid_param_set)
+    τ_relax(ice_param_set)
 
- - `cloud_param_set` - abstract set with cloud liquid water or cloud ice
-    microphysics parameters
+ - `liquid_param_set` - abstract set with cloud liquid water parameters
+ - `ice_param_set` - abstract set with cloud ice parameters
 
 Returnts the relaxation timescale for condensation and evaporation of
 cloud liquid water or the relaxation timescale for sublimation and
@@ -317,7 +316,7 @@ function conv_q_liq_to_q_rai(rain_param_set::ARPS, q_liq::FT) where {FT <: Real}
 end
 
 """
-    conv_q_ice_to_q_sno(param_set, ice_param_set, q, ρ)
+    conv_q_ice_to_q_sno(param_set, ice_param_set, q, ρ, T)
 
  - `param_set` - abstract set with earth parameters
  - `ice_param_set` - abstract set with ice microphysics parameters
@@ -331,10 +330,10 @@ Parameterized following Harrington et al 1996 and Kaul et al 2015
 function conv_q_ice_to_q_sno(param_set::APS, ice_param_set::AIPS,
                              q::PhasePartition{FT}, ρ::FT, T::FT) where {FT<:Real}
     acnv_rate = FT(0)
+    _S::FT = supersaturation(param_set, q, ρ, T, Ice())
 
-    if q.ice > FT(0)
+    if (q.ice > FT(0) && _S > FT(0))
 
-        _S::FT = supersaturation(param_set, q, ρ, T, Ice())
         _G::FT = G_func(param_set, T, Ice())
 
         _r_ice_snow::FT = r_ice_snow(ice_param_set)
@@ -481,14 +480,15 @@ function evaporation_sublimation(param_set::APS, rain_param_set::ARPS,
                                  q::PhasePartition{FT}, q_rai::FT, ρ::FT,
                                  T::FT) where {FT<:Real}
     evap_subl_rate = FT(0)
-    if q_rai  > FT(0)
+    _S::FT = supersaturation(param_set, q, ρ, T, Liquid())
+
+    if (q_rai  > FT(0) && _S < FT(0))
 
         _a_vent::FT  = a_vent(rain_param_set)
         _b_vent::FT  = b_vent(rain_param_set)
         _ν_air::FT   = ν_air(param_set)
         _D_vapor::FT = D_vapor(param_set)
 
-        _S::FT = supersaturation(param_set, q, ρ, T, Liquid())
         _G::FT = G_func(param_set, T, Liquid())
 
         (_n0, _α, _β, _γ, _δ, _ζ, _η) =
@@ -545,7 +545,9 @@ function snow_melt(param_set::APS, snow_param_set::ASPS, q_sno::FT,
                    ρ::FT) where {FT<:Real}
 
     snow_melt_rate = FT(0)
-    if q_sno  > FT(0)
+    _T_freeze = T_freeze(param_set)
+
+    if (q_sno > FT(0) && T > _T_freeze)
 
         _a_vent::FT  = a_vent(snow_param_set)
         _b_vent::FT  = b_vent(snow_param_set)
@@ -553,7 +555,6 @@ function snow_melt(param_set::APS, snow_param_set::ASPS, q_sno::FT,
         _D_vapor::FT = D_vapor(param_set)
         _K_therm::FT = K_therm(param_set)
 
-        _T_freeze = T_freeze(param_set)
         L = latent_heat_fusion(param_set, T)
 
         (_n0, _α, _β, _γ, _δ, _ζ, _η) =
