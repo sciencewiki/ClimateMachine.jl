@@ -50,7 +50,7 @@ Base.@kwdef struct HeatModel{FT} <: BalanceLaw
     initialT::FT = 295.15
     "Bottom boundary value for temperature (Dirichlet boundary conditions)"
     T_bottom::FT = 300.0
-    "Top flux (α∇T) at top boundary (Neumann boundary conditions)"
+    "Top flux (α∇ρcT) at top boundary (Neumann boundary conditions)"
     flux_top::FT = 0.0
 end
 
@@ -60,9 +60,9 @@ vars_state_auxiliary(::HeatModel, FT) = @vars(z::FT, T::FT);
 
 vars_state_conservative(::HeatModel, FT) = @vars(ρcT::FT);
 
-vars_state_gradient(::HeatModel, FT) = @vars(T::FT);
+vars_state_gradient(::HeatModel, FT) = @vars(ρcT::FT);
 
-vars_state_gradient_flux(::HeatModel, FT) = @vars(α∇T::SVector{3, FT});
+vars_state_gradient_flux(::HeatModel, FT) = @vars(α∇ρcT::SVector{3, FT});
 
 function init_state_auxiliary!(m::HeatModel, aux::Vars, geom::LocalGeometry)
     aux.z = geom.coord[3]
@@ -106,7 +106,7 @@ function compute_gradient_argument!(
     aux::Vars,
     t::Real,
 )
-    transform.T = state.ρcT / m.ρc
+    transform.ρcT = state.ρcT
 end;
 
 function compute_gradient_flux!(
@@ -117,7 +117,7 @@ function compute_gradient_flux!(
     aux::Vars,
     t::Real,
 )
-    diffusive.α∇T = m.α * ∇transform.T
+    diffusive.α∇ρcT = m.α * ∇transform.ρcT
 end;
 
 function source!(m::HeatModel, _...) end;
@@ -138,7 +138,7 @@ function flux_second_order!(
     aux::Vars,
     t::Real,
 )
-    flux.ρcT -= diffusive.α∇T
+    flux.ρcT -= diffusive.α∇ρcT
 end;
 
 function boundary_state!(
@@ -177,7 +177,7 @@ function boundary_state!(
     if bctype == 1 # bottom
         state⁺.ρcT = m.ρc * m.T_bottom
     elseif bctype == 2 # top
-        diff⁺.α∇T = -n⁻ * m.flux_top
+        diff⁺.α∇ρcT = -n⁻ * m.flux_top
     end
 end;
 
