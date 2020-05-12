@@ -1,12 +1,6 @@
 using MPI
-using Test
-using Logging
-using Printf
 using NCDatasets
-using LinearAlgebra
 using OrderedCollections
-using Interpolations
-using DelimitedFiles
 using Plots
 using StaticArrays
 
@@ -14,14 +8,10 @@ using ClimateMachine
 using ClimateMachine.Mesh.Topologies
 using ClimateMachine.Mesh.Grids
 using ClimateMachine.Writers
-using ClimateMachine.VTK
-using ClimateMachine.Mesh.Elements: interpolationmatrix
 using ClimateMachine.DGmethods
 using ClimateMachine.DGmethods.NumericalFluxes
 using ClimateMachine.DGmethods: BalanceLaw, LocalGeometry
 using ClimateMachine.MPIStateArrays
-using ClimateMachine.GenericCallbacks:
-    EveryXWallTimeSeconds, EveryXSimulationSteps
 using ClimateMachine.GenericCallbacks
 using ClimateMachine.ODESolvers
 using ClimateMachine.VariableTemplates
@@ -58,8 +48,10 @@ Base.@kwdef struct HeatModel{FT} <: BalanceLaw
     α::FT = 0.01
     "Initial conditions for temperature"
     initialT::FT = 295.15
-    "Surface boundary value for temperature (Dirichlet boundary conditions)"
-    surfaceT::FT = 300.0
+    "Bottom boundary value for temperature (Dirichlet boundary conditions)"
+    T_bottom::FT = 300.0
+    "Top flux (α∇T) at top boundary (Neumann boundary conditions)"
+    flux_top::FT = 0.0
 end
 
 m = HeatModel{FT}();
@@ -70,7 +62,7 @@ vars_state_conservative(::HeatModel, FT) = @vars(ρcT::FT);
 
 vars_state_gradient(::HeatModel, FT) = @vars(T::FT);
 
-vars_state_gradient_flux(::HeatModel, FT) = @vars(∇T::SVector{3, FT});
+vars_state_gradient_flux(::HeatModel, FT) = @vars(α∇T::SVector{3, FT});
 
 function init_state_auxiliary!(m::HeatModel, aux::Vars, geom::LocalGeometry)
     aux.z = geom.coord[3]
@@ -87,18 +79,23 @@ function init_state_conservative!(
     state.ρcT = m.ρc * aux.T
 end;
 
-function update_aux!(
+function update_auxiliary_state!(
     dg::DGModel,
     m::HeatModel,
     Q::MPIStateArray,
     t::Real,
     elems::UnitRange,
 )
-    nodal_update_aux!(soil_nodal_update_aux!, dg, m, Q, t, elems)
+    nodal_update_auxiliary_state!(heat_eq_nodal_update_aux!, dg, m, Q, t, elems)
     return true # TODO: remove return true
 end;
 
-function soil_nodal_update_aux!(m::HeatModel, state::Vars, aux::Vars, t::Real)
+function heat_eq_nodal_update_aux!(
+    m::HeatModel,
+    state::Vars,
+    aux::Vars,
+    t::Real,
+)
     aux.T = state.ρcT / m.ρc
 end;
 
@@ -120,7 +117,7 @@ function compute_gradient_flux!(
     aux::Vars,
     t::Real,
 )
-    diffusive.∇T = ∇transform.T
+    diffusive.α∇T = m.α * ∇transform.T
 end;
 
 function source!(m::HeatModel, _...) end;
@@ -141,7 +138,7 @@ function flux_second_order!(
     aux::Vars,
     t::Real,
 )
-    flux.ρcT -= m.α * diffusive.∇T
+    flux.ρcT -= diffusive.α∇T
 end;
 
 function boundary_state!(
@@ -149,16 +146,16 @@ function boundary_state!(
     m::HeatModel,
     state⁺::Vars,
     aux⁺::Vars,
-    nM,
+    n⁻,
     state⁻::Vars,
     aux⁻::Vars,
     bctype,
     t,
     _...,
 )
-    if bctype == 1 # surface
-        state⁺.ρcT = m.ρc * m.surfaceT
-    elseif bctype == 2 # bottom
+    if bctype == 1 # bottom
+        state⁺.ρcT = m.ρc * m.T_bottom
+    elseif bctype == 2 # top
         nothing
     end
 end;
@@ -169,7 +166,7 @@ function boundary_state!(
     state⁺::Vars,
     diff⁺::Vars,
     aux⁺::Vars,
-    nM,
+    n⁻,
     state⁻::Vars,
     diff⁻::Vars,
     aux⁻::Vars,
@@ -177,10 +174,10 @@ function boundary_state!(
     t,
     _...,
 )
-    if bctype == 1 # surface
-        state⁺.ρcT = m.ρc * m.surfaceT
-    elseif bctype == 2 # bottom
-        diff⁺.∇T = -diff⁻.∇T
+    if bctype == 1 # bottom
+        state⁺.ρcT = m.ρc * m.T_bottom
+    elseif bctype == 2 # top
+        diff⁺.α∇T = -n⁻ * m.flux_top
     end
 end;
 
@@ -200,7 +197,7 @@ dg = DGModel(
 
 Δ = min_node_distance(grid)
 
-given_Fourier = 0.08;
+given_Fourier = FT(0.08);
 Fourier_bound = given_Fourier * Δ^2 / m.α;
 dt = Fourier_bound
 
@@ -237,13 +234,7 @@ callback = GenericCallbacks.EveryXSimulationTime(
     every_x_simulation_time,
     lsrk,
 ) do (init = false)
-    state_vars = get_vars_from_stack(
-        grid,
-        Q,
-        m,
-        vars_state_conservative;
-        exclude = [],
-    )
+    state_vars = get_vars_from_stack(grid, Q, m, vars_state_conservative)
     aux_vars = get_vars_from_stack(
         grid,
         dg.state_auxiliary,
