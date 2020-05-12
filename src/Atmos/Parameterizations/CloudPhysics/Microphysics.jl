@@ -1,18 +1,13 @@
 """
-    one-moment bulk Microphysics scheme
+    One-moment bulk microphysics scheme that includes:
 
-Included processes
-   - terminal velocity of precipitation
-   - condensation/evaporation of cloud liquid and deposition/sublimation of cloud ice (as relaxation to equilibrium)
-   - autoconversion of cloud liquid into rain and cloud ice into snow
-   - accretion due to collisions between categories of condensed species
-   - evaporation and sublimation of precipitation
-   - melting of frozen precipitation into non-frozen precipitation
-  - condensation/evaporation as relaxation to equilibrium
-  - autoconversion
-  - accretion
-  - evaporation and sublimation
-  - terminal velocity
+  - terminal velocity of precipitation
+  - condensation and evaporation of cloud liquid water and
+    deposition and sublimation of cloud ice (relaxation to equilibrium)
+  - autoconversion of cloud liquid water into rain and cloud ice into snow
+  - accretion due to collisions between categories of condensed species
+  - evaporation and sublimation of precipitation
+  - melting of snow into rain
 """
 module Microphysics
 
