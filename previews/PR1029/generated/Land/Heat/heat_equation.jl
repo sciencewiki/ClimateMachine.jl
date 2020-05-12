@@ -46,10 +46,10 @@ FT = Float64;
 
 ClimateMachine.init(; disable_gpu = true);
 
-const clima_dir = dirname(dirname(pathof(ClimateMachine)))
+const clima_dir = dirname(dirname(pathof(ClimateMachine)));
 
-include(joinpath(clima_dir, "tutorials", "Land", "helper_funcs.jl"))
-include(joinpath(clima_dir, "tutorials", "Land", "plotting_funcs.jl"))
+include(joinpath(clima_dir, "tutorials", "Land", "helper_funcs.jl"));
+include(joinpath(clima_dir, "tutorials", "Land", "plotting_funcs.jl"));
 
 Base.@kwdef struct HeatModel{FT} <: BalanceLaw
     "Heat capacity"
@@ -130,7 +130,7 @@ function flux_first_order!(
     state::Vars,
     aux::Vars,
     t::Real,
-) end
+) end;
 
 function flux_second_order!(
     m::HeatModel,
@@ -188,7 +188,7 @@ velems = collect(0:10) / 10;
 
 N_poly = 5;
 
-grid = SingleStackGrid(MPI, velems, N_poly, FT, Array)
+grid = SingleStackGrid(MPI, velems, N_poly, FT, Array);
 
 dg = DGModel(
     m,
@@ -210,7 +210,7 @@ lsrk = LSRK54CarpenterKennedy(dg, Q; dt = dt, t0 = 0);
 
 output_dir = @__DIR__;
 
-mkpath(output_dir)
+mkpath(output_dir);
 
 state_vars = get_vars_from_stack(grid, Q, m, vars_state_conservative);
 aux_vars =
@@ -232,7 +232,7 @@ dims = OrderedDict("z" => collect(get_z(grid, z_scale)));
 
 output_data = DataFile(joinpath(output_dir, "output_data"));
 
-step = [0]
+step = [0];
 callback = GenericCallbacks.EveryXSimulationTime(
     every_x_simulation_time,
     lsrk,
@@ -243,25 +243,25 @@ callback = GenericCallbacks.EveryXSimulationTime(
         m,
         vars_state_conservative;
         exclude = [],
-    )
+    );
     aux_vars = get_vars_from_stack(
         grid,
         dg.state_auxiliary,
         m,
         vars_state_auxiliary;
         exclude = ["z"],
-    )
-    all_vars = OrderedDict(state_vars..., aux_vars...)
+    );
+    all_vars = OrderedDict(state_vars..., aux_vars...);
     write_data(
         NetCDFWriter(),
         output_data(step[1]),
         dims,
         all_vars,
         gettime(lsrk),
-    )
-    step[1] += 1
+    );
+    step[1] += 1;
     nothing
-end
+end;
 
 solve!(Q, lsrk; timeend = timeend, callbacks = (callback,));
 
