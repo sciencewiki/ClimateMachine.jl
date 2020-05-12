@@ -450,7 +450,7 @@ Integrating eq.(\ref{eq:accr_ir}) yields:
 \end{equation}
 ```
 
-Collisions between rain and snow result in snow in temperatures below freezing andin rain in temperatures above freezing.
+Collisions between rain and snow result in snow in temperatures below freezing and in rain in temperatures above freezing.
 The source term is defined as:
 ```math
 \begin{equation}
