@@ -4,7 +4,7 @@ The `Microphysics.jl` module describes a 1-moment bulk parameterization of cloud
 The module is based on the ideas of
 [Kessler\_1995](https://www.sciencedirect.com/science/article/pii/016980959400090Z),
 [Grabowski\_1998](https://journals.ametsoc.org/doi/full/10.1175/1520-0469%281998%29055%3C3283%3ATCRMOL%3E2.0.CO%3B2 )
-and [Kaul\_et\_al\_2015](https://journals.ametsoc.org/doi/10.1175/MWR-D-14-00319.1)
+and [Kaul\_et\_al\_2015](https://journals.ametsoc.org/doi/10.1175/MWR-D-14-00319.1).
 
 The cloud microphysics variables are expressed as specific humidities:
   - `q_tot` - total water specific humidity,
