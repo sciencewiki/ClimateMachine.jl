@@ -1,5 +1,13 @@
 Base.HOME_PROJECT[] = abspath(Base.HOME_PROJECT[]) # JuliaLang/julia/pull/28625
 
+rm(joinpath(@__DIR__, "Manifest.toml"), force = true) # Remove local Manifest
+push!(LOAD_PATH, joinpath(@__DIR__, "..", "env", "Plots")) # add Plots env
+push!(LOAD_PATH, joinpath(@__DIR__, ".."))                 # add ClimateMachine env
+
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.instantiate(;verbose=true)
+
 using ClimateMachine, Documenter, Literate
 ENV["GKSwstype"] = "100" # https://github.com/jheinen/GR.jl/issues/278#issuecomment-587090846
 
