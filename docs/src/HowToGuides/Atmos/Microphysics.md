@@ -4,7 +4,7 @@ The `Microphysics.jl` module describes a 1-moment bulk parameterization of cloud
 The module is based on the ideas of
 [Kessler\_1995](https://www.sciencedirect.com/science/article/pii/016980959400090Z),
 [Grabowski\_1998](https://journals.ametsoc.org/doi/full/10.1175/1520-0469%281998%29055%3C3283%3ATCRMOL%3E2.0.CO%3B2 )
-and [Kaul\_et\_al\_2015](https://journals.ametsoc.org/doi/10.1175/MWR-D-14-00319.1)
+and [Kaul\_et\_al\_2015](https://journals.ametsoc.org/doi/10.1175/MWR-D-14-00319.1).
 
 The cloud microphysics variables are expressed as specific humidities:
   - `q_tot` - total water specific humidity,
@@ -39,7 +39,7 @@ where:
  - ``\alpha, \, \beta, \, \gamma, \, \delta, \, \zeta, \, \eta \,`` are the coefficients.
 
 These coefficients,
-smiliarliy to all other microphysics parameters,
+similarly to all other microphysics parameters,
 are not hardcoded in the final microphysics parameterizations.
 The goal is to allow easy flexibility when calibrating the microphysics parameters.
 With that said, the assumption about the shape of the particles is used twice
@@ -286,7 +286,7 @@ where:
  - ``q_{liq}`` - liquid water specific humidity,
  - ``\tau_{cond\_evap}`` - relaxation timescale (parameter in `MicrophysicsParameters` module).
 
-### Cloud ice sublimation/resublimation
+### Cloud ice deposition/sublimation
 
 Sublimation and resublimation of cloud ice is parameterized as a relaxation to equilibrium value at the current time step.
 ```math
@@ -302,7 +302,7 @@ where:
 !!! note
     Both ``\tau_{cond\_evap}`` and ``\tau_{sub\_resub}`` are assumed constant here.
     It would be great to make the relaxation time a function of available condensation nuclei, turbulence intensity, etc.
-    See works by [prof Raymond Shaw](https://www.mtu.edu/physics/department/faculty/shaw/) for hints.
+    See works by [prof Raymond Shaw](https://www.mtu.edu/physics/department/faculty/shaw/) for hints. In particular, [Desai et al., 2019](https://doi.org/10.1029/2019GL083503).
 
 ### Rain autoconversion
 
@@ -451,7 +451,7 @@ Integrating eq.(\ref{eq:accr_ir}) yields:
 \end{equation}
 ```
 
-Collisions between rain and snow result in snow in temperatures below freezing andin rain in temperatures above freezing.
+Collisions between rain and snow result in snow in temperatures below freezing and in rain in temperatures above freezing.
 The source term is defined as:
 ```math
 \begin{equation}
