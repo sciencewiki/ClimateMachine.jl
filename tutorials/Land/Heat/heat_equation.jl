@@ -3,12 +3,14 @@
 # In this tutorial, we'll be solving the [heat equation](https://en.wikipedia.org/wiki/Heat_equation):
 
 # ``
-# \frac{∂ ρcT}{∂ t} + ∇ ⋅ (-α ∇ρcT) = 0
+# \frac{∂ ρcT}{∂ t} + ∇ ⋅ (-α(T) ∇ρcT) = S(α(T), ∇T)
+# \frac{∂ ρcT}{∂ t} + ∇ ⋅ (-α(T,∇T) ∇ρcT) = S(α(T,∇T), ∇T)
 # ``
 
 # where
 #  - `t` is time
-#  - `α` is the thermal diffusivity
+#  - `α(T)` is the thermal diffusivity
+#  - `S(T)` α(T,∇T) * ∇T
 #  - `T` is the temperature
 #  - `ρ` is the density
 #  - `c` is the heat capacity
@@ -21,7 +23,7 @@
 # ``
 
 # where
-#  - `F(ρcT,t) = -α ∇ρcT` is the second-order flux
+#  - `F(ρcT,t) = -α(T) ∇ρcT` is the second-order flux
 
 # with boundary conditions
 #  - Fixed temperature ``T_{surface}`` at ``z_{min}`` (non-zero Dirichlet)
@@ -96,21 +98,28 @@ include(joinpath(clima_dir, "tutorials", "Land", "plotting_funcs.jl"));
 
 # Model parameters can be stored in the particular [`BalanceLaw`](@ref ClimateMachine.DGMethods.BalanceLaw), in this case, a `HeatModel`:
 
-Base.@kwdef struct HeatModel{FT} <: BalanceLaw
+Base.@kwdef struct HeatModel{FT,Tα} <: BalanceLaw
     "Heat capacity"
     ρc::FT = 1
     "Thermal diffusivity"
-    α::FT = 0.01
+    α::Tα = (T, ∇T) -> 0.000001*∇T/T
+    "Thermal diffusivity"
+    α_0::FT = 295.15*0.00001
     "Initial conditions for temperature"
     initialT::FT = 295.15
     "Bottom boundary value for temperature (Dirichlet boundary conditions)"
     T_bottom::FT = 300.0
-    "Top flux (α∇T) at top boundary (Neumann boundary conditions)"
+    "Top flux (α(T)∇T) at top boundary (Neumann boundary conditions)"
     flux_top::FT = 0.0
 end
 
 # Create an instance of the `HeatModel`:
-m = HeatModel{FT}();
+function compute_α(T, ∇T)
+    return 0.000001*∇T/T
+end
+
+Tα = typeof(compute_α)
+m = HeatModel{FT,Tα}(;α=compute_α);
 
 # This model dictates the flow control, using [Dynamic Multiple Dispatch](https://en.wikipedia.org/wiki/Multiple_dispatch), for which kernels are executed.
 
@@ -125,10 +134,10 @@ vars_state_auxiliary(::HeatModel, FT) = @vars(z::FT, T::FT);
 vars_state_conservative(::HeatModel, FT) = @vars(ρcT::FT);
 
 # Specify state variables whose gradients are needed for `HeatModel`
-vars_state_gradient(::HeatModel, FT) = @vars(T::FT);
+vars_state_gradient(::HeatModel, FT) = @vars(T::FT, ρcT::FT);
 
 # Specify gradient variables for `HeatModel`
-vars_state_gradient_flux(::HeatModel, FT) = @vars(α∇T::SVector{3, FT});
+vars_state_gradient_flux(::HeatModel, FT) = @vars(α∇ρcT::SVector{3, FT}, ∇T::SVector{3, FT});
 
 # ## Define the compute kernels
 
@@ -187,7 +196,8 @@ function compute_gradient_argument!(
     aux::Vars,
     t::Real,
 )
-    transform.T = state.ρcT / m.ρc
+    transform.ρcT = state.ρcT
+    transform.T = aux.T
 end;
 
 # Specify where in `diffusive::Vars` to store the computed gradient from `compute_gradient_argument!`. Note that:
@@ -201,11 +211,26 @@ function compute_gradient_flux!(
     aux::Vars,
     t::Real,
 )
-    diffusive.α∇T = m.α * ∇transform.T
+    α_val = m.α(aux.T, ∇transform.T)
+    diffusive.α∇ρcT = hypot(α_val...) * ∇transform.ρcT'
+    diffusive.∇T = ∇transform.T
 end;
 
 # We do no have sources, nor non-diffusive fluxes.
-function source!(m::HeatModel, _...) end;
+function source!(
+    m::HeatModel,
+    source::Vars,
+    state::Vars,
+    diffusive::Vars,
+    aux::Vars,
+    t::Real,
+    direction,
+)
+    # α_val = m.α(aux.T, ∇transform.T)
+    # diffusive.α∇ρcT = hypot(α_val...) * ∇transform.ρcT'
+    # source.ρcT += m.α(aux.T, diffusive.∇T) * diffusive.∇T
+end
+
 function flux_first_order!(
     m::HeatModel,
     flux::Grad,
@@ -213,6 +238,8 @@ function flux_first_order!(
     aux::Vars,
     t::Real,
 ) end;
+
+# \frac{∂ ρcT}{∂ t} + ∇ ⋅ (-α(T,∇T) ∇ρcT) = S(α(T,∇T), ∇T)
 
 # Compute diffusive flux (``F(T,t) = -α ∇T`` in the original PDE). Note that:
 # - `diffusive.α∇T` is available here because we've specified `α∇T` in `vars_state_gradient_flux`
@@ -225,7 +252,8 @@ function flux_second_order!(
     aux::Vars,
     t::Real,
 )
-    flux.ρcT -= diffusive.α∇T
+    # flux.ρcT -= m.α(state.T, diffusive.∇T) * diffusive.ρcT
+    flux.ρcT -= diffusive.α∇ρcT
 end;
 
 # ### Boundary conditions
@@ -271,7 +299,7 @@ function boundary_state!(
     if bctype == 1 # bottom
         state⁺.ρcT = m.ρc * m.T_bottom
     elseif bctype == 2 # top
-        diff⁺.α∇T = -n⁻ * m.flux_top
+        diff⁺.α∇ρcT = -n⁻ * m.flux_top
     end
 end;
 
@@ -301,7 +329,7 @@ dg = DGModel(
 Δ = min_node_distance(grid)
 
 given_Fourier = FT(0.08);
-Fourier_bound = given_Fourier * Δ^2 / m.α;
+Fourier_bound = given_Fourier * Δ^2 / m.α_0;
 dt = Fourier_bound
 
 # ## Initialize the state vector
