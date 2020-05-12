@@ -373,6 +373,7 @@ source!(::AtmosAcousticGravityLinearModelThermo, _...) = nothing
 abstract type AtmosLinearModelSplit <: AtmosLinearModel end
 
 struct AtmosAcousticLinearModelSplit{M} <: AtmosLinearModelSplit
+  atmos::M
   linear::AtmosAcousticLinearModel{M}
   momentum::AtmosAcousticLinearModelMomentum{M}
   thermo::AtmosAcousticLinearModelThermo{M}
@@ -381,6 +382,7 @@ struct AtmosAcousticLinearModelSplit{M} <: AtmosLinearModelSplit
       error("AtmosAcousticLinearModelSplit needs a model with a reference state")
     end
     new{M}(
+        atmos,
         AtmosAcousticLinearModel(atmos),
         AtmosAcousticLinearModelMomentum(atmos),
         AtmosAcousticLinearModelThermo(atmos),
@@ -389,6 +391,7 @@ struct AtmosAcousticLinearModelSplit{M} <: AtmosLinearModelSplit
 end
 
 struct AtmosAcousticGravityLinearModelSplit{M} <: AtmosLinearModelSplit
+  atmos::M
   linear::AtmosAcousticGravityLinearModel{M}
   momentum::AtmosAcousticGravityLinearModelMomentum{M}
   thermo::AtmosAcousticGravityLinearModelThermo{M}
@@ -397,6 +400,7 @@ struct AtmosAcousticGravityLinearModelSplit{M} <: AtmosLinearModelSplit
       error("AtmosAcousticGravityLinearModelSplit needs a model with a reference state")
     end
     new{M}(
+        atmos,
         AtmosAcousticGravityLinearModel(atmos),
         AtmosAcousticGravityLinearModelMomentum(atmos),
         AtmosAcousticGravityLinearModelThermo(atmos),
