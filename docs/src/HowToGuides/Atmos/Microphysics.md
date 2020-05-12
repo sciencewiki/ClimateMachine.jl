@@ -286,7 +286,7 @@ where:
  - ``q_{liq}`` - liquid water specific humidity,
  - ``\tau_{cond\_evap}`` - relaxation timescale (parameter in `MicrophysicsParameters` module).
 
-### Cloud ice sublimation/resublimation
+### Cloud ice deposition/sublimation
 
 Sublimation and resublimation of cloud ice is parameterized as a relaxation to equilibrium value at the current time step.
 ```math
