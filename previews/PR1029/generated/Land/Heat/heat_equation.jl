@@ -243,23 +243,23 @@ callback = GenericCallbacks.EveryXSimulationTime(
         m,
         vars_state_conservative;
         exclude = [],
-    );
+    )
     aux_vars = get_vars_from_stack(
         grid,
         dg.state_auxiliary,
         m,
         vars_state_auxiliary;
         exclude = ["z"],
-    );
-    all_vars = OrderedDict(state_vars..., aux_vars...);
+    )
+    all_vars = OrderedDict(state_vars..., aux_vars...)
     write_data(
         NetCDFWriter(),
         output_data(step[1]),
         dims,
         all_vars,
         gettime(lsrk),
-    );
-    step[1] += 1;
+    )
+    step[1] += 1
     nothing
 end;
 
