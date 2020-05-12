@@ -302,7 +302,7 @@ where:
 !!! note
     Both ``\tau_{cond\_evap}`` and ``\tau_{sub\_resub}`` are assumed constant here.
     It would be great to make the relaxation time a function of available condensation nuclei, turbulence intensity, etc.
-    See works by [prof Raymond Shaw](https://www.mtu.edu/physics/department/faculty/shaw/) for hints.
+    See works by [prof Raymond Shaw](https://www.mtu.edu/physics/department/faculty/shaw/) for hints. In particular, [Desai et al., 2019](https://doi.org/10.1029/2019GL083503).
 
 ### Rain autoconversion
 
