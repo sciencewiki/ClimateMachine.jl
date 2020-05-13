@@ -119,6 +119,17 @@ mutable struct AdditiveRungeKutta{T, RT, AT, BE, V, VS, Nstages, Nstages_sq} <:
         variant_storage = additional_storage(variant, Q, Nstages)
         VS = typeof(variant_storage)
 
+        for v in variant_storage
+            fill!(v, NaN)
+        end
+        fill!(Qhat, NaN)
+        for r in Rstages
+            fill!(r, NaN)
+        end
+        for q in Base.tail(Qstages)
+            fill!(q, NaN)
+        end
+
         # The code throughout assumes SDIRK implicit tableau so we assert that
         # here.
         for is in 2:Nstages
@@ -380,6 +391,8 @@ function dostep!(
         dependencies = (event,),
     )
     wait(device(Q), event)
+
+    @show isnan(sum(Q))
 end
 
 @kernel function stage_update!(
