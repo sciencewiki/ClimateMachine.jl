@@ -193,7 +193,7 @@ nelem_vert = 20;
 
 zmax = FT(10);
 
-driver_config = ClimateMachine.AtmosSingleStackConfiguration(
+driver_config = ClimateMachine.SingleStackConfiguration(
     "HeatEquation",
     N_poly,
     nelem_vert,
