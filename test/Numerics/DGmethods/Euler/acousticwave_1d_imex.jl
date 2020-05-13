@@ -60,12 +60,12 @@ function main()
     mpicomm = MPI.COMM_WORLD
 
     polynomialorder = 5
-    numelem_horz = 10
-    numelem_vert = 5
+    numelem_horz = 1
+    numelem_vert = 1
 
     timeend = 60 * 60
     # timeend = 33 * 60 * 60 # Full simulation
-    outputtime = 60 * 60
+    outputtime = 3 * 60 * 60
 
     expected_result = Dict()
     expected_result[Float32] = 9.5064378310656000e+13
@@ -155,7 +155,8 @@ function run(
     dt = dt_factor * element_size / acoustic_speed / polynomialorder^2
     # Adjust the time step so we exactly hit 1 hour for VTK output
     dt = 60 * 60 / ceil(60 * 60 / dt)
-    nsteps = ceil(Int, timeend / dt)
+    # nsteps = ceil(Int, timeend / dt)
+    nsteps = 3
 
     Q = init_ode_state(dg, FT(0))
 
