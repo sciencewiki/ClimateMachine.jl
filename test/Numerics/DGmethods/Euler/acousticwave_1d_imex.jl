@@ -49,7 +49,7 @@ const param_set = EarthParameterSet()
 
 using MPI, Logging, StaticArrays, LinearAlgebra, Printf, Dates, Test
 
-const output_vtk = false
+const output_vtk = true
 
 const ntracers = 1
 
@@ -157,6 +157,7 @@ function run(
     dt = 60 * 60 / ceil(60 * 60 / dt)
     # nsteps = ceil(Int, timeend / dt)
     nsteps = 6
+    outputtime = dt
 
     Q = init_ode_state(dg, FT(0))
 
