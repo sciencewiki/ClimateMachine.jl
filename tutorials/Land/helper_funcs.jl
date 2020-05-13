@@ -89,7 +89,8 @@ end
 Prepares `vars_from_stack` to
 be passed into `write_data`.
 """
-prep_for_io(z_label, vars_from_stack) = Dict(k=>([z_label],v) for (k,v) in vars_from_stack)
+prep_for_io(z_label, vars_from_stack) =
+    Dict(k => ([z_label], v) for (k, v) in vars_from_stack)
 
 """
     collect_data(output_data::DataFile, n_steps::Int)
