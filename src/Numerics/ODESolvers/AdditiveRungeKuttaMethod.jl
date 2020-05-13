@@ -291,6 +291,24 @@ function dostep!(
     wait(device(Q), event)
 end
 
+step = 0
+using Printf
+using FileIO
+
+function oursave(filename, Q, Qstages, Rstages, Qhat, Qtt, slow_rv_dQ)
+    save(
+        filename,
+        Dict(
+            "Q" => Q.data,
+            "Qstages" => getfield.(Qstages, :data),
+            "Rstages" => getfield.(Rstages, :data),
+            "Qhat" => Qhat.data,
+            "Qtt" => Qtt.data,
+            "slow_rv_dQ" => isnothing(slow_rv_dQ) ? nothing : slow_rv_dQ.data,
+        ),
+    )
+end
+
 function dostep!(
     Q,
     ark::AdditiveRungeKutta,
@@ -302,6 +320,10 @@ function dostep!(
     slow_scaling = nothing,
 )
     dt = ark.dt
+
+    global step += 1
+    substep = 0
+
 
     besolver! = ark.besolver!
     RKA_explicit, RKA_implicit = ark.RKA_explicit, ark.RKA_implicit
@@ -322,8 +344,30 @@ function dostep!(
 
     groupsize = 256
 
+    oursave(
+        @sprintf("s_%02d_%02d.jld2", step, substep),
+        Q,
+        Qstages,
+        Rstages,
+        Qhat,
+        Qtt,
+        slow_rv_dQ,
+    )
+    substep += 1
+
     # calculate the rhs at first stage to initialize the stage loop
     rhs!(Rstages[1], Qstages[1], p, time + RKC[1] * dt, increment = false)
+
+    oursave(
+        @sprintf("s_%02d_%02d.jld2", step, substep),
+        Q,
+        Qstages,
+        Rstages,
+        Qhat,
+        Qtt,
+        slow_rv_dQ,
+    )
+    substep += 1
 
     # note that it is important that this loop does not modify Q!
     for istage in 2:Nstages
@@ -351,15 +395,59 @@ function dostep!(
         )
         wait(device(Q), event)
 
+        oursave(
+            @sprintf("s_%02d_%02d.jld2", step, substep),
+            Q,
+            Qstages,
+            Rstages,
+            Qhat,
+            Qtt,
+            slow_rv_dQ,
+        )
+        substep += 1
+
         # solves
         # Q_tt = Qhat + dt * RKA_implicit[istage, istage] * rhs_implicit!(Q_tt)
         α = dt * RKA_implicit[istage, istage]
         besolver!(Qtt, Qhat, α, p, stagetime)
 
+        oursave(
+            @sprintf("s_%02d_%02d.jld2", step, substep),
+            Q,
+            Qstages,
+            Rstages,
+            Qhat,
+            Qtt,
+            slow_rv_dQ,
+        )
+        substep += 1
+
         # update Qstages
         Qstages[istage] .+= Qtt
 
+        oursave(
+            @sprintf("s_%02d_%02d.jld2", step, substep),
+            Q,
+            Qstages,
+            Rstages,
+            Qhat,
+            Qtt,
+            slow_rv_dQ,
+        )
+        substep += 1
+
         rhs!(Rstages[istage], Qstages[istage], p, stagetime, increment = false)
+
+        oursave(
+            @sprintf("s_%02d_%02d.jld2", step, substep),
+            Q,
+            Qstages,
+            Rstages,
+            Qhat,
+            Qtt,
+            slow_rv_dQ,
+        )
+        substep += 1
     end
 
     if split_explicit_implicit
@@ -392,7 +480,16 @@ function dostep!(
     )
     wait(device(Q), event)
 
-    @show isnan(sum(Q))
+    oursave(
+        @sprintf("s_%02d_%02d.jld2", step, substep),
+        Q,
+        Qstages,
+        Rstages,
+        Qhat,
+        Qtt,
+        slow_rv_dQ,
+    )
+    substep += 1
 end
 
 @kernel function stage_update!(
