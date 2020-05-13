@@ -121,6 +121,24 @@ function collect_data(output_data::DataFile, n_steps::Int)
 end
 
 """
+    get_index_and_varname(s)
+
+Index `i::Int` and name `"abc"` from string `"abc[i]"`
+Returns `nothing` for index if no index exists
+"""
+function get_index_and_varname(s)
+    if occursin("[", s)
+        s_split = split(s, "[")
+        s_var = first(s_split)
+        index = parse(Int, first(split(last(s_split), "]")))
+    else
+        index = nothing
+        s_var = s
+    end
+    return s_var, index
+end
+
+"""
     get_prop_recursive(var, v::String)
 
 Recursive `getproperty` on struct `var` based on dot chain (`a.b`).
@@ -137,17 +155,22 @@ c = get_prop_recursive(var, "a.b.c")
 function get_prop_recursive(var, v::String)
     if occursin(".", v)
         s = split(v, ".")
+        s_var, index = get_index_and_varname(s[1])
+        sym = Symbol(s_var)
         if length(s) == 1
-            return getproperty(var, Symbol(s[1]))
+            val = getproperty(var, sym)
         else
-            return get_prop_recursive(
-                getproperty(var, Symbol(s[1])),
+            val = get_prop_recursive(
+                getproperty(var, sym),
                 join(s[2:end], "."),
             )
         end
     else
-        return getproperty(var, Symbol(v))
+        s_var, index = get_index_and_varname(v)
+        sym = Symbol(s_var)
+        val = getproperty(var, sym)
     end
+    return index===nothing ? val : val[index]
 end
 
 """

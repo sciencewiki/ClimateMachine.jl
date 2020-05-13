@@ -35,7 +35,14 @@ function export_plot(z, all_data, ϕ_all, filename, ylabel)
             ϕ_string = String(ϕ)
             ϕ_name = plot_friendly_name(ϕ_string)
             ϕ_data = all_data[n][ϕ_string][:]
-            plot!(ϕ_data, z, xlabel = ϕ_name, ylabel = ylabel)
+            if eltype(ϕ_data) <: AbstractArray
+                for k in size(first(ϕ_data))
+                    vec_data = getindex.(ϕ_data,k)
+                    plot!(vec_data, z, xlabel = ϕ_name*"_$(k)", ylabel = ylabel)
+                end
+            else
+                plot!(ϕ_data, z, xlabel = ϕ_name, ylabel = ylabel)
+            end
         end
     end
     savefig(filename)
