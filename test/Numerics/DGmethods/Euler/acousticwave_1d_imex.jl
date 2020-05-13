@@ -59,9 +59,9 @@ function main()
 
     mpicomm = MPI.COMM_WORLD
 
-    polynomialorder = 5
-    numelem_horz = 1
-    numelem_vert = 1
+    polynomialorder = 4
+    numelem_horz = 5
+    numelem_vert = 2
 
     timeend = 60 * 60
     # timeend = 33 * 60 * 60 # Full simulation
@@ -156,7 +156,7 @@ function run(
     # Adjust the time step so we exactly hit 1 hour for VTK output
     dt = 60 * 60 / ceil(60 * 60 / dt)
     # nsteps = ceil(Int, timeend / dt)
-    nsteps = 3
+    nsteps = 6
 
     Q = init_ode_state(dg, FT(0))
 
