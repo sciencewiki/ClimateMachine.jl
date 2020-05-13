@@ -71,7 +71,7 @@ function main()
     expected_result[Float32] = 9.5064378310656000e+13
     expected_result[Float64] = 9.5073452847081828e+13
 
-    for FT in (Float32, Float64)
+    for FT in (Float64,)
         result = run(
             mpicomm,
             polynomialorder,
