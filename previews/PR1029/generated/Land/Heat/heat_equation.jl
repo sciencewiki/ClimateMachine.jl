@@ -209,14 +209,20 @@ output_dir = @__DIR__;
 
 mkpath(output_dir);
 
+z_scale = 100 # convert from meters to cm
+z_key = "z"
+z_label = "z [cm]"
+z = get_z(grid, z_scale)
 state_vars = get_vars_from_stack(grid, Q, m, vars_state_conservative);
 aux_vars =
     get_vars_from_stack(grid, dg.state_auxiliary, m, vars_state_auxiliary);
 all_vars = OrderedDict(state_vars..., aux_vars...);
 export_plot_snapshot(
+    z,
     all_vars,
     ("ρcT",),
     joinpath(output_dir, "initial_condition.png"),
+    z_label,
 );
 
 const timeend = 40;
@@ -224,8 +230,7 @@ const n_outputs = 5;
 
 const every_x_simulation_time = ceil(Int, timeend / n_outputs);
 
-z_scale = 100 # convert from meters to cm
-dims = OrderedDict("z" => collect(get_z(grid, z_scale)));
+dims = OrderedDict(z_key => collect(z));
 
 output_data = DataFile(joinpath(output_dir, "output_data"));
 
@@ -240,9 +245,10 @@ callback = GenericCallbacks.EveryXSimulationTime(
         dg.state_auxiliary,
         m,
         vars_state_auxiliary;
-        exclude = ["z"],
+        exclude = [z_key],
     )
     all_vars = OrderedDict(state_vars..., aux_vars...)
+    all_vars = prep_for_io(z_label, all_vars)
     write_data(
         NetCDFWriter(),
         output_data(step[1]),
@@ -258,7 +264,9 @@ solve!(Q, lsrk; timeend = timeend, callbacks = (callback,));
 
 all_data = collect_data(output_data, step[1]);
 
-export_plot(all_data, ("ρcT",), joinpath(output_dir, "solution_vs_time.png"));
+@show keys(all_data[0])
+
+export_plot(z, all_data, ("ρcT",), joinpath(output_dir, "solution_vs_time.png"), z_label);
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 
