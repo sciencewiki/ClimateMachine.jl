@@ -4,6 +4,10 @@ using OrderedCollections
 using Plots
 using StaticArrays
 
+using CLIMAParameters
+struct EarthParameterSet <: AbstractEarthParameterSet end
+const param_set = EarthParameterSet()
+
 using ClimateMachine
 using ClimateMachine.Mesh.Topologies
 using ClimateMachine.Mesh.Grids
@@ -42,6 +46,8 @@ include(joinpath(clima_dir, "tutorials", "Land", "helper_funcs.jl"));
 include(joinpath(clima_dir, "tutorials", "Land", "plotting_funcs.jl"));
 
 Base.@kwdef struct HeatModel{FT} <: BalanceLaw
+    "Parameters"
+    param_set::AbstractParameterSet = param_set
     "Heat capacity"
     ρc::FT = 1
     "Thermal diffusivity"
@@ -181,29 +187,33 @@ function boundary_state!(
     end
 end;
 
-velems = collect(0:10) / 10;
-
 N_poly = 5;
 
-grid = SingleStackGrid(MPI, velems, N_poly, FT, Array);
+nelem_vert = 20;
 
-dg = DGModel(
+zmax = FT(10);
+
+driver_config = ClimateMachine.AtmosSingleStackConfiguration(
+    "HeatEquation",
+    N_poly,
+    nelem_vert,
+    zmax,
+    param_set,
     m,
-    grid,
-    CentralNumericalFluxFirstOrder(),
-    CentralNumericalFluxSecondOrder(),
-    CentralNumericalFluxGradient(),
+    numerical_flux_first_order = CentralNumericalFluxFirstOrder(),
 );
 
-Δ = min_node_distance(grid)
+t0 = FT(0)
+timeend = FT(40)
+
+Δ = min_node_distance(driver_config.grid)
 
 given_Fourier = FT(0.08);
 Fourier_bound = given_Fourier * Δ^2 / m.α;
 dt = Fourier_bound
 
-Q = init_ode_state(dg, FT(0));
-
-lsrk = LSRK54CarpenterKennedy(dg, Q; dt = dt, t0 = 0);
+solver_config =
+    ClimateMachine.SolverConfiguration(t0, timeend, driver_config, ode_dt = dt);
 
 output_dir = @__DIR__;
 
@@ -212,10 +222,19 @@ mkpath(output_dir);
 z_scale = 100 # convert from meters to cm
 z_key = "z"
 z_label = "z [cm]"
-z = get_z(grid, z_scale)
-state_vars = get_vars_from_stack(grid, Q, m, vars_state_conservative);
-aux_vars =
-    get_vars_from_stack(grid, dg.state_auxiliary, m, vars_state_auxiliary);
+z = get_z(driver_config.grid, z_scale)
+state_vars = get_vars_from_stack(
+    driver_config.grid,
+    solver_config.Q,
+    m,
+    vars_state_conservative,
+);
+aux_vars = get_vars_from_stack(
+    driver_config.grid,
+    solver_config.dg.state_auxiliary,
+    m,
+    vars_state_auxiliary,
+);
 all_vars = OrderedDict(state_vars..., aux_vars...);
 export_plot_snapshot(
     z,
@@ -225,7 +244,6 @@ export_plot_snapshot(
     z_label,
 );
 
-const timeend = 40;
 const n_outputs = 5;
 
 const every_x_simulation_time = ceil(Int, timeend / n_outputs);
@@ -237,12 +255,17 @@ output_data = DataFile(joinpath(output_dir, "output_data"));
 step = [0];
 callback = GenericCallbacks.EveryXSimulationTime(
     every_x_simulation_time,
-    lsrk,
+    solver_config.solver,
 ) do (init = false)
-    state_vars = get_vars_from_stack(grid, Q, m, vars_state_conservative)
+    state_vars = get_vars_from_stack(
+        driver_config.grid,
+        solver_config.Q,
+        m,
+        vars_state_conservative,
+    )
     aux_vars = get_vars_from_stack(
-        grid,
-        dg.state_auxiliary,
+        driver_config.grid,
+        solver_config.dg.state_auxiliary,
         m,
         vars_state_auxiliary;
         exclude = [z_key],
@@ -254,19 +277,25 @@ callback = GenericCallbacks.EveryXSimulationTime(
         output_data(step[1]),
         dims,
         all_vars,
-        gettime(lsrk),
+        gettime(solver_config.solver),
     )
     step[1] += 1
     nothing
 end;
 
-solve!(Q, lsrk; timeend = timeend, callbacks = (callback,));
+ClimateMachine.invoke!(solver_config; user_callbacks = (callback,))
 
 all_data = collect_data(output_data, step[1]);
 
 @show keys(all_data[0])
 
-export_plot(z, all_data, ("ρcT",), joinpath(output_dir, "solution_vs_time.png"), z_label);
+export_plot(
+    z,
+    all_data,
+    ("ρcT",),
+    joinpath(output_dir, "solution_vs_time.png"),
+    z_label,
+);
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 
